@@ -24,11 +24,21 @@ jobs:
       - name: Build wheel and sdist
         run: python -m build
 
+      - name: Create boomerang.tar.gz
+        run: |
+          tar -czf boomerang.tar.gz -C src/opencode_boomerang/assets/.opencode agents/ skills/ plugins/
+
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
+
+      - name: Upload release tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-tarball
+          path: boomerang.tar.gz
 
   publish:
     needs: build
@@ -56,11 +66,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download artifacts
+      - name: Download wheel artifacts
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
+
+      - name: Download release tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: release-tarball
+          path: .
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -95,18 +111,5 @@ jobs:
             dist/*.tar.gz
             boomerang.tar.gz
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create boomerang.tar.gz
-        run: |
-          tar -czf boomerang.tar.gz -C src/opencode_boomerang/assets/.opencode agents/ skills/ plugins/
-
-      - name: Upload boomerang.tar.gz to release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          body: ""
-          files: boomerang.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
