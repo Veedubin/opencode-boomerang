@@ -2,39 +2,65 @@ name: Release
 
 on:
   push:
-    branches: [main]
     tags:
       - 'v*.*.*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          npm ci
+      - name: Install build tools
+        run: pip install build hatchling
 
-      - name: Build plugin
-        run: |
-          cd .opencode/plugins/boomerang
-          npm install
-          npm run build
+      - name: Build wheel and sdist
+        run: python -m build
 
-      - name: Create release package
-        run: |
-          tar -czf boomerang.tar.gz \
-            -C .opencode agents/ \
-            -C .opencode skills/ \
-            -C .opencode plugins/boomerang/
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -47,12 +73,40 @@ jobs:
             This release includes the latest Boomerang plugin for OpenCode.
 
             ### Installation
+
+            Install from PyPI:
+            ```bash
+            pip install opencode-boomerang
+            # Or using uv
+            uv tool install opencode-boomerang
+            ```
+
+            Or use the "Vanilla OpenCode Install" prompt from the [README](README.md).
+
+            ### Manual Install
+
+            Download and extract `boomerang.tar.gz` to your project directory:
             ```bash
             tar -xzf boomerang.tar.gz -C /your/project/
             ```
 
-            See the [README](README.md) for full installation instructions.
-          files: boomerang.tar.gz
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+            boomerang.tar.gz
           generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create boomerang.tar.gz
+        run: |
+          tar -czf boomerang.tar.gz -C src/opencode_boomerang/assets/.opencode agents/ skills/ plugins/
+
+      - name: Upload boomerang.tar.gz to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body: ""
+          files: boomerang.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

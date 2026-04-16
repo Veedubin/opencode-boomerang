@@ -5,6 +5,6 @@ node_modules/
 .vscode/
 *.ts
 !*.d.ts
-src/
+.opencode/plugins/boomerang/src/
 .opencode/plugins/boomerang/node_modules/
 *.tar.gz
