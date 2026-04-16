@@ -42,13 +42,77 @@ Then run the /boomerang-init skill to complete installation.
 4. Start OpenCode and run `/boomerang-init`
 5. Restart OpenCode for agents to load
 
-## Required MCPs
+## Prerequisites
 
-Boomerang expects these MCP servers in your `opencode.json`:
+Before installing Boomerang, you need to set up **super-memory** (required) and optionally **searxng**.
 
-- **sequential-thinking** - `@modelcontextprotocol/server-sequential-thinking`
-- **super-memory** - `uv run super-memory`
-- **searxng** - `mcp-searxng` (optional but recommended)
+### 1. Install Super-Memory (Required)
+
+Super-Memory gives Boomerang agents long-term memory across sessions.
+
+```bash
+# Using uv (recommended)
+uv tool install super-memory
+
+# Or using pip
+pip install super-memory
+```
+
+Then add it to your `~/.opencode/opencode.json` (global config):
+
+```json
+{
+  "mcp": {
+    "super-memory": {
+      "type": "local",
+      "command": ["super-memory"],
+      "enabled": true
+    }
+  }
+}
+```
+
+If you installed with `uv run` instead of `uv tool install`, use `"command": ["uv", "run", "super-memory"]`.
+
+### 2. Install SearXNG (Optional)
+
+For web research capabilities:
+
+```bash
+# Using docker
+docker run -d -p 8080:8080 --name searxng searxng/searxng
+```
+
+Then add to your global `~/.opencode/opencode.json`:
+
+```json
+{
+  "mcp": {
+    "searxng": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-searxng"],
+      "environment": { "SEARXNG_URL": "http://localhost:8080" },
+      "enabled": true
+    }
+  }
+}
+```
+
+### 3. Sequential Thinking (Usually Pre-installed)
+
+Most OpenCode installations already have this. If not:
+
+```json
+{
+  "mcp": {
+    "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
+    }
+  }
+}
+```
 
 ## License
 
