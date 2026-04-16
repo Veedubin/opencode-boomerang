@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.ts
+!*.d.ts
+src/
+.opencode/plugins/boomerang/node_modules/

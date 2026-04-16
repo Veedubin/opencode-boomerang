@@ -1,0 +1,300 @@
+import { tool } from "@opencode-ai/plugin";
+import { createBoomerangOrchestrator } from "./orchestrator.js";
+import { boomerangMemory } from "./memory.js";
+import { checkGitStatus, commitCheckpoint, commitWithMessage, generateCommitMessage } from "./git.js";
+import { runAllQualityGates, DEFAULT_QUALITY_GATES } from "./quality-gates.js";
+import { parseTasksFromPrompt, buildDAG, createExecutionPlan, formatDAGForPrompt, assignAgentsToTasks } from "./task-parser.js";
+import { getOrCreateSession, getSessionState } from "./session-state.js";
+import { updateTaskInSession } from "./task-state.js";
+import { recordDecisionInSession } from "./agent-state.js";
+import { compactSessionIfNeeded } from "./lazy-compaction.js";
+const DEFAULT_CONFIG = {
+    orchestratorModel: "kimi-for-coding/k2.5",
+    coderModel: "minimax/MiniMax-M2.7-highspeed",
+    architectModel: "openai/gpt-5.4",
+    testerModel: "google/gemini-3-pro",
+    linterModel: "minimax/MiniMax-M2.7",
+    gitCheckBeforeWork: true,
+    gitCommitAfterWork: true,
+    qualityGates: {
+        lint: true,
+        typecheck: true,
+        test: true,
+    },
+    memoryEnabled: true,
+    lazyCompactionEnabled: true,
+};
+const BOOMERANG_RULES = `
+[BOOMERANG PROTOCOL - ALWAYS ACTIVE]
+
+You are operating under the Boomerang Protocol. The following rules are ALWAYS in effect:
+
+1. GIT DISCIPLINE:
+   - Before ANY code changes: Check git status and commit if dirty with "wip: pre-work checkpoint"
+   - After completing work: Run quality gates, then commit with meaningful message
+
+2. MODEL ROUTING:
+   - Kimi K2.5 (orchestrator): COORDINATES ONLY - never writes code
+   - MiniMax M2.7 (boomerang-coder): Fast code generation
+   - Kimi K2.5 (boomerang-architect): Architecture and design decisions
+   - MiniMax M2.7 (boomerang-tester): Testing
+   - When ANY work is needed: delegate via Task tool to the appropriate agent
+
+3. ORCHESTRATOR DISCIPLINE:
+   - The orchestrator NEVER writes code, edits files, or runs implementation commands
+   - ALL work MUST be delegated to sub-agents via Task tool
+   - When given multiple tasks, analyze dependencies to run in parallel vs sequential
+   - Use session.fork() for parallel task execution
+   - Aggregate results from all sub-tasks before completing
+
+4. QUALITY GATES:
+   - After code changes: Run linting
+   - After linting: Run type checking
+   - After type check: Run tests
+   - Only commit if ALL quality gates pass
+
+5. MEMORY (LAZY COMPACTION):
+   - After each task: Update TASKS.md with status
+   - After decisions: Update AGENTS.md with reasoning
+   - Compact session only when resumed (not after every prompt)
+   - This saves tokens by not running expensive compaction on single-prompt sessions
+
+6. SEQUENTIAL THINKING (MANDATORY):
+   - Trigger sequential-thinking_sequentialthinking for:
+     * Multi-step tasks (3+ steps)
+     * Bug fixes requiring diagnosis
+     * Architectural decisions
+     * Unknown/unclear requirements
+     * Research tasks
+     * ANY task where you feel uncertain
+
+7. SUPER-MEMORY (MANDATORY):
+   - Start: super-memory_query_memory to check relevant past context
+   - Research: super-memory_save_web_memory with url and title
+   - Files: super-memory_save_file_memory with file_path
+   - End: super-memory_save_to_memory with summary and tags
+
+8. WEB SEARCH (when needed):
+   - Use SearXNG MCP for web searches
+   - Use Playwright MCP for browser automation
+`;
+export const BoomerangPlugin = async (ctx) => {
+    const config = DEFAULT_CONFIG;
+    try {
+        ctx.client.app.log("Boomerang Protocol activated (lazy compaction enabled)");
+    }
+    catch { }
+    return {
+        tool: {
+            boomerang_status: tool({
+                description: "Check Boomerang Protocol status and configuration",
+                args: {},
+                async execute(args, context) {
+                    return `Boomerang Protocol Status:
+- Orchestrator: ${config.orchestratorModel}
+- Coder: ${config.coderModel}
+- Architect: ${config.architectModel}
+- Tester: ${config.testerModel}
+- Git Check Before Work: ${config.gitCheckBeforeWork}
+- Git Commit After Work: ${config.gitCommitAfterWork}
+- Quality Gates: lint=${config.qualityGates.lint}, typecheck=${config.qualityGates.typecheck}, test=${config.qualityGates.test}
+- Memory Enabled: ${config.memoryEnabled}
+- Lazy Compaction: ${config.lazyCompactionEnabled}
+
+Rules Active:
+${BOOMERANG_RULES}`;
+                },
+            }),
+            boomerang_plan: tool({
+                description: "Plan task execution with DAG analysis",
+                args: {
+                    tasks: tool.schema.string().describe("Comma-separated list of tasks to plan"),
+                },
+                async execute(args, context) {
+                    const session = getOrCreateSession(context.sessionID);
+                    const taskList = args.tasks.split(",").map((t) => t.trim());
+                    const tasks = parseTasksFromPrompt(taskList.join("\n"));
+                    const withAgents = assignAgentsToTasks(tasks);
+                    const dag = buildDAG(withAgents);
+                    const plan = createExecutionPlan(dag);
+                    for (const task of withAgents) {
+                        updateTaskInSession(context.sessionID, task);
+                    }
+                    let response = `## Boomerang Task Plan\n\n`;
+                    response += `**Total Tasks:** ${plan.dag.totalTasks}\n`;
+                    response += `**Estimated Parallelism:** ${plan.estimatedParallelism} concurrent tasks\n\n`;
+                    response += formatDAGForPrompt(dag);
+                    response += `\n## Execution Phases\n\n`;
+                    for (const phase of plan.executionOrder) {
+                        response += `### Phase ${phase.phase}: ${phase.type}\n`;
+                        for (const task of phase.tasks) {
+                            response += `- [${task.id}] ${task.description} (agent: ${task.agent})\n`;
+                        }
+                        response += "\n";
+                    }
+                    recordDecisionInSession(context.sessionID, "orchestrator", `Planned ${plan.dag.totalTasks} tasks with ${plan.estimatedParallelism} parallel`);
+                    return response;
+                },
+            }),
+            boomerang_execute: tool({
+                description: "Execute tasks using Boomerang Protocol with parallel/sequential orchestration",
+                args: {
+                    prompt: tool.schema.string().describe("The task or description to execute"),
+                },
+                async execute(args, context) {
+                    const orchestrator = createBoomerangOrchestrator({
+                        sessionId: context.sessionID,
+                        directory: context.directory,
+                        worktree: context.worktree,
+                        client: ctx.client,
+                    }, config, ctx.$);
+                    try {
+                        const result = await orchestrator.run(args.prompt);
+                        for (const task of result.tasks) {
+                            updateTaskInSession(context.sessionID, task);
+                        }
+                        return result.summary;
+                    }
+                    catch (error) {
+                        return `Boomerang execution failed: ${error instanceof Error ? error.message : String(error)}`;
+                    }
+                },
+            }),
+            boomerang_git_check: tool({
+                description: "Check git status and commit if there are uncommitted changes",
+                args: {},
+                async execute(args, context) {
+                    const status = await checkGitStatus(ctx.$);
+                    if (status.isDirty) {
+                        const result = await commitCheckpoint(ctx.$);
+                        return result.success
+                            ? `Git dirty - checkpoint committed (${result.hash})\nFiles: ${status.files.length}`
+                            : `Git dirty - commit failed: ${result.error}`;
+                    }
+                    return `Git clean. Branch: ${status.branch}`;
+                },
+            }),
+            boomerang_quality_gates: tool({
+                description: "Run quality gates: lint, typecheck, and tests",
+                args: {},
+                async execute(args, context) {
+                    const result = await runAllQualityGates(ctx.$, DEFAULT_QUALITY_GATES);
+                    return result.summary;
+                },
+            }),
+            boomerang_memory_search: tool({
+                description: "Search super-memory for relevant context",
+                args: {
+                    query: tool.schema.string().describe("Search query"),
+                },
+                async execute(args, context) {
+                    const result = await boomerangMemory.searchMemory(args.query);
+                    if (!result.success) {
+                        return `Memory search failed: ${result.error}`;
+                    }
+                    if (!result.results || result.results.length === 0) {
+                        return "No relevant memories found.";
+                    }
+                    return `Found ${result.results.length} relevant memories:\n\n${result.results.map((r) => `- ${r.content}`).join("\n")}`;
+                },
+            }),
+            boomerang_memory_add: tool({
+                description: "Save context to super-memory",
+                args: {
+                    content: tool.schema.string().describe("Content to save"),
+                    tags: tool.schema.string().optional().describe("Comma-separated tags"),
+                },
+                async execute(args, context) {
+                    const tags = args.tags?.split(",").map((t) => t.trim());
+                    const result = await boomerangMemory.addMemory(args.content, tags);
+                    return result.success ? `Saved to memory (${result.id})` : `Failed to save: ${result.error}`;
+                },
+            }),
+            boomerang_compact: tool({
+                description: "Manually trigger session compaction (normally done lazily on session resume)",
+                args: {},
+                async execute(args, context) {
+                    if (!config.lazyCompactionEnabled) {
+                        return "Lazy compaction is disabled";
+                    }
+                    const session = getSessionState(context.sessionID);
+                    if (!session) {
+                        return "No active session state";
+                    }
+                    const contextText = await compactSessionIfNeeded(context.sessionID, ctx.client);
+                    return contextText
+                        ? `Session compacted. Context injected:\n\n${contextText}`
+                        : "Session already clean, no compaction needed";
+                },
+            }),
+        },
+        event: async ({ event }) => {
+            const eventType = event.type;
+            if (eventType === "session.created") {
+                const sessionId = event.sessionId || event.id;
+                try {
+                    ctx.client.app.log("Session created - Boomerang ready");
+                }
+                catch { }
+                if (config.memoryEnabled && sessionId) {
+                    try {
+                        const memResult = await boomerangMemory.searchMemory("recent boomerang session context");
+                        if (memResult.success && memResult.results && memResult.results.length > 0) {
+                            const memoryContext = boomerangMemory.formatContextForInjection(memResult.results);
+                            await ctx.client.session.prompt({
+                                path: { id: sessionId },
+                                body: {
+                                    parts: [{
+                                            type: "text",
+                                            text: `\n\n[INJECTED FROM SUPER-MEMORY - Previous Context]\n${memoryContext}\n\n`,
+                                        }],
+                                    noReply: true,
+                                },
+                            });
+                            ctx.client.app.log(`Injected ${memResult.results.length} memories into session`);
+                        }
+                    }
+                    catch (err) {
+                        ctx.client.app.log(`Memory injection failed: ${err}`);
+                    }
+                }
+            }
+            if (eventType === "session.idle") {
+                try {
+                    ctx.client.app.log("Session idle - Boomerang orchestration available");
+                }
+                catch { }
+            }
+            if (eventType === "session.compacted") {
+                const sessionId = event.sessionId || event.id;
+                if (config.memoryEnabled && sessionId) {
+                    const session = getSessionState(sessionId);
+                    if (session) {
+                        await boomerangMemory.addMemory(`Session compacted: ${JSON.stringify(session).substring(0, 500)}`, ["boomerang", "session", "compacted"]);
+                    }
+                }
+            }
+        },
+        "tool.execute.before": async ({ tool: toolName }) => {
+            if (toolName === "bash" && config.gitCheckBeforeWork) {
+                const status = await checkGitStatus(ctx.$);
+                if (status.isDirty) {
+                    await commitCheckpoint(ctx.$);
+                }
+            }
+        },
+        "tool.execute.after": async ({ tool: toolName }, output) => {
+            if (toolName === "bash" && config.gitCommitAfterWork) {
+                const status = await checkGitStatus(ctx.$);
+                if (status.isDirty && typeof output === "string" && output.includes("success")) {
+                    const commitMsg = generateCommitMessage(`After tool: ${toolName}`);
+                    await commitWithMessage(ctx.$, commitMsg);
+                }
+            }
+        },
+        config: async (cfg) => {
+            cfg.boomerang = config;
+        },
+    };
+};
+export default BoomerangPlugin;
