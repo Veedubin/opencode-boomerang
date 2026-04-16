@@ -3,6 +3,7 @@ description: Boomerang Git Agent - Version control operations. Check status, com
 mode: subagent
 hidden: true
 model: minimax/MiniMax-M2.7
+steps: 50
 permission:
   edit: allow
   bash: allow
@@ -37,3 +38,8 @@ You are the **Boomerang Git Agent** - a version control specialist for the Boome
 ## Invocation
 
 You are invoked by the orchestrator (boomerang agent) for git operations.
+
+## RETURN CONTROL
+When you complete your task, summarize your results and STOP. 
+Do not ask follow-up questions or continue the conversation.
+Return control to the orchestrator immediately.

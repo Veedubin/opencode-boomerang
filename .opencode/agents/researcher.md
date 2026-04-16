@@ -3,6 +3,7 @@ description: Boomerang Researcher - Web research specialist. Searches, fetches p
 mode: subagent
 hidden: true
 model: minimax/MiniMax-M2.7
+steps: 50
 permission:
   edit: deny
   bash: allow
@@ -98,3 +99,8 @@ For each research task:
 | `super-memory_save_to_memory` | Save findings |
 | `super-memory_save_file_memory` | Save file content |
 | `sequential-thinking_sequentialthinking` | Complex research |
+
+## RETURN CONTROL
+When you complete your task, summarize your results and STOP. 
+Do not ask follow-up questions or continue the conversation.
+Return control to the orchestrator immediately.

@@ -3,6 +3,7 @@ description: Boomerang Linter - Code quality specialist. Runs linters, formatter
 mode: subagent
 hidden: true
 model: minimax/MiniMax-M2.7
+steps: 50
 permission:
   edit: allow
   bash: allow
@@ -70,3 +71,8 @@ You are the **Boomerang Linter** - a code quality specialist for the Boomerang P
 ## Invocation
 
 You are invoked by the orchestrator or coder when quality checks are needed.
+
+## RETURN CONTROL
+When you complete your task, summarize your results and STOP. 
+Do not ask follow-up questions or continue the conversation.
+Return control to the orchestrator immediately.

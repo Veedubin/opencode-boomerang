@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Build plugin
+        run: |
+          cd .opencode/plugins/boomerang
+          npm install
+          npm run build
+
+      - name: Verify build output exists
+        run: |
+          if [ ! -f ".opencode/plugins/boomerang/dist/index.js" ]; then
+            echo "ERROR: Build output not found"
+            exit 1
+          fi
+          echo "Build output verified"
+
+      - name: Create release package
+        run: |
+          tar -czf boomerang.tar.gz \
+            -C .opencode agents/ \
+            -C .opencode skills/ \
+            -C .opencode plugins/boomerang/
+
+      - name: Verify release package contents
+        run: |
+          echo "Release package contents:"
+          tar -tzf boomerang.tar.gz | head -20
+          
+          # Verify critical files exist in package
+          if ! tar -tzf boomerang.tar.gz | grep -q "agents/boomerang.md"; then
+            echo "ERROR: agents/boomerang.md not found in package"
+            exit 1
+          fi
+          if ! tar -tzf boomerang.tar.gz | grep -q "skills/"; then
+            echo "ERROR: skills/ not found in package"
+            exit 1
+          fi
+          if ! tar -tzf boomerang.tar.gz | grep -q "plugins/boomerang/dist/"; then
+            echo "ERROR: plugins/boomerang/dist/ not found in package"
+            exit 1
+          fi
+          echo "Release package contents verified"

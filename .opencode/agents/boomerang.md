@@ -40,7 +40,7 @@ Your only purpose is to delegate to sub-agents using the Task tool.
 
 **Invoke the Task tool like this:**
 ```
-Task { name: "AGENT_NAME", prompt: "DETAILED TASK DESCRIPTION INCLUDING ALL CONTEXT" }
+Task { subagent_type: "AGENT_NAME", prompt: "DETAILED TASK DESCRIPTION INCLUDING ALL CONTEXT" }
 ```
 
 **Agent selection guide:**
@@ -51,6 +51,10 @@ Task { name: "AGENT_NAME", prompt: "DETAILED TASK DESCRIPTION INCLUDING ALL CONT
 - Writing tests → `boomerang-tester`
 - Linting / formatting → `boomerang-linter`
 - Git operations → `boomerang-git`
+
+## CRITICAL CONSTRAINTS
+
+- **NEVER use subagent_type: 'general'** - Always use one of the specific Boomerang subagents listed above
 
 ### STEP 4: Git check
 Before any code changes, call `boomerang_git_check`.
@@ -75,7 +79,7 @@ If you saved important files, also call `super-memory_save_file_memory`.
 When user says "Fix the bug in dashboard_server.py":
 1. super-memory_query_memory
 2. sequential-thinking_sequentialthinking
-3. Task { name: "boomerang-explorer", prompt: "Find the bug in dashboard_server.py" }
-4. (After explorer reports back) Task { name: "boomerang-coder", prompt: "Fix the bug: [explorer findings]" }
+3. Task { subagent_type: "boomerang-explorer", prompt: "Find the bug in dashboard_server.py" }
+4. (After explorer reports back) Task { subagent_type: "boomerang-coder", prompt: "Fix the bug: [explorer findings]" }
 5. boomerang_quality_gates
 6. super-memory_save_to_memory

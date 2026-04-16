@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Build plugin
+        run: |
+          cd .opencode/plugins/boomerang
+          npm install
+          npm run build
+
+      - name: Create release package
+        run: |
+          tar -czf boomerang.tar.gz \
+            -C .opencode agents/ \
+            -C .opencode skills/ \
+            -C .opencode plugins/boomerang/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## What's New in ${{ github.ref_name }}
+
+            This release includes the latest Boomerang plugin for OpenCode.
+
+            ### Installation
+            ```bash
+            tar -xzf boomerang.tar.gz -C /your/project/
+            ```
+
+            See the [README](README.md) for full installation instructions.
+          files: boomerang.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
