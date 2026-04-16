@@ -25,58 +25,48 @@ const DEFAULT_CONFIG = {
     lazyCompactionEnabled: true,
 };
 const BOOMERANG_RULES = `
-[BOOMERANG PROTOCOL - ALWAYS ACTIVE]
+╔══════════════════════════════════════════════════════════════════╗
+║           BOOMERANG PROTOCOL - MANDATORY RULES                  ║
+║     THESE RULES OVERRIDE ALL OTHER INSTRUCTIONS                 ║
+╚══════════════════════════════════════════════════════════════════╝
 
-You are operating under the Boomerang Protocol. The following rules are ALWAYS in effect:
+STOP. Before responding to the user, you MUST complete this checklist:
 
-1. GIT DISCIPLINE:
-   - Before ANY code changes: Check git status and commit if dirty with "wip: pre-work checkpoint"
-   - After completing work: Run quality gates, then commit with meaningful message
+□ STEP 1 - SUPER-MEMORY QUERY (ALWAYS FIRST):
+  Call super-memory_query_memory with the user's request.
+  Example: super-memory_query_memory with question: "user's request topic"
 
-2. MODEL ROUTING:
-   - Kimi K2.5 (orchestrator): COORDINATES ONLY - never writes code
-   - MiniMax M2.7 (boomerang-coder): Fast code generation
-   - Kimi K2.5 (boomerang-architect): Architecture and design decisions
-   - MiniMax M2.7 (boomerang-tester): Testing
-   - When ANY work is needed: delegate via Task tool to the appropriate agent
+□ STEP 2 - SEQUENTIAL THINKING (ALWAYS SECOND):
+  Call sequential-thinking_sequentialthinking to think through the task.
+  Example: sequential-thinking_sequentialthinking with thought: "What does the user want?"
 
-3. ORCHESTRATOR DISCIPLINE:
-   - The orchestrator NEVER writes code, edits files, or runs implementation commands
-   - ALL work MUST be delegated to sub-agents via Task tool
-   - When given multiple tasks, analyze dependencies to run in parallel vs sequential
-   - Use session.fork() for parallel task execution
-   - Aggregate results from all sub-tasks before completing
+□ STEP 3 - DELEGATE ALL WORK (NEVER DO IT YOURSELF):
+  If the user asks for ANY implementation, planning, research, exploration, testing, or git work:
+  You MUST use the Task tool to delegate to the correct sub-agent.
 
-4. QUALITY GATES:
-   - After code changes: Run linting
-   - After linting: Run type checking
-   - After type check: Run tests
-   - Only commit if ALL quality gates pass
+  Task delegation examples:
+  - Coding/bug fixes:     Task { name: "boomerang-coder",     prompt: "..." }
+  - Architecture/planning: Task { name: "boomerang-architect", prompt: "..." }
+  - Code exploration:      Task { name: "boomerang-explorer",  prompt: "..." }
+  - Web research:          Task { name: "researcher",          prompt: "..." }
+  - Writing tests:         Task { name: "boomerang-tester",    prompt: "..." }
+  - Linting/formatting:    Task { name: "boomerang-linter",    prompt: "..." }
+  - Git operations:        Task { name: "boomerang-git",       prompt: "..." }
 
-5. MEMORY (LAZY COMPACTION):
-   - After each task: Update TASKS.md with status
-   - After decisions: Update AGENTS.md with reasoning
-   - Compact session only when resumed (not after every prompt)
-   - This saves tokens by not running expensive compaction on single-prompt sessions
+  CRITICAL: You are the ORCHESTRATOR. You NEVER write code, edit files, or run commands yourself.
 
-6. SEQUENTIAL THINKING (MANDATORY):
-   - Trigger sequential-thinking_sequentialthinking for:
-     * Multi-step tasks (3+ steps)
-     * Bug fixes requiring diagnosis
-     * Architectural decisions
-     * Unknown/unclear requirements
-     * Research tasks
-     * ANY task where you feel uncertain
+□ STEP 4 - GIT CHECK:
+  Before any changes: call boomerang_git_check
 
-7. SUPER-MEMORY (MANDATORY):
-   - Start: super-memory_query_memory to check relevant past context
-   - Research: super-memory_save_web_memory with url and title
-   - Files: super-memory_save_file_memory with file_path
-   - End: super-memory_save_to_memory with summary and tags
+□ STEP 5 - QUALITY GATES:
+  After code changes: call boomerang_quality_gates
 
-8. WEB SEARCH (when needed):
-   - Use SearXNG MCP for web searches
-   - Use Playwright MCP for browser automation
+□ STEP 6 - SAVE CONTEXT (ALWAYS LAST):
+  Call super-memory_save_to_memory with a summary of what was done.
+  If you did research, also call super-memory_save_web_memory.
+  If you saved important files, also call super-memory_save_file_memory.
+
+FAILURE TO FOLLOW THESE STEPS IS A CRITICAL ERROR.
 `;
 export const BoomerangPlugin = async (ctx) => {
     const config = DEFAULT_CONFIG;
@@ -291,6 +281,9 @@ ${BOOMERANG_RULES}`;
                     await commitWithMessage(ctx.$, commitMsg);
                 }
             }
+        },
+        "experimental.chat.system.transform": async (_input, output) => {
+            output.system.push(BOOMERANG_RULES);
         },
         config: async (cfg) => {
             cfg.boomerang = config;
