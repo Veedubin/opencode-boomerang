@@ -8,6 +8,29 @@
 
 ---
 
+## 🚀 Vanilla OpenCode Install (One-Click Prompt)
+
+> **Copy and paste the following prompt into a fresh OpenCode Builder session. It will do everything automatically.**
+
+```text
+I want you to install the Boomerang multi-agent plugin for OpenCode. Do this step by step:
+
+1. Install the Boomerang package from PyPI. Run: pip install opencode-boomerang (or uv tool install opencode-boomerang if uv is available).
+
+2. Install super-memory from PyPI. Run: pip install super-memory (or uv tool install super-memory if uv is available).
+
+3. Edit the project's .opencode/opencode.json file to include:
+   - The Boomerang plugin: "plugin": ["opencode-boomerang"]
+   - An MCP server entry for super-memory with command ["super-memory"] or ["uv", "run", "super-memory"] depending on how it was installed
+   - An MCP server entry for sequential-thinking with command ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+
+4. Confirm completion and tell me to:
+   a) Restart OpenCode completely
+   b) After restart, open the Skills panel (type /skills) and select "boomerang-init" to run the initialization skill
+```
+
+---
+
 ## 🎯 What is Boomerang?
 
 Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](https://opencode.ai) that coordinates a team of specialized AI agents working together on your codebase. Instead of relying on a single AI, Boomerang implements the **Boomerang Protocol** — a structured 6-step workflow that ensures thorough, consistent, and high-quality code delivery.
@@ -140,35 +163,31 @@ super-memory --version
 
 ## 🚚 Installation
 
-### Option 1: Automated (Recommended)
-
-Start a fresh OpenCode session and simply say:
-
-```
-Download and install the Boomerang plugin from:
-https://github.com/Veedubin/opencode-boomerang/releases/latest/download/boomerang.tar.gz
-
-Extract it so the .opencode/ directory contents go into my project's .opencode/ directory.
-Then run the /boomerang-init skill to complete installation.
-```
+> ⭐ **For the easiest install experience, use the "Vanilla OpenCode Install" prompt above — just copy, paste, and let OpenCode do everything!**
 
 ### Option 2: Manual Install
 
-1. Download the latest release from [GitHub Releases](https://github.com/Veedubin/opencode-boomerang/releases)
-2. Extract into your project's `.opencode/` directory:
+1. Install Boomerang from PyPI:
    ```bash
-   tar -xzf boomerang.tar.gz -C /your/project/
+   pip install opencode-boomerang
+   # Or if using uv
+   uv tool install opencode-boomerang
+   ```
+2. Install super-memory from PyPI:
+   ```bash
+   pip install super-memory
+   # Or if using uv
+   uv tool install super-memory
    ```
 3. Update your `.opencode/opencode.json` to include the plugin:
    ```json
    {
-     "plugin": [
-       "file:///ABSOLUTE/PATH/TO/YOUR/PROJECT/.opencode/plugins/boomerang/dist"
-     ]
+     "plugin": ["opencode-boomerang"]
    }
    ```
-4. Start OpenCode and run `/boomerang-init` skill
-5. Restart OpenCode for agents to load
+4. Add super-memory and sequential-thinking MCP configurations (see Configuration section below)
+5. Start OpenCode and run `/boomerang-init` skill
+6. Restart OpenCode for agents to load
 
 ---
 
@@ -178,9 +197,7 @@ Then run the /boomerang-init skill to complete installation.
 
 ```json
 {
-  "plugin": [
-    "file:///ABSOLUTE/PATH/TO/YOUR/PROJECT/.opencode/plugins/boomerang/dist"
-  ],
+  "plugin": ["opencode-boomerang"],
   "mcp": {
     "super-memory": {
       "type": "local",
@@ -285,11 +302,10 @@ gh release view Veedubin/opencode-boomerang --json tagName,createdAt
 
 ### 2. Update Your Installation
 ```bash
-# Download the new release
-curl -L https://github.com/Veedubin/opencode-boomerang/releases/latest/download/boomerang.tar.gz -o boomerang.tar.gz
-
-# Extract to your project (overwrite existing)
-tar -xzf boomerang.tar.gz -C /your/project/
+# Update Boomerang from PyPI
+pip install --upgrade opencode-boomerang
+# Or if using uv
+uv tool upgrade opencode-boomerang
 
 # Re-run initialization
 opencode /boomerang-init
