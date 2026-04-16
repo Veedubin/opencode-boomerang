@@ -282,9 +282,6 @@ ${BOOMERANG_RULES}`;
                 }
             }
         },
-        "experimental.chat.system.transform": async (_input, output) => {
-            output.system.push(BOOMERANG_RULES);
-        },
         config: async (cfg) => {
             cfg.boomerang = config;
         },
