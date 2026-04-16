@@ -23,7 +23,7 @@ Start a fresh OpenCode session in your project and say:
 
 ```
 Download and extract the Boomerang plugin from:
-https://github.com/YOUR_USERNAME/opencode-boomerang/releases/latest/download/boomerang.tar.gz
+https://github.com/Veedubin/opencode-boomerang/releases/latest/download/boomerang.tar.gz
 
 Extract it so that the .opencode/ directory contents go into this project's .opencode/ directory.
 Then run the /boomerang-init skill to complete installation.
