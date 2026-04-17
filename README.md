@@ -15,13 +15,13 @@
 ```text
 I want you to install the Boomerang multi-agent plugin for OpenCode. Do this step by step:
 
-1. Install the Boomerang package from PyPI. Run: pip install opencode-boomerang (or uv tool install opencode-boomerang if uv is available).
+1. Install the Boomerang package from PyPI. Run: pip install opencode-boomerang (or uv pip install opencode-boomerang if uv is available).
 
-2. Install super-memory from PyPI. Run: pip install super-memory (or uv tool install super-memory if uv is available).
+2. Install super-memory from PyPI. Run: pip install super-memory-mcp (or uv tool install super-memory-mcp if uv is available).
 
 3. Edit the project's .opencode/opencode.json file to include:
    - The Boomerang plugin: "plugin": ["opencode-boomerang"]
-   - An MCP server entry for super-memory with command ["super-memory"] or ["uv", "run", "super-memory"] depending on how it was installed
+   - An MCP server entry for super-memory with command ["uvx", "super-memory-mcp"]
    - An MCP server entry for sequential-thinking with command ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
 
 4. Confirm completion and tell me to:
@@ -119,10 +119,10 @@ This means Boomerang learns your codebase over time and doesn't repeat mistakes.
 
 ```bash
 # Using uv (recommended)
-uv tool install super-memory
+uv tool install super-memory-mcp
 
 # Or using pip
-pip install super-memory
+pip install super-memory-mcp
 ```
 
 ### Configuration
@@ -134,19 +134,19 @@ Add super-memory to your global `~/.opencode/opencode.json`:
   "mcp": {
     "super-memory": {
       "type": "local",
-      "command": ["super-memory"],
+      "command": ["uvx", "super-memory-mcp"],
       "enabled": true
     }
   }
 }
 ```
 
-> **Note:** If you installed with `uv run`, use `"command": ["uv", "run", "super-memory"]`
+> **Note:** If you installed with `uv run`, use `"command": ["uvx", "super-memory-mcp"]`
 
 ### Verify Installation
 
 ```bash
-super-memory --version
+super-memory-mcp --version
 ```
 
 ---
@@ -155,7 +155,7 @@ super-memory --version
 
 | Dependency | Status | Installation |
 |------------|--------|--------------|
-| **super-memory** | ⚠️ **Required** | `uv tool install super-memory` or `pip install super-memory` |
+| **super-memory** | ⚠️ **Required** | `uv tool install super-memory-mcp` or `pip install super-memory-mcp` |
 | **searxng** | 🔧 Optional | Docker: `docker run -d -p 8080:8080 --name searxng searxng/searxng` |
 | **sequential-thinking** | ✅ Usually pre-installed | MCP server: `npx -y @modelcontextprotocol/server-sequential-thinking` |
 
@@ -171,13 +171,13 @@ super-memory --version
    ```bash
    pip install opencode-boomerang
    # Or if using uv
-   uv tool install opencode-boomerang
+   uv pip install opencode-boomerang
    ```
 2. Install super-memory from PyPI:
    ```bash
-   pip install super-memory
+   pip install super-memory-mcp
    # Or if using uv
-   uv tool install super-memory
+   uv tool install super-memory-mcp
    ```
 3. Update your `.opencode/opencode.json` to include the plugin:
    ```json
@@ -201,7 +201,7 @@ super-memory --version
   "mcp": {
     "super-memory": {
       "type": "local",
-      "command": ["super-memory"],
+      "command": ["uvx", "super-memory-mcp"],
       "enabled": true
     },
     "searxng": {
@@ -305,7 +305,7 @@ gh release view Veedubin/opencode-boomerang --json tagName,createdAt
 # Update Boomerang from PyPI
 pip install --upgrade opencode-boomerang
 # Or if using uv
-uv tool upgrade opencode-boomerang
+uv pip install --upgrade opencode-boomerang
 
 # Re-run initialization
 opencode /boomerang-init
