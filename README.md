@@ -347,6 +347,54 @@ The `boomerang.tar.gz` release contains:
 
 ---
 
+## 📦 NPM Publishing
+
+> **Note:** The Boomerang package is currently not published to NPM. The following guide is for when you're ready to publish.
+
+### Prerequisites
+
+1. **NPM Account**: Create an account at [npmjs.com](https://www.npmjs.com) if you don't have one
+2. **Login**: Run `npm login` and authenticate with your credentials
+3. **Package Name**: Ensure the package name in `package.json` is available on NPM
+
+### Publishing Steps
+
+1. **Prepare the package**:
+   ```bash
+   # Ensure version is updated in package.json
+   npm version patch|minor|major
+   
+   # Run tests and build
+   npm test
+   npm run build
+   ```
+
+2. **Publish to NPM**:
+   ```bash
+   # Publish publicly
+   npm publish --access public
+   
+   # Or publish scoped package
+   npm publish --access public
+   ```
+
+3. **Verify publication**:
+   ```bash
+   npm view opencode-boomerang
+   ```
+
+### Post-Publication
+
+- Update installation instructions in README to use `npm install` or `pip install`
+- Tag the release on GitHub
+- Announce in relevant communities
+
+### Troubleshooting
+
+- **Name collision**: If the package name is taken, consider scoping (e.g., `@yourorg/opencode-boomerang`)
+- **Authentication errors**: Ensure you're logged in with `npm login`
+- **Version conflicts**: Update version in package.json before publishing
+
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.

@@ -37,3 +37,26 @@ Use **GPT-5.4** or **Kimi K2.5** for strategic architecture decisions.
 - Document architectural decisions
 - Think about scalability
 - Prioritize maintainability
+
+## Super-Memory Protocol
+
+### Required Actions
+
+1. **Query at start**: Before beginning any work, query super-memory for:
+   - Previous related work on this feature/bug
+   - Established patterns and conventions
+   - Known issues or workarounds
+   - User preferences
+
+2. **Save at end**: After completing work, save to super-memory:
+   - What was implemented or fixed
+   - Key decisions made
+   - Patterns established
+   - Any lessons learned
+
+### Sequential Thinking
+
+For complex tasks (multi-file changes, architectural decisions, debugging):
+- Use sequential-thinking to plan your approach
+- Adjust total_thoughts as needed
+- Do not rush through analysis
