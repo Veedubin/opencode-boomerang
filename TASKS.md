@@ -15,7 +15,7 @@
 - [x] Update all agent skills with super-memory protocol requirements
 - [x] Create missing agent skills (boomerang-explorer, boomerang-linter, boomerang-git)
 - [x] Research LangChain deepagents for competitive insights
-- [ ] Implement context isolation for subagents (learned from deepagents)
+- [x] Implement context isolation for subagents (learned from deepagents)
 - [ ] Create/update AGENTS.md with full agent roster
 - [ ] Create HANDOFF.md template
 - [ ] Update README.md with new skills and agents
@@ -23,8 +23,8 @@
 ### Medium Priority
 
 - [ ] Implement context compaction agent/skill
-- [ ] Add tool result eviction / large output offloading
-- [ ] Implement middleware hooks (wrap_model_call, wrap_tool_call)
+- [x] Add tool result eviction / large output offloading
+- [~] Implement middleware hooks concept (wrap_model_call, wrap_tool_call)
 - [ ] Add web scraping integration tests
 - [ ] Create example project initialization flow
 - [ ] Document super-memory best practices

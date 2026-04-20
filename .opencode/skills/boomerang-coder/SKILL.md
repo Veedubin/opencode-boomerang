@@ -59,3 +59,47 @@ For complex tasks (multi-file changes, architectural decisions, debugging):
 - Use sequential-thinking to plan your approach
 - Adjust total_thoughts as needed
 - Do not rush through analysis
+
+## Tool Result Eviction
+
+### When to Evict
+
+When tool outputs exceed ~500 words or 3000 characters:
+- **Glob results** with many files
+- **Grep results** with many matches
+- **Read output** of large files
+- **Web fetch** of long pages
+- **Search results** with many entries
+
+### How to Evict
+
+1. **Write to file** — Use the Write tool to save the full output to a temporary file
+2. **Return summary** — Provide a concise summary in your response
+3. **Reference file** — Include the file path so the orchestrator can read it if needed
+
+### Example
+
+**Instead of:**
+```
+I found these matches:
+[50 lines of grep output]
+```
+
+**Do this:**
+```
+## Search Results Summary
+
+Found 47 matches across 12 files. Full results written to `temp/search-results-[timestamp].md`.
+
+### Key Findings
+- 12 files contain references to "auth"
+- 3 files have the function signature we need
+- Main implementation is in `src/auth/core.ts`
+```
+
+### File Naming
+
+Use consistent temporary file names:
+- `temp/explore-[topic]-[timestamp].md`
+- `temp/search-[query]-[timestamp].md`
+- `temp/results-[task]-[timestamp].md`

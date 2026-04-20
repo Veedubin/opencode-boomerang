@@ -1,6 +1,6 @@
 # Boomerang Agent Roster
 
-## Core Agents
+## Agent Roster
 
 | Agent | Skill | Model | Role |
 |-------|-------|-------|------|
@@ -13,13 +13,8 @@
 | **boomerang-git** | boomerang-git | MiniMax M2.7 | Version control. Commits, branches, history |
 | **boomerang-writer** | boomerang-writer | Kimi K2.5 | Documentation and markdown writing |
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | Web scraping and research |
-
-## Special Skills
-
-| Skill | Purpose |
-|-------|---------|
-| **boomerang-init** | Initialize and personalize agents for a project |
-| **boomerang-handoff** | Wrap-up session. Updates docs, saves context |
+| **boomerang-handoff** | boomerang-handoff | Kimi K2.5 | Session wrap-up. Updates docs, saves context |
+| **boomerang-init** | boomerang-init | Kimi K2.5 | Initialize and personalize agents for a project |
 
 ## Agent Selection Guide
 

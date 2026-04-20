@@ -103,8 +103,122 @@ When delegating to sub-agents, include in your prompt:
 - "Save your work to super-memory when complete"
 - "Use sequential-thinking if this is a complex task"
 
+## Context Isolation for Subagents
+
+### Problem: Context Bloat
+
+When sub-agents execute, their intermediate tool calls, search results, and exploration steps accumulate in the main conversation context. This causes:
+- **Context bloat** — The main context fills with irrelevant details
+- **"Dumb zone"** — Model quality degrades as context grows
+- **Token waste** — Paying for tokens that don't contribute to the final answer
+
+### Solution: Return-Only-Final-Result
+
+Sub-agents MUST follow this protocol:
+
+1. **Do all exploration internally** — Search, read, analyze as needed
+2. **Synthesize findings** — Distill all research into a concise summary
+3. **Return ONLY the final result** — No raw tool outputs, no intermediate steps
+4. **Use files for large outputs** — If results are too large for a summary, write to a file and return the file path
+
+### Example: Good vs Bad Sub-Agent Response
+
+**BAD** (returns raw tool output):
+```
+I found these files:
+- /home/user/project/src/main.ts (45 lines)
+- /home/user/project/src/utils.ts (120 lines)
+[... 50 more files ...]
+```
+
+**GOOD** (returns synthesized result):
+```
+## Exploration Results: Authentication Flow
+
+### Key Files
+| File | Role |
+|------|------|
+| src/auth/login.ts | Handles login form submission |
+| src/auth/middleware.ts | JWT validation |
+| src/auth/session.ts | Session management |
+
+### Architecture
+The auth system uses JWT tokens stored in httpOnly cookies...
+
+### Full Details
+See `exploration-auth.md` for complete file list and code snippets.
+```
+
+### Delegation Best Practices
+
+When delegating, tell the sub-agent:
+```
+"Do your research internally. Return ONLY a concise summary of findings.
+If output would exceed ~500 words, write it to a file and return the path."
+```
+
+### Context Budget
+
+Each sub-agent call should aim to return:
+- **Simple tasks**: 100-300 words
+- **Complex tasks**: 300-800 words OR a file path
+- **Never**: Raw tool output dumps
+
 ## Task Flow
 
 ```
 User Request → Memory Query → Sequential Think → Parse → Build DAG → Execute Parallel → Execute Sequential → Quality Gates → Save Memory
 ```
+
+## Middleware Pattern (Future)
+
+Inspired by LangChain DeepAgents, Boomerang can support composable middleware hooks:
+
+### Proposed Hooks
+
+1. **wrap_model_call** — Intercept and modify model invocations
+   - Logging
+   - Rate limiting
+   - Model fallback (e.g., if Kimi fails, try GPT)
+
+2. **wrap_tool_call** — Intercept and modify tool executions
+   - Validation
+   - Caching
+   - Result transformation
+
+3. **before_agent** — Run before agent starts
+   - Context setup
+   - Permission checks
+   - Environment validation
+
+4. **after_agent** — Run after agent completes
+   - Result validation
+   - Cleanup
+   - Metrics collection
+
+### Middleware Stack
+
+```
+User Request
+  → before_agent
+    → wrap_model_call
+      → Agent Execution
+    → wrap_tool_call (per tool)
+  → after_agent
+  → Result
+```
+
+### Use Cases
+
+- **Logging**: Track all agent actions for audit
+- **Caching**: Cache tool results to avoid redundant calls
+- **HITL**: Human-in-the-loop approval for sensitive operations
+- **Fallbacks**: Switch models if primary is unavailable
+- **Validation**: Validate tool inputs before execution
+
+### Implementation Notes
+
+- Middleware should be composable (chainable)
+- Order matters — middleware runs in pipeline order
+- Each middleware can short-circuit (stop processing)
+- State should be immutable between middleware layers

@@ -69,7 +69,7 @@ Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](http
 ┌─────────────────────────────────────────────────────────────────┐
 │                  🔄 THE BOOMERANG PROTOCOL                       │
 │                                                                 │
-│   1️⃣ Memory   →   2️⃣ Think   →   3️⃣ Delegate                  │
+│   1️⃣ Memory   →   2️⃣ Think (Sequential)   →   3️⃣ Delegate   │
 │   4️⃣ Git Check →   5️⃣ Quality Gates →   6️⃣ Save Memory        │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -98,6 +98,9 @@ Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](http
 | **boomerang-tester** | MiniMax M2.7 | 🧪 **Testing specialist** — Unit/integration tests, verification |
 | **boomerang-linter** | MiniMax M2.7 | ✅ **Quality enforcement** — Lint, format, style consistency |
 | **boomerang-git** | MiniMax M2.7 | 📦 **Version control** — Commits, branches, history discipline |
+| **boomerang-writer** | Kimi K2.5 | 📝 **Documentation** — Markdown writing and documentation |
+| **boomerang-scraper** | MiniMax M2.7 | 🌐 **Web scraping** — Research and information gathering |
+| **boomerang-handoff** | Kimi K2.5 | 🔄 **Session wrap-up** — Context saving and handoff |
 | **researcher** | MiniMax M2.7 | 🌐 **Web research** — Search, fetch, and synthesize online information |
 
 ---
@@ -394,6 +397,25 @@ The `boomerang.tar.gz` release contains:
 - **Name collision**: If the package name is taken, consider scoping (e.g., `@yourorg/opencode-boomerang`)
 - **Authentication errors**: Ensure you're logged in with `npm login`
 - **Version conflicts**: Update version in package.json before publishing
+
+## 🔬 DeepAgents Research Insights
+
+Boomerang has been benchmarked against [LangChain DeepAgents](https://github.com/langchain-ai/deepagents) (21.3k ⭐) and incorporates several proven patterns:
+
+### Context Isolation
+Sub-agents return **only final results**, not intermediate tool outputs. This prevents context bloat and keeps the "dumb zone" away.
+
+### Tool Result Eviction
+Large outputs (><500 words) are auto-offloaded to temporary files instead of polluting context.
+
+### Context Compaction
+At ~40% context usage, the `/handoff` skill wraps up work, saves state, and allows a fresh start.
+
+### Middleware Hooks (Planned)
+Composable pipeline hooks for logging, caching, HITL, and model fallbacks.
+
+### Key Insight
+DeepAgents research shows the primary problem sub-agents solve is **context bloat** — not parallelism. As context fills, model quality degrades into a "dumb zone." Boomerang's compaction + isolation strategy directly addresses this.
 
 ## 📄 License
 
