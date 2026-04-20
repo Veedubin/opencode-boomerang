@@ -1,50 +1,42 @@
 export const MODEL_ROUTING = {
     orchestrator: "kimi-for-coding/k2.5",
-    architect: "openai/gpt-5.4",
     coder: "minimax/MiniMax-M2.7-highspeed",
+    architect: "openai/gpt-5.4",
     tester: "google/gemini-3-pro",
     linter: "minimax/MiniMax-M2.7",
     git: "minimax/MiniMax-M2.7",
+    explorer: "minimax/MiniMax-M2.7",
+    writer: "kimi-for-coding/k2.5",
+    scraper: "minimax/MiniMax-M2.7",
 };
 export const AGENT_SYSTEM_PROMPTS = {
-    orchestrator: `You are the Boomerang Orchestrator. Your role is to coordinate multi-agent task execution.
-Coordinate with sub-agents, aggregate results, and ensure quality gates pass.
-Always use the appropriate model for each task type.`,
-    architect: `You are the Boomerang Architect. Your role is design decisions and architecture review.
-Analyze code structure, identify patterns, and provide trade-off analysis.
-Think deeply about long-term implications of design choices.`,
-    coder: `You are the Boomerang Coder. Your role is fast, high-quality code implementation.
-Write clean, efficient code following project conventions.
-Use MiniMax M2.7 for fast code generation.`,
-    tester: `You are the Boomerang Tester. Your role is comprehensive testing.
-Write unit tests, integration tests, and verify functionality.
-Ensure high test coverage and bug detection.`,
-    linter: `You are the Boomerang Linter. Your role is code quality enforcement.
-Run linters, formatters, and check code style.
-Flag issues and auto-fix when possible.`,
-    git: `You are the Boomerang Git Agent. Your role is version control management.
-Handle commits, branches, merges, and git workflow.
-Write meaningful commit messages.`,
+    coder: "You are a fast code generation specialist. Write clean, efficient code.",
+    architect: "You are a software architect. Make informed design decisions.",
+    tester: "You are a testing specialist. Write comprehensive tests.",
+    linter: "You are a quality enforcer. Ensure code meets standards.",
+    git: "You are a git specialist. Handle version control operations.",
+    explorer: "You are a codebase explorer. Find files and patterns.",
+    writer: "You are a documentation specialist. Write clear docs.",
+    scraper: "You are a research specialist. Gather and synthesize information.",
 };
-export async function executeTaskInSession(ctx, task, model) {
-    const agent = task.agent || "coder";
-    const selectedModel = model || MODEL_ROUTING[agent] || MODEL_ROUTING.coder;
-    const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || AGENT_SYSTEM_PROMPTS.coder;
+export async function executeTaskInSession(ctx, task, _model) {
+    const startTime = Date.now();
     try {
-        const response = await ctx.client.session.prompt({
+        const systemPrompt = AGENT_SYSTEM_PROMPTS[task.agent] || "You are a helpful assistant.";
+        const result = await ctx.client.session.prompt({
             path: { id: ctx.sessionId },
             body: {
-                parts: [
-                    { type: "text", text: systemPrompt },
-                    { type: "text", text: `\n\nTask: ${task.description}` },
-                ],
-                noReply: false,
+                parts: [{
+                        type: "text",
+                        text: `[${task.agent.toUpperCase()}] ${systemPrompt}\n\nTask: ${task.description}`,
+                    }],
             },
         });
         return {
             taskId: task.id,
             success: true,
-            output: typeof response === "string" ? response : JSON.stringify(response),
+            output: result?.content || "Completed",
+            executionTime: Date.now() - startTime,
         };
     }
     catch (error) {
@@ -53,17 +45,18 @@ export async function executeTaskInSession(ctx, task, model) {
             success: false,
             output: "",
             error: error instanceof Error ? error.message : String(error),
+            executionTime: Date.now() - startTime,
         };
     }
 }
-export async function executeParallelTasks(ctx, tasks, model) {
-    const promises = tasks.map((task) => executeTaskInSession(ctx, task, model));
+export async function executeParallelTasks(ctx, tasks, defaultModel) {
+    const promises = tasks.map((task) => executeTaskInSession(ctx, task, MODEL_ROUTING[task.agent] || defaultModel));
     return Promise.all(promises);
 }
-export async function executeSequentialTasks(ctx, tasks, model) {
+export async function executeSequentialTasks(ctx, tasks, defaultModel) {
     const results = [];
     for (const task of tasks) {
-        const result = await executeTaskInSession(ctx, task, model);
+        const result = await executeTaskInSession(ctx, task, MODEL_ROUTING[task.agent] || defaultModel);
         results.push(result);
         if (!result.success) {
             break;
@@ -71,42 +64,26 @@ export async function executeSequentialTasks(ctx, tasks, model) {
     }
     return results;
 }
-export function aggregateResults(results) {
-    let totalTasks = 0;
-    let successfulTasks = 0;
-    let failedTasks = 0;
-    for (const phase of results) {
-        totalTasks += phase.results.length;
-        for (const r of phase.results) {
-            if (r.success) {
-                successfulTasks++;
+export function aggregateResults(phaseResults) {
+    let total = 0;
+    let successful = 0;
+    let failed = 0;
+    for (const phase of phaseResults) {
+        for (const result of phase.results) {
+            total++;
+            if (result.success) {
+                successful++;
             }
             else {
-                failedTasks++;
+                failed++;
             }
         }
-    }
-    let summary = `## Execution Summary\n\n`;
-    summary += `- **Total Tasks:** ${totalTasks}\n`;
-    summary += `- **Successful:** ${successfulTasks}\n`;
-    summary += `- **Failed:** ${failedTasks}\n\n`;
-    for (const phase of results) {
-        summary += `### Phase ${phase.phase} (${phase.type})\n`;
-        summary += `- Status: ${phase.allSuccess ? "✅ All Passed" : "❌ Some Failed"}\n`;
-        for (const r of phase.results) {
-            summary += `  - ${r.taskId}: ${r.success ? "✅" : "❌"}`;
-            if (r.error) {
-                summary += ` (${r.error})`;
-            }
-            summary += `\n`;
-        }
-        summary += `\n`;
     }
     return {
-        totalTasks,
-        successfulTasks,
-        failedTasks,
-        allPassed: failedTasks === 0,
-        summary,
+        totalTasks: total,
+        successfulTasks: successful,
+        failedTasks: failed,
+        allPassed: failed === 0,
     };
 }
+//# sourceMappingURL=task-executor.js.map

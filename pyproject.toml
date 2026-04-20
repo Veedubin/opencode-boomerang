@@ -1,6 +1,6 @@
 [project]
 name = "opencode-boomerang"
-version = "0.1.2"
+version = "0.2.0"
 description = "Multi-agent orchestration plugin for OpenCode with Boomerang Protocol support"
 readme = "README.md"
 license = {text = "MIT"}

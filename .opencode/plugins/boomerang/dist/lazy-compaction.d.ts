@@ -1,10 +1,5 @@
-import type { createOpencodeClient } from "@opencode-ai/sdk";
-export interface LazyCompactionConfig {
-    enabled: boolean;
-    memoryOffloadEnabled: boolean;
-    taslsMdUpdateEnabled: boolean;
-    agentsMdUpdateEnabled: boolean;
-}
-export declare function compactSessionIfNeeded(sessionId: string, client: ReturnType<typeof createOpencodeClient>, config?: LazyCompactionConfig): Promise<boolean>;
-export declare function compactSession(sessionId: string, client: ReturnType<typeof createOpencodeClient>, config?: LazyCompactionConfig): Promise<string>;
-export declare function injectContext(sessionId: string, context: string, client: ReturnType<typeof createOpencodeClient>): Promise<void>;
+export declare function compactSessionIfNeeded(sessionId: string, client: any): Promise<string | null>;
+export declare function compactSession(sessionId: string, client: any): Promise<string>;
+export declare function buildCompactedContext(session: any): string;
+export declare function injectContext(context: string): string;
+//# sourceMappingURL=lazy-compaction.d.ts.map

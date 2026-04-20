@@ -117,3 +117,4 @@ export class BoomerangMemory {
     }
 }
 export const boomerangMemory = new BoomerangMemory();
+//# sourceMappingURL=memory.js.map

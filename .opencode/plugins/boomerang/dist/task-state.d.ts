@@ -1,12 +1,4 @@
-import type { Task } from "./task-parser.js";
-export declare function updateTASKSMD(sessionId: string, session: {
-    completedTasks: Task[];
-    pendingTasks: Task[];
-    agentDecisions: Array<{
-        agent: string;
-        summary: string;
-        timestamp: string;
-    }>;
-    lastUsedAt: number;
-}): Promise<void>;
+import { Task } from "./types.js";
+export declare function updateTASKSMD(sessionId: string, projectDir: string): void;
 export declare function updateTaskInSession(sessionId: string, task: Task): void;
+//# sourceMappingURL=task-state.d.ts.map

@@ -85,3 +85,4 @@ export function getAllDirtySessions() {
     }
     return dirty;
 }
+//# sourceMappingURL=session-state.js.map

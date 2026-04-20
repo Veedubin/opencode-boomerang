@@ -1,39 +1,33 @@
 export async function checkGitStatus($) {
     try {
-        const statusOutput = $ `git status --porcelain`.text().trim();
-        const branchOutput = $ `git branch --show-current`.text().trim();
+        const statusResult = await $ `git status --porcelain`;
+        const files = statusResult.stdout
+            .split("\n")
+            .filter((line) => line.trim().length > 0)
+            .map((line) => line.slice(3));
+        const branchResult = await $ `git branch --show-current`;
+        const branch = branchResult.stdout.trim();
         return {
-            isDirty: statusOutput.length > 0,
-            files: statusOutput ? statusOutput.split("\n").filter((f) => f.trim()) : [],
-            branch: branchOutput || "detached",
+            isDirty: files.length > 0,
+            files,
+            branch,
             ahead: 0,
             behind: 0,
         };
     }
     catch {
-        return {
-            isDirty: false,
-            files: [],
-            branch: "unknown",
-            ahead: 0,
-            behind: 0,
-        };
+        return { isDirty: false, files: [], branch: "", ahead: 0, behind: 0 };
     }
 }
-export async function commitCheckpoint($, message = "wip: pre-work checkpoint") {
+export async function commitCheckpoint($, message = "wip: checkpoint") {
     try {
-        const status = await checkGitStatus($);
-        if (!status.isDirty) {
-            return { success: true, message: "No changes to commit" };
-        }
-        $ `git add -A`.text();
-        $ `git commit -m "${message}"`.text();
-        const hashOutput = $ `git rev-parse HEAD`.text().trim();
-        const hash = hashOutput.substring(0, 7);
+        await $ `git add -A`;
+        const result = await $ `git commit -m ${message}`;
+        const hashMatch = result.stdout.match(/\[.+?\s+([a-f0-9]+)\]/);
         return {
             success: true,
-            hash,
-            message: `Committed: ${message} (${hash})`,
+            hash: hashMatch?.[1],
+            message,
         };
     }
     catch (error) {
@@ -45,18 +39,13 @@ export async function commitCheckpoint($, message = "wip: pre-work checkpoint") 
 }
 export async function commitWithMessage($, message) {
     try {
-        const status = await checkGitStatus($);
-        if (!status.isDirty) {
-            return { success: true, message: "No changes to commit" };
-        }
-        $ `git add -A`.text();
-        $ `git commit -m "${message}"`.text();
-        const hashOutput = $ `git rev-parse HEAD`.text().trim();
-        const hash = hashOutput.substring(0, 7);
+        await $ `git add -A`;
+        const result = await $ `git commit -m ${message}`;
+        const hashMatch = result.stdout.match(/\[.+?\s+([a-f0-9]+)\]/);
         return {
             success: true,
-            hash,
-            message: `Committed: ${message} (${hash})`,
+            hash: hashMatch?.[1],
+            message,
         };
     }
     catch (error) {
@@ -66,30 +55,18 @@ export async function commitWithMessage($, message) {
         };
     }
 }
-export async function getLastCommitMessage($) {
-    try {
-        const result = $ `git log -1 --format=%s`.text().trim();
-        return result;
-    }
-    catch {
-        return "";
-    }
+export function generateCommitMessage(prompt) {
+    const lower = prompt.toLowerCase();
+    let prefix = "feat:";
+    if (lower.includes("fix") || lower.includes("bug"))
+        prefix = "fix:";
+    else if (lower.includes("test"))
+        prefix = "test:";
+    else if (lower.includes("doc"))
+        prefix = "docs:";
+    else if (lower.includes("refactor"))
+        prefix = "refactor:";
+    const summary = prompt.split("\n")[0].slice(0, 72);
+    return `${prefix} ${summary}`;
 }
-export function generateCommitMessage(summary) {
-    const prefixes = ["feat", "fix", "refactor", "test", "docs", "chore", "style"];
-    const lowerSummary = summary.toLowerCase();
-    for (const prefix of prefixes) {
-        if (lowerSummary.includes(prefix)) {
-            return `${prefix}: ${summary}`;
-        }
-    }
-    if (lowerSummary.includes("test"))
-        return `test: ${summary}`;
-    if (lowerSummary.includes("fix") || lowerSummary.includes("bug"))
-        return `fix: ${summary}`;
-    if (lowerSummary.includes("doc"))
-        return `docs: ${summary}`;
-    if (lowerSummary.includes("format") || lowerSummary.includes("style"))
-        return `style: ${summary}`;
-    return `feat: ${summary}`;
-}
+//# sourceMappingURL=git.js.map

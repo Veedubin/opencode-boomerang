@@ -1,19 +1,4 @@
-import type { Plugin } from "@opencode-ai/plugin";
-export interface BoomerangConfig {
-    orchestratorModel: string;
-    coderModel: string;
-    architectModel: string;
-    testerModel: string;
-    linterModel: string;
-    gitCheckBeforeWork: boolean;
-    gitCommitAfterWork: boolean;
-    qualityGates: {
-        lint: boolean;
-        typecheck: boolean;
-        test: boolean;
-    };
-    memoryEnabled: boolean;
-    lazyCompactionEnabled: boolean;
-}
-export declare const BoomerangPlugin: Plugin;
+import { PluginContext } from "./types.js";
+export declare const BoomerangPlugin: (ctx: PluginContext) => Promise<any>;
 export default BoomerangPlugin;
+//# sourceMappingURL=index.d.ts.map

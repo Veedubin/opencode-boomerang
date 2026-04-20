@@ -1,12 +1,15 @@
 {
   "name": "boomerang",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Intelligent multi-agent orchestration plugin for OpenCode with Boomerang Protocol",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "build": "npx tsc",
-    "typecheck": "npx tsc --noEmit"
+    "dev": "tsc --watch",
+    "typecheck": "npx tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@opencode-ai/plugin": "^1.4.3",
@@ -16,6 +19,7 @@
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
   }
 }
