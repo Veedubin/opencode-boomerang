@@ -13,18 +13,20 @@
 - [x] Create boomerang-writer skill for documentation
 - [x] Create boomerang-scraper skill for web research
 - [x] Update all agent skills with super-memory protocol requirements
-- [x] Create missing agent skills (boomerang-explorer, boomerang-linter, boomerang-git)
+- [x] Create missing agent skills (explorer, linter, git)
 - [x] Research LangChain deepagents for competitive insights
-- [x] Implement context isolation for subagents (learned from deepagents)
-- [ ] Create/update AGENTS.md with full agent roster
-- [ ] Create HANDOFF.md template
-- [ ] Update README.md with new skills and agents
+- [x] Implement context isolation for subagents
+- [x] Add tool result eviction / large output offloading
+- [x] Implement middleware hooks concept (wrap_model_call, wrap_tool_call)
+- [x] Create/update AGENTS.md with full agent roster
+- [x] Create HANDOFF.md template
+- [x] Update README.md with new skills and agents
+- [x] Test Boomerang on sports-bet project
+- [x] Package and publish v0.2.0
 
 ### Medium Priority
 
 - [ ] Implement context compaction agent/skill
-- [x] Add tool result eviction / large output offloading
-- [~] Implement middleware hooks concept (wrap_model_call, wrap_tool_call)
 - [ ] Add web scraping integration tests
 - [ ] Create example project initialization flow
 - [ ] Document super-memory best practices
@@ -49,6 +51,9 @@
 - [x] README.md with installation and configuration
 - [x] Super-memory integration documentation
 - [x] Basic agent roster definition
+- [x] Rebuilt TypeScript plugin runtime from compiled JS to proper TS source
+- [x] Added test infrastructure with 29 passing tests
+- [x] Updated sports-bet project with latest Boomerang setup
 
 ## Notes
 

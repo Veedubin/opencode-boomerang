@@ -1,6 +1,6 @@
 # Boomerang Agent Roster
 
-## Agent Roster
+## Core Agents
 
 | Agent | Skill | Model | Role |
 |-------|-------|-------|------|
@@ -13,8 +13,13 @@
 | **boomerang-git** | boomerang-git | MiniMax M2.7 | Version control. Commits, branches, history |
 | **boomerang-writer** | boomerang-writer | Kimi K2.5 | Documentation and markdown writing |
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | Web scraping and research |
-| **boomerang-handoff** | boomerang-handoff | Kimi K2.5 | Session wrap-up. Updates docs, saves context |
-| **boomerang-init** | boomerang-init | Kimi K2.5 | Initialize and personalize agents for a project |
+
+## Special Skills
+
+| Skill | Purpose | Model |
+|-------|---------|-------|
+| **boomerang-init** | Initialize and personalize agents for a project | Kimi K2.5 |
+| **boomerang-handoff** | Wrap-up session. Updates docs, saves context | Kimi K2.5 |
 
 ## Agent Selection Guide
 
@@ -26,6 +31,7 @@
 - **Linting / formatting** → `boomerang-linter`
 - **Git operations** → `boomerang-git`
 - **Documentation / markdown** → `boomerang-writer`
+- **Session wrap-up** → `boomerang-handoff`
 
 ## Super-Memory Requirements
 
@@ -33,3 +39,7 @@ All agents MUST:
 1. Query super-memory before starting work
 2. Save results to super-memory when complete
 3. Use sequential-thinking for complex tasks
+
+## Project-Specific Context
+
+This is the Boomerang multi-agent orchestration system for OpenCode.
