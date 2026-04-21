@@ -2,6 +2,57 @@
  * Boomerang Protocol - Core Type Definitions
  */
 
+// Embedding Strategy
+export type EmbeddingStrategy = "TIERED" | "PARALLEL";
+
+// Memory Tier Configuration
+export interface MemoryTierConfig {
+  strategy: EmbeddingStrategy;
+  bgeThreshold: number;
+  autoSummarizeInterval: number;
+  miniLMDimensions: number;
+  bgeDimensions: number;
+}
+
+// Enhanced Memory Entry with tier metadata
+export interface MemoryEntry {
+  id: string;
+  content: string;
+  tags?: string[];
+  createdAt?: string;
+  sourceModel?: "minilm" | "bge-large"; // track which embedding model
+  tier?: "transient" | "permanent";    // memory tier classification
+  project?: string;                      // project tag
+  metadata?: Record<string, any>;        // key-value metadata
+}
+
+// Search result with confidence score
+export interface MemorySearchResult {
+  success: boolean;
+  results?: MemoryEntry[];
+  error?: string;
+  strategy?: EmbeddingStrategy;          // which strategy was used
+  tierSearched?: ("minilm" | "bge")[];  // which tiers were searched
+  confidence?: number;                   // top result confidence
+}
+
+// RRF (Reciprocal Rank Fusion) result
+export interface RRFResult {
+  entry: MemoryEntry;
+  score: number;
+  sourceTier: "minilm" | "bge";
+  originalRank: number;
+}
+
+// Save long result
+export interface MemorySaveLongResult {
+  success: boolean;
+  id?: string;
+  error?: string;
+  embeddingModel?: "bge-large";
+  dimensions?: number;
+}
+
 // Plugin Configuration
 export interface BoomerangConfig {
   orchestratorModel: string;
@@ -17,6 +68,7 @@ export interface BoomerangConfig {
     test: boolean;
   };
   memoryEnabled: boolean;
+  memoryTierConfig: MemoryTierConfig;    // tier config for memory
   lazyCompactionEnabled: boolean;
   contextIsolationEnabled: boolean;
   toolResultEvictionThreshold: number;
@@ -130,19 +182,6 @@ export interface QualityGateSummary {
 }
 
 // Memory
-export interface MemoryEntry {
-  id: string;
-  content: string;
-  tags?: string[];
-  createdAt?: string;
-}
-
-export interface MemorySearchResult {
-  success: boolean;
-  results?: MemoryEntry[];
-  error?: string;
-}
-
 export interface MemoryAddResult {
   success: boolean;
   id?: string;

@@ -1,6 +1,45 @@
 /**
  * Boomerang Protocol - Core Type Definitions
  */
+export type EmbeddingStrategy = "TIERED" | "PARALLEL";
+export interface MemoryTierConfig {
+    strategy: EmbeddingStrategy;
+    bgeThreshold: number;
+    autoSummarizeInterval: number;
+    miniLMDimensions: number;
+    bgeDimensions: number;
+}
+export interface MemoryEntry {
+    id: string;
+    content: string;
+    tags?: string[];
+    createdAt?: string;
+    sourceModel?: "minilm" | "bge-large";
+    tier?: "transient" | "permanent";
+    project?: string;
+    metadata?: Record<string, any>;
+}
+export interface MemorySearchResult {
+    success: boolean;
+    results?: MemoryEntry[];
+    error?: string;
+    strategy?: EmbeddingStrategy;
+    tierSearched?: ("minilm" | "bge")[];
+    confidence?: number;
+}
+export interface RRFResult {
+    entry: MemoryEntry;
+    score: number;
+    sourceTier: "minilm" | "bge";
+    originalRank: number;
+}
+export interface MemorySaveLongResult {
+    success: boolean;
+    id?: string;
+    error?: string;
+    embeddingModel?: "bge-large";
+    dimensions?: number;
+}
 export interface BoomerangConfig {
     orchestratorModel: string;
     coderModel: string;
@@ -15,6 +54,7 @@ export interface BoomerangConfig {
         test: boolean;
     };
     memoryEnabled: boolean;
+    memoryTierConfig: MemoryTierConfig;
     lazyCompactionEnabled: boolean;
     contextIsolationEnabled: boolean;
     toolResultEvictionThreshold: number;
@@ -98,17 +138,6 @@ export interface QualityGateSummary {
     allPassed: boolean;
     summary: string;
     results: QualityGateResult[];
-}
-export interface MemoryEntry {
-    id: string;
-    content: string;
-    tags?: string[];
-    createdAt?: string;
-}
-export interface MemorySearchResult {
-    success: boolean;
-    results?: MemoryEntry[];
-    error?: string;
 }
 export interface MemoryAddResult {
     success: boolean;

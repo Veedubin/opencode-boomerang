@@ -23,6 +23,13 @@ const DEFAULT_CONFIG = {
         test: true,
     },
     memoryEnabled: true,
+    memoryTierConfig: {
+        strategy: process.env.EMBEDDING_STRATEGY || "TIERED",
+        bgeThreshold: parseFloat(process.env.BGE_THRESHOLD || "0.72"),
+        autoSummarizeInterval: parseInt(process.env.AUTO_SUMMARIZE_INTERVAL || "15", 10),
+        miniLMDimensions: 384,
+        bgeDimensions: 1024,
+    },
     lazyCompactionEnabled: true,
     contextIsolationEnabled: true,
     toolResultEvictionThreshold: 500,
@@ -66,6 +73,13 @@ STOP. Before responding to the user, you MUST complete this checklist:
 □ STEP 6 - SAVE CONTEXT (ALWAYS LAST):
   Call super-memory_save_to_memory with a summary of what was done.
 
+MEMORY TOOLS:
+- boomerang_memory_search: Search using configured strategy (TIERED or PARALLEL)
+- boomerang_memory_add: Save to transient tier (MiniLM, fast/transient)
+- boomerang_memory_save_long: Archive to permanent tier (BGE-Large, slow/permanent)
+- boomerang_memory_search_tiered: Force TIERED strategy (MiniLM first, BGE fallback)
+- boomerang_memory_search_parallel: Force PARALLEL strategy (both tiers, RRF merge)
+
 FAILURE TO FOLLOW THESE STEPS IS A CRITICAL ERROR.
 `;
 export const BoomerangPlugin = async (ctx) => {
@@ -98,6 +112,8 @@ export const BoomerangPlugin = async (ctx) => {
 - Git Commit After Work: ${config.gitCommitAfterWork}
 - Quality Gates: lint=${config.qualityGates.lint}, typecheck=${config.qualityGates.typecheck}, test=${config.qualityGates.test}
 - Memory Enabled: ${config.memoryEnabled}
+- Memory Strategy: ${config.memoryTierConfig.strategy}
+- Memory BGE Threshold: ${config.memoryTierConfig.bgeThreshold}
 - Lazy Compaction: ${config.lazyCompactionEnabled}
 
 Rules Active:
@@ -182,33 +198,98 @@ ${BOOMERANG_RULES}`;
                 },
             }),
             boomerang_memory_search: tool({
-                description: "Search super-memory for relevant context",
+                description: "Search super-memory for relevant context using configured strategy",
                 args: {
                     query: tool.schema.string().describe("Search query"),
+                    project: tool.schema.string().optional().describe("Filter by project tag"),
+                    limit: tool.schema.number().optional().describe("Max results"),
                 },
                 async execute(args) {
-                    const result = await boomerangMemory.searchMemory(args.query);
+                    const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project);
                     if (!result.success) {
                         return `Memory search failed: ${result.error}`;
                     }
                     if (!result.results || result.results.length === 0) {
                         return "No relevant memories found.";
                     }
-                    return `Found ${result.results.length} relevant memories:\n\n${result.results
-                        .map((r) => `- ${r.content}`)
+                    return `Strategy: ${result.strategy}, Tiers: ${result.tierSearched?.join(", ")}, Confidence: ${result.confidence}\n\n${result.results
+                        .map((r) => `- [${r.tier || "unknown"}] ${r.content}`)
                         .join("\n")}`;
                 },
             }),
             boomerang_memory_add: tool({
-                description: "Save context to super-memory",
+                description: "Save context to super-memory transient tier (MiniLM, fast/transient)",
                 args: {
                     content: tool.schema.string().describe("Content to save"),
                     tags: tool.schema.string().optional().describe("Comma-separated tags"),
+                    project: tool.schema.string().optional().describe("Project tag"),
+                    metadata: tool.schema.string().optional().describe("JSON string of key-value metadata"),
                 },
                 async execute(args) {
                     const tags = args.tags?.split(",").map((t) => t.trim());
-                    const result = await boomerangMemory.addMemory(args.content, tags);
-                    return result.success ? `Saved to memory (${result.id})` : `Failed to save: ${result.error}`;
+                    const metadata = args.metadata ? JSON.parse(args.metadata) : undefined;
+                    const result = await boomerangMemory.addMemory(args.content, tags, args.project, metadata);
+                    return result.success
+                        ? `Saved to transient memory (ID: ${result.id})`
+                        : `Failed to save: ${result.error}`;
+                },
+            }),
+            boomerang_memory_save_long: tool({
+                description: "High-fidelity archival of complex technical context using BGE-Large (1024-dim). Use for architectural decisions, verified successes, and session summaries.",
+                args: {
+                    content: tool.schema.string().describe("High-value technical summary to archive"),
+                    project: tool.schema.string().describe("Project tag (e.g., 'sports-betting-v3', 'cloud-infra-proposal')"),
+                    tags: tool.schema.string().optional().describe("Comma-separated tags"),
+                    metadata: tool.schema.string().optional().describe("JSON string of key-value metadata"),
+                    force_high_precision: tool.schema.boolean().optional().describe("Force BGE-Large embedding (default: true)"),
+                },
+                async execute(args) {
+                    const tags = args.tags?.split(",").map((t) => t.trim());
+                    const metadata = args.metadata ? JSON.parse(args.metadata) : undefined;
+                    const result = await boomerangMemory.addMemoryLong(args.content, args.project, tags, metadata, args.force_high_precision ?? true);
+                    return result.success
+                        ? `Archived to deep memory with BGE-Large [${result.embeddingModel}, ${result.dimensions}d] (ID: ${result.id})`
+                        : `Failed to archive: ${result.error}`;
+                },
+            }),
+            boomerang_memory_search_tiered: tool({
+                description: "Explicitly search using the TIERED strategy: MiniLM first, BGE fallback if confidence is low. Use when you need speed but want high recall.",
+                args: {
+                    query: tool.schema.string().describe("Search query"),
+                    project: tool.schema.string().optional().describe("Filter by project tag"),
+                    limit: tool.schema.number().optional().describe("Max results"),
+                },
+                async execute(args) {
+                    // Force TIERED strategy for this call
+                    const originalStrategy = boomerangMemory.config.strategy;
+                    boomerangMemory.config.strategy = "TIERED";
+                    const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project);
+                    boomerangMemory.config.strategy = originalStrategy;
+                    if (!result.success)
+                        return `Search failed: ${result.error}`;
+                    if (!result.results || result.results.length === 0)
+                        return "No memories found.";
+                    return `Strategy: ${result.strategy}, Tiers: ${result.tierSearched?.join(", ")}, Confidence: ${result.confidence}\n\n${result.results.map((r) => `- [${r.tier}] ${r.content}`).join("\n")}`;
+                },
+            }),
+            boomerang_memory_search_parallel: tool({
+                description: "Explicitly search using PARALLEL strategy: query both MiniLM and BGE simultaneously, merge with RRF. Use for high-stakes architectural decisions.",
+                args: {
+                    query: tool.schema.string().describe("Search query"),
+                    project: tool.schema.string().optional().describe("Filter by project tag"),
+                    limit: tool.schema.number().optional().describe("Max results"),
+                },
+                async execute(args) {
+                    // Temporarily override strategy to PARALLEL
+                    const originalStrategy = boomerangMemory.config.strategy;
+                    boomerangMemory.config.strategy = "PARALLEL";
+                    const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project);
+                    boomerangMemory.config.strategy = originalStrategy;
+                    if (!result.success)
+                        return `Search failed: ${result.error}`;
+                    if (!result.results || result.results.length === 0)
+                        return "No memories found.";
+                    return `Strategy: ${result.strategy}, Tiers: ${result.tierSearched?.join(", ")}\n\n${result.results.map((r) => `- [${r.tier}] ${r.content}`).join("\n")}`;
                 },
             }),
             boomerang_compact: tool({
@@ -271,7 +352,9 @@ ${BOOMERANG_RULES}`;
                 if (config.memoryEnabled && sessionId) {
                     const session = getSessionState(sessionId);
                     if (session) {
-                        await boomerangMemory.addMemory(`Session compacted: ${JSON.stringify(session).substring(0, 500)}`, ["boomerang", "session", "compacted"]);
+                        // Use addMemoryLong for session compaction to ensure high-fidelity archival
+                        const summary = `Session compacted: ${JSON.stringify(session).substring(0, 500)}`;
+                        await boomerangMemory.addMemoryLong(summary, "boomerang-session", ["boomerang", "session", "compacted"]);
                     }
                 }
             }

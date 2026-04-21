@@ -1,11 +1,21 @@
 export class BoomerangMemory {
     apiKey;
     apiUrl;
-    constructor(apiKey, apiUrl) {
-        this.apiKey = apiKey || "";
-        this.apiUrl = apiUrl || "https://mcp.supermemory.ai/mcp";
+    config;
+    constructor(config, apiKey, apiUrl) {
+        this.apiKey = apiKey || process.env.SUPER_MEMORY_API_KEY || "";
+        this.apiUrl = apiUrl || process.env.SUPER_MEMORY_API_URL || "https://mcp.supermemory.ai/mcp";
+        this.config = {
+            strategy: process.env.EMBEDDING_STRATEGY || "TIERED",
+            bgeThreshold: parseFloat(process.env.BGE_THRESHOLD || "0.72"),
+            autoSummarizeInterval: parseInt(process.env.AUTO_SUMMARIZE_INTERVAL || "15", 10),
+            miniLMDimensions: 384,
+            bgeDimensions: 1024,
+            ...config,
+        };
     }
-    async addMemory(content, tags) {
+    // Save to transient tier (MiniLM)
+    async addMemory(content, tags, project, metadata) {
         if (!this.apiKey) {
             return { success: false, error: "No API key configured" };
         }
@@ -21,7 +31,16 @@ export class BoomerangMemory {
                     method: "tools/call",
                     params: {
                         name: "add",
-                        arguments: { content, tags },
+                        arguments: {
+                            content,
+                            tags,
+                            metadata: {
+                                ...metadata,
+                                source_model: "minilm",
+                                tier: "transient",
+                                project,
+                            },
+                        },
                     },
                     id: 1,
                 }),
@@ -36,7 +55,149 @@ export class BoomerangMemory {
             };
         }
     }
-    async searchMemory(query, limit = 5) {
+    // Save to permanent tier (BGE-Large)
+    async addMemoryLong(content, project, tags, metadata, forceHighPrecision = true) {
+        if (!this.apiKey) {
+            return { success: false, error: "No API key configured" };
+        }
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${this.apiKey}`,
+                },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "tools/call",
+                    params: {
+                        name: "save_memory_long",
+                        arguments: {
+                            content,
+                            project,
+                            tags,
+                            metadata: {
+                                ...metadata,
+                                source_model: "bge-large",
+                                tier: "permanent",
+                                force_high_precision: forceHighPrecision,
+                            },
+                        },
+                    },
+                    id: 1,
+                }),
+            });
+            const data = await response.json();
+            return {
+                success: true,
+                id: data.result?.id,
+                embeddingModel: "bge-large",
+                dimensions: 1024,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+            };
+        }
+    }
+    // Search with strategy-aware logic
+    async searchMemory(query, limit = 5, project) {
+        if (!this.apiKey) {
+            return { success: false, error: "No API key configured" };
+        }
+        if (this.config.strategy === "TIERED") {
+            return this.searchMemoryTiered(query, limit, project);
+        }
+        else {
+            return this.searchMemoryParallel(query, limit, project);
+        }
+    }
+    // TIERED strategy: MiniLM first, BGE fallback if confidence is low
+    async searchMemoryTiered(query, limit, project) {
+        try {
+            // Search MiniLM first
+            const miniLMResult = await this.searchMiniLM(query, limit, project);
+            if (!miniLMResult.success) {
+                return miniLMResult;
+            }
+            const topResult = miniLMResult.results?.[0];
+            const confidence = topResult?.metadata?.confidence ?? topResult?.metadata?.score ?? 0.9;
+            // If above threshold, return MiniLM results only
+            if (confidence >= this.config.bgeThreshold) {
+                return {
+                    success: true,
+                    results: miniLMResult.results,
+                    strategy: "TIERED",
+                    tierSearched: ["minilm"],
+                    confidence,
+                };
+            }
+            // Below threshold - search BGE as fallback
+            const bgeResult = await this.searchBGE(query, limit, project);
+            if (!bgeResult.success) {
+                return {
+                    success: true,
+                    results: miniLMResult.results,
+                    strategy: "TIERED",
+                    tierSearched: ["minilm"],
+                    confidence,
+                };
+            }
+            // Combine results, BGE results first (higher quality)
+            const combinedResults = [...(bgeResult.results || []), ...(miniLMResult.results || [])];
+            const seen = new Set();
+            const deduped = combinedResults.filter((r) => {
+                if (seen.has(r.id))
+                    return false;
+                seen.add(r.id);
+                return true;
+            });
+            return {
+                success: true,
+                results: deduped.slice(0, limit),
+                strategy: "TIERED",
+                tierSearched: ["minilm", "bge"],
+                confidence: bgeResult.results?.[0]?.metadata?.confidence ?? bgeResult.confidence ?? confidence,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+            };
+        }
+    }
+    // PARALLEL strategy: Search both indexes, merge with RRF
+    async searchMemoryParallel(query, limit, project) {
+        try {
+            // Fire both searches simultaneously
+            const [miniLMResult, bgeResult] = await Promise.all([
+                this.searchMiniLM(query, limit, project),
+                this.searchBGE(query, limit, project),
+            ]);
+            const miniLMEntries = miniLMResult.results || [];
+            const bgeEntries = bgeResult.results || [];
+            // Apply RRF fusion
+            const rrfResults = this.reciprocalRankFusion(miniLMEntries, bgeEntries, 60);
+            return {
+                success: true,
+                results: rrfResults.slice(0, limit).map((r) => r.entry),
+                strategy: "PARALLEL",
+                tierSearched: ["minilm", "bge"],
+                confidence: rrfResults[0]?.score,
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+            };
+        }
+    }
+    // Search only transient tier (MiniLM)
+    async searchMiniLM(query, limit = 5, project) {
         if (!this.apiKey) {
             return { success: false, error: "No API key configured" };
         }
@@ -52,15 +213,21 @@ export class BoomerangMemory {
                     method: "tools/call",
                     params: {
                         name: "search",
-                        arguments: { query, limit },
+                        arguments: { query, limit, project },
                     },
                     id: 1,
                 }),
             });
             const data = await response.json();
+            const results = (data.result || []).map((r) => ({
+                ...r,
+                sourceModel: "minilm",
+                tier: "transient",
+            }));
             return {
                 success: true,
-                results: data.result || [],
+                results,
+                tierSearched: ["minilm"],
             };
         }
         catch (error) {
@@ -70,7 +237,49 @@ export class BoomerangMemory {
             };
         }
     }
-    async listMemories(limit = 20) {
+    // Search only permanent tier (BGE)
+    async searchBGE(query, limit = 5, project) {
+        if (!this.apiKey) {
+            return { success: false, error: "No API key configured" };
+        }
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${this.apiKey}`,
+                },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "tools/call",
+                    params: {
+                        name: "search_long",
+                        arguments: { query, limit, project },
+                    },
+                    id: 1,
+                }),
+            });
+            const data = await response.json();
+            const results = (data.result || []).map((r) => ({
+                ...r,
+                sourceModel: "bge-large",
+                tier: "permanent",
+            }));
+            return {
+                success: true,
+                results,
+                tierSearched: ["bge"],
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error),
+            };
+        }
+    }
+    // List memories with optional tier filter
+    async listMemories(limit = 20, tier) {
         if (!this.apiKey) {
             return { success: false, error: "No API key configured" };
         }
@@ -92,9 +301,18 @@ export class BoomerangMemory {
                 }),
             });
             const data = await response.json();
+            let memories = (data.result || []).map((r) => ({
+                ...r,
+                sourceModel: r.metadata?.source_model || "minilm",
+                tier: r.metadata?.tier || "transient",
+            }));
+            // Filter by tier if specified
+            if (tier) {
+                memories = memories.filter((m) => m.tier === tier);
+            }
             return {
                 success: true,
-                memories: data.result || [],
+                memories,
             };
         }
         catch (error) {
@@ -104,13 +322,43 @@ export class BoomerangMemory {
             };
         }
     }
+    // RRF Fusion for PARALLEL mode
+    reciprocalRankFusion(miniLMResults, bgeResults, k = 60) {
+        const scores = new Map();
+        miniLMResults.forEach((entry, idx) => {
+            const id = entry.id;
+            if (!scores.has(id))
+                scores.set(id, { entry, score: 0, sources: new Set(), ranks: [] });
+            scores.get(id).score += 1 / (k + idx + 1);
+            scores.get(id).sources.add("minilm");
+            scores.get(id).ranks.push(idx + 1);
+        });
+        bgeResults.forEach((entry, idx) => {
+            const id = entry.id;
+            if (!scores.has(id))
+                scores.set(id, { entry, score: 0, sources: new Set(), ranks: [] });
+            scores.get(id).score += 1 / (k + idx + 1);
+            scores.get(id).sources.add("bge");
+            scores.get(id).ranks.push(idx + 1);
+        });
+        return Array.from(scores.values())
+            .sort((a, b) => b.score - a.score)
+            .map((item) => ({
+            entry: item.entry,
+            score: item.score,
+            sourceTier: item.sources.has("bge") ? "bge" : "minilm",
+            originalRank: Math.min(...item.ranks),
+        }));
+    }
+    // Format context for injection into prompts
     formatContextForInjection(searchResults) {
         if (searchResults.length === 0) {
             return "";
         }
         let context = "\n\n## Relevant Past Context (from memory)\n\n";
         for (const result of searchResults) {
-            context += `- ${result.content}\n`;
+            const tierLabel = result.tier ? `[${result.tier}]` : "";
+            context += `- ${tierLabel} ${result.content}\n`;
         }
         context += "\n";
         return context;
