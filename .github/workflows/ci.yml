@@ -25,17 +25,41 @@ jobs:
       - name: Build wheel and sdist
         run: python -m build
 
-      - name: Verify wheel contains .opencode assets
+      - name: Verify dist directory exists
         run: |
-          echo "Wheel contents:"
-          unzip -l dist/*.whl | grep -E "(\.opencode|agents|skills|plugins)" | head -30
-          
-          # Verify .opencode assets are in the wheel
-          if ! unzip -l dist/*.whl | grep -q "\.opencode"; then
-            echo "ERROR: .opencode assets not found in wheel"
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist/)" ]; then
+            echo "ERROR: dist directory is empty or missing"
             exit 1
           fi
-          echo "Wheel assets verified"
+          echo "Dist directory verified"
+
+      - name: Verify wheel contains .opencode assets
+        run: |
+          set -e
+
+          echo "=== Wheel contents ==="
+          if ! ls dist/*.whl >/dev/null 2>&1; then
+            echo "ERROR: No wheel file found in dist/"
+            ls -la dist/
+            exit 1
+          fi
+
+          WHEEL_FILE=$(ls dist/*.whl | head -1)
+          echo "Found wheel: $WHEEL_FILE"
+
+          echo ""
+          echo "=== Checking for .opencode assets ==="
+          unzip -l "dist/$WHEEL_FILE" | grep -E "(\.opencode|agents/|skills/|plugins/)" || true
+
+          echo ""
+          echo "=== Verification ==="
+          if ! unzip -l "dist/$WHEEL_FILE" | grep -q "\.opencode"; then
+            echo "ERROR: .opencode assets not found in wheel"
+            echo "Full wheel contents:"
+            unzip -l "dist/$WHEEL_FILE"
+            exit 1
+          fi
+          echo "SUCCESS: Wheel contains .opencode assets"
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
