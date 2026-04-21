@@ -1,11 +1,5 @@
 name: Release
 
-# Publishing strategy:
-#   - PyPI (this workflow): publishes the `opencode-boomerang` Python installer wrapper
-#     (pip/uv installable) which bundles agents, skills, and plugin assets.
-#   - NPM  (npm-publish.yml): publishes the `@veedubin/opencode-boomerang` TypeScript
-#     plugin package located at .opencode/plugins/boomerang/ for direct JS/TS consumers.
-
 on:
   push:
     tags:
@@ -37,30 +31,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install build tools
-        run: pip install build hatchling
-
-      - name: Build wheel and sdist
-        run: python -m build
-
-      - name: Verify dist directory
-        run: |
-          if [ ! -d "dist" ] || [ -z "$(ls -A dist/)" ]; then
-            echo "ERROR: dist directory is empty or missing"
-            exit 1
-          fi
-          echo "Build artifacts verified"
-
       - name: Create boomerang.tar.gz
         run: |
           set -e
 
-          ASSETS_DIR="src/opencode_boomerang/assets/.opencode"
+          ASSETS_DIR=".opencode"
 
           if [ ! -d "$ASSETS_DIR" ]; then
             echo "ERROR: Assets directory not found: $ASSETS_DIR"
@@ -68,7 +43,7 @@ jobs:
           fi
 
           echo "Creating tarball from $ASSETS_DIR"
-          tar -czf boomerang.tar.gz -C src/opencode_boomerang/assets .opencode
+          tar -czf boomerang.tar.gz .opencode
           
           if [ ! -f boomerang.tar.gz ]; then
             echo "ERROR: Failed to create boomerang.tar.gz"
@@ -78,47 +53,14 @@ jobs:
           echo "Tarball created successfully:"
           ls -la boomerang.tar.gz
 
-      - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
       - name: Upload release tarball artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-tarball
           path: boomerang.tar.gz
 
-  publish-pypi:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/opencode-boomerang
-    permissions:
-      id-token: write
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Verify wheel exists
-        run: |
-          if [ ! -f "dist/"*.whl ]; then
-            echo "ERROR: No wheel file found in dist/"
-            exit 1
-          fi
-          echo "Wheel file verified"
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-
   github-release:
-    needs: [build, publish-pypi]
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -126,12 +68,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Download wheel artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
 
       - name: Download release tarball
         uses: actions/download-artifact@v4
@@ -143,7 +79,6 @@ jobs:
         run: |
           set -e
           echo "=== Release Assets ==="
-          ls -la dist/
           ls -la boomerang.tar.gz || true
 
           if [ ! -f "boomerang.tar.gz" ]; then
@@ -159,28 +94,21 @@ jobs:
           body: |
             ## What's New in ${{ github.ref_name }}
 
-            This release includes the latest Boomerang plugin for OpenCode.
+            This release includes the latest Boomerang multi-agent orchestration plugin for OpenCode.
 
             ### Installation
 
-            Install from PyPI:
+            Install from NPM:
             ```bash
-            pip install opencode-boomerang
-            # Or using uv
-            uv tool install opencode-boomerang
+            npm install @veedubin/opencode-boomerang
             ```
 
-            Or use the "Vanilla OpenCode Install" prompt from the [README](README.md).
-
-            ### Manual Install
-
-            Download and extract `boomerang.tar.gz` to your project directory:
+            Or download and extract `boomerang.tar.gz` to your project:
             ```bash
             tar -xzf boomerang.tar.gz -C /your/project/
             ```
 
           files: |
-            dist/*.whl
             boomerang.tar.gz
           generate_release_notes: true
         env:

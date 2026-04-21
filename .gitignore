@@ -3,8 +3,9 @@ node_modules/
 .DS_Store
 .idea/
 .vscode/
+# Ignore TypeScript files except in plugin src
 *.ts
 !*.d.ts
-.opencode/plugins/boomerang/src/
+!.opencode/plugins/boomerang/src/**/*.ts
 .opencode/plugins/boomerang/node_modules/
 *.tar.gz
