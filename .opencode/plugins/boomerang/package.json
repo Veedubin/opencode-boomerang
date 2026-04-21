@@ -1,16 +1,41 @@
 {
-  "name": "boomerang",
+  "name": "@veedubin/opencode-boomerang",
   "version": "0.3.0",
   "description": "Intelligent multi-agent orchestration plugin for OpenCode with Boomerang Protocol",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "module",
+  "files": [
+    "dist/",
+    "package.json",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "npx tsc",
     "dev": "tsc --watch",
     "typecheck": "npx tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "multi-agent",
+    "orchestration",
+    "boomerang-protocol",
+    "agents"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/veedubin/opencode-boomerang"
+  },
+  "license": "MIT",
   "dependencies": {
     "@opencode-ai/plugin": "^1.4.3",
     "@opencode-ai/sdk": "^1.4.6",

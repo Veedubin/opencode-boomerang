@@ -1,0 +1,20 @@
+# Source files
+src/
+
+# Test files
+tests/
+
+# Config files
+tsconfig.json
+vitest.config.ts
+
+# Development files
+*.ts.map
+*.d.ts.map
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

@@ -21,8 +21,7 @@ The following elements are **PROTECTED** and must NEVER be modified, removed, or
 2. **Agent selection rules** — Which agent types route to which sub-agents
 3. **Mandatory step ordering** — super-memory query first, sequential thinking second
 4. **Quality gate requirements** — lint → typecheck → test enforcement
-5. **Context compaction rules** — Handoff at ~40% context usage
-6. **Sub-agent requirements** — super-memory and sequential-thinking mandates in prompts
+5. **Sub-agent requirements** — super-memory and sequential-thinking mandates in prompts
 
 ### PERMITTED: Append-Only Customizations
 

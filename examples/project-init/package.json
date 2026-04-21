@@ -1,0 +1,26 @@
+{
+  "name": "task-tracker",
+  "version": "1.0.0",
+  "description": "A simple task management API with user authentication",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --coverage",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.1",
+    "eslint": "^8.50.0"
+  },
+  "keywords": ["task", "management", "api"],
+  "author": "",
+  "license": "MIT"
+}

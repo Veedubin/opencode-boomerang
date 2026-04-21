@@ -1,5 +1,11 @@
 name: Release
 
+# Publishing strategy:
+#   - PyPI (this workflow): publishes the `opencode-boomerang` Python installer wrapper
+#     (pip/uv installable) which bundles agents, skills, and plugin assets.
+#   - NPM  (npm-publish.yml): publishes the `@veedubin/opencode-boomerang` TypeScript
+#     plugin package located at .opencode/plugins/boomerang/ for direct JS/TS consumers.
+
 on:
   push:
     tags:

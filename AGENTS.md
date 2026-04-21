@@ -13,10 +13,7 @@
 | **boomerang-git** | boomerang-git | MiniMax M2.7 | 📦 **Version control** — Commits, branches, history discipline |
 | **boomerang-writer** | boomerang-writer | Kimi K2.5 | 📝 **Documentation** — Markdown writing and documentation |
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | 🌐 **Web scraping** — Research and information gathering |
-| **boomerang-compactor** | boomerang-compactor | MiniMax M2.7 | 🔄 **Context compaction** — Summarizes threads, preserves critical context |
 | **researcher** | researcher | MiniMax M2.7 | 🌐 **Web research** — Search, fetch, and synthesize online information |
-
-## Special Skills
 
 | Skill | Purpose | Model |
 |-------|---------|-------|
@@ -36,7 +33,6 @@
 - **Web research** → `researcher` or `boomerang-scraper`
 - **Session initialization** → `boomerang-init`
 - **Session wrap-up** → `boomerang-handoff`
-- **Context compaction** → `boomerang-compactor`
 
 ## Super-Memory Requirements
 

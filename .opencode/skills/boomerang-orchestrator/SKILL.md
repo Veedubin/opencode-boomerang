@@ -83,7 +83,7 @@ Adjust total_thoughts as needed. Do not stop at 1-2 thoughts if the problem is c
 When context usage reaches approximately 40%:
 1. Trigger the `/handoff` skill to wrap up current work
 2. Save all critical context to super-memory
-3. Call the compaction agent (if available) to summarize and compact context
+3. OpenCode has built-in context compaction that handles this automatically
 4. After compaction, re-read AGENTS.md, TASKS.md, HANDOFF.md, and README.md to restore essential context
 5. Continue from where you left off
 
