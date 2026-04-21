@@ -107,6 +107,28 @@ When delegating to sub-agents, include in your prompt:
 - "Query super-memory before starting work"
 - "Save your work to super-memory when complete"
 - "Use sequential-thinking if this is a complex task"
+- "Use tiered memory: standard saves for routine work, boomerang_memory_save_long for high-value architectural decisions and session summaries"
+
+### Tiered Memory Protocol
+
+This project uses a tiered memory architecture with two modes:
+- **Fast Reply** (TIERED): Quick MiniLM search with BGE fallback for speed
+- **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
+
+#### When Saving:
+- **Routine work** (logs, fixes, explorations): Use standard `super-memory_save_to_memory`
+- **High-value work** (architectural decisions, verified successes, session summaries): Use `boomerang_memory_save_long` with a descriptive `project` tag
+- **Session summaries**: Always use `boomerang_memory_save_long` — these are high-value for resuming work
+
+#### When Searching:
+- Default searches use the configured strategy automatically
+- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
+
+#### Orchestrator-Specific:
+As orchestrator, use `boomerang_memory_save_long` for:
+- Session summaries (after handoff)
+- Major architectural decisions made during planning
+- Complex dependency graphs or task analysis results
 
 ## Context Isolation for Subagents
 

@@ -17,7 +17,7 @@ Wrap-up function for ending a session cleanly. Updates AGENTS.md, TASKS.md, HAND
 2. **Updates TASKS.md** — Captures current task state, what's done, what's pending
 3. **Updates HANDOFF.md** — Summarizes session accomplishments, decisions made, and where to resume
 4. **Updates README.md** — Ensures project documentation stays current (if changes were made)
-5. **Saves to super-memory** — Persists all critical context for the next session
+5. **Saves to super-memory** — Use `boomerang_memory_save_long` for the session summary (high-value for next session resume)
 
 ## When to Use
 

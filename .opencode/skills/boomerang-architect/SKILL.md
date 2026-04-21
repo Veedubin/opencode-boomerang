@@ -40,6 +40,24 @@ Use **GPT-5.4** or **Kimi K2.5** for strategic architecture decisions.
 
 ## Super-Memory Protocol
 
+### Tiered Memory Architecture
+
+**CRITICAL**: This project uses a tiered memory architecture. As the architect, you deal with high-value decisions that must be preserved accurately.
+
+#### Modes:
+- **Fast Reply** (TIERED): Quick MiniLM search with BGE fallback for speed
+- **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
+
+#### When Saving:
+- **ALWAYS use `boomerang_memory_save_long`** for architectural decisions — these are the highest-value saves
+- **Routine work** (minor adjustments, explorations): Use standard `super-memory_save_to_memory`
+- Use a descriptive `project` tag when saving decisions
+
+#### When Searching:
+- Default searches use the configured strategy automatically
+- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
+- **Strongly prefer Archivist mode** when reviewing past architectural decisions to ensure maximum recall
+
 ### Required Actions
 
 1. **Query at start**: Before beginning any work, query super-memory for:

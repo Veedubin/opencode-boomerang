@@ -40,6 +40,20 @@ Use **Gemini 3 Pro** for comprehensive testing.
 
 ## Super-Memory Protocol
 
+### Tiered Memory Architecture
+
+This project uses a tiered memory architecture with two modes:
+- **Fast Reply** (TIERED): Quick MiniLM search with BGE fallback for speed
+- **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
+
+#### When Saving:
+- **Routine work** (test runs, exploratory testing): Use standard `super-memory_save_to_memory`
+- **High-value work** (verified test patterns, bug verification results, coverage analysis): Use `boomerang_memory_save_long` with a descriptive `project` tag
+
+#### When Searching:
+- Default searches use the configured strategy automatically
+- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
+
 ### Required Actions
 
 1. **Query at start**: Before beginning any work, query super-memory for:

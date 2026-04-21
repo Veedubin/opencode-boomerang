@@ -40,6 +40,21 @@ All agents MUST:
 1. Query super-memory before starting work
 2. Save results to super-memory when complete
 3. Use sequential-thinking for complex tasks
+4. Use tiered memory: standard `super-memory_save_to_memory` for routine work, `boomerang_memory_save_long` for high-value saves (architectural decisions, session summaries, verified successes)
+
+### Tiered Memory Architecture
+
+This project uses a tiered memory architecture with two modes:
+- **Fast Reply** (TIERED): Quick MiniLM search with BGE fallback for speed
+- **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
+
+#### When Saving:
+- **Routine work** (logs, quick fixes, explorations): Use standard `super-memory_save_to_memory`
+- **High-value work** (architectural decisions, session summaries, verified successes): Use `boomerang_memory_save_long` with a descriptive `project` tag
+
+#### When Searching:
+- Default searches use the configured strategy automatically
+- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
 
 ## Project-Specific Context
 

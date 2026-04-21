@@ -61,6 +61,20 @@ Use `webfetch` or `searxng_web_url_read` for:
 
 ## Research Protocol
 
+### Tiered Memory Architecture
+
+This project uses a tiered memory architecture with two modes:
+- **Fast Reply** (TIERED): Quick MiniLM search with BGE fallback for speed
+- **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
+
+#### When Saving:
+- **Routine work** (quick searches, single-page fetches): Use standard `super-memory_save_to_memory`
+- **High-value work** (comprehensive research synthesis, verified findings, technical deep-dives): Use `boomerang_memory_save_long` with a descriptive `project` tag
+
+#### When Searching:
+- Default searches use the configured strategy automatically
+- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
+
 1. Query super-memory for any existing research on the topic
 2. Formulate search queries
 3. Execute searches with searx-ng
