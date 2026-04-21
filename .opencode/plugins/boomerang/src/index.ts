@@ -1,6 +1,6 @@
 import { tool } from "@opencode-ai/plugin";
 import { createBoomerangOrchestrator } from "./orchestrator.js";
-import { boomerangMemory } from "./memory.js";
+import { boomerangMemory, generateSessionSummary } from "./memory.js";
 import {
   checkGitStatus,
   commitCheckpoint,
@@ -291,11 +291,7 @@ ${BOOMERANG_RULES}`;
           limit: tool.schema.number().optional().describe("Max results"),
         },
         async execute(args: { query: string; project?: string; limit?: number }) {
-          // Force TIERED strategy for this call
-          const originalStrategy = boomerangMemory.config.strategy;
-          boomerangMemory.config.strategy = "TIERED";
-          const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project);
-          boomerangMemory.config.strategy = originalStrategy;
+          const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project, "TIERED");
           if (!result.success) return `Search failed: ${result.error}`;
           if (!result.results || result.results.length === 0) return "No memories found.";
           return `Strategy: ${result.strategy}, Tiers: ${result.tierSearched?.join(", ")}, Confidence: ${result.confidence}\n\n${result.results.map((r) => `- [${r.tier}] ${r.content}`).join("\n")}`;
@@ -310,11 +306,7 @@ ${BOOMERANG_RULES}`;
           limit: tool.schema.number().optional().describe("Max results"),
         },
         async execute(args: { query: string; project?: string; limit?: number }) {
-          // Temporarily override strategy to PARALLEL
-          const originalStrategy = boomerangMemory.config.strategy;
-          boomerangMemory.config.strategy = "PARALLEL";
-          const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project);
-          boomerangMemory.config.strategy = originalStrategy;
+          const result = await boomerangMemory.searchMemory(args.query, args.limit || 5, args.project, "PARALLEL");
           if (!result.success) return `Search failed: ${result.error}`;
           if (!result.results || result.results.length === 0) return "No memories found.";
           return `Strategy: ${result.strategy}, Tiers: ${result.tierSearched?.join(", ")}\n\n${result.results.map((r) => `- [${r.tier}] ${r.content}`).join("\n")}`;
@@ -379,8 +371,7 @@ ${BOOMERANG_RULES}`;
         if (config.memoryEnabled && sessionId) {
           const session = getSessionState(sessionId);
           if (session) {
-            // Use addMemoryLong for session compaction to ensure high-fidelity archival
-            const summary = `Session compacted: ${JSON.stringify(session).substring(0, 500)}`;
+            const summary = generateSessionSummary(session);
             await boomerangMemory.addMemoryLong(summary, "boomerang-session", ["boomerang", "session", "compacted"]);
           }
         }

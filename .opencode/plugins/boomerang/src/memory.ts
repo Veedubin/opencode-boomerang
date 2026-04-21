@@ -1,4 +1,4 @@
-import { MemorySearchResult, MemoryAddResult, MemorySaveLongResult, MemoryEntry, MemoryTierConfig, EmbeddingStrategy, RRFResult } from "./types.js";
+import { MemorySearchResult, MemoryAddResult, MemorySaveLongResult, MemoryEntry, MemoryTierConfig, EmbeddingStrategy, RRFResult, SessionState } from "./types.js";
 
 /*
  * Boomerang Memory - Tiered Search System
@@ -114,12 +114,13 @@ export class BoomerangMemory {
   }
 
   // Search with strategy-aware logic
-  async searchMemory(query: string, limit = 5, project?: string): Promise<MemorySearchResult> {
+  async searchMemory(query: string, limit = 5, project?: string, overrideStrategy?: EmbeddingStrategy): Promise<MemorySearchResult> {
     if (!this.apiKey) {
       return { success: false, error: "No API key configured" };
     }
 
-    if (this.config.strategy === "TIERED") {
+    const strategy = overrideStrategy || this.config.strategy;
+    if (strategy === "TIERED") {
       return this.searchMemoryTiered(query, limit, project);
     } else {
       return this.searchMemoryParallel(query, limit, project);
@@ -386,6 +387,34 @@ export class BoomerangMemory {
     context += "\n";
     return context;
   }
+}
+
+export function generateSessionSummary(session: SessionState): string {
+  const completedCount = session.completedTasks.length;
+  const pendingCount = session.pendingTasks.length;
+  const decisions = session.agentDecisions;
+
+  let summary = `## Session Summary: ${session.sessionId}\n\n`;
+  summary += `**Status:** ${session.dirty ? "Dirty" : "Clean"}\n`;
+  summary += `**Tasks:** ${completedCount} completed, ${pendingCount} pending\n`;
+  summary += `**Duration:** ${Math.round((Date.now() - session.createdAt) / 60000)} minutes\n\n`;
+
+  if (decisions.length > 0) {
+    summary += `### Key Decisions\n`;
+    for (const decision of decisions.slice(-5)) {
+      summary += `- **${decision.agent}**: ${decision.summary}\n`;
+    }
+    summary += `\n`;
+  }
+
+  if (session.pendingTasks.length > 0) {
+    summary += `### Pending Work\n`;
+    for (const task of session.pendingTasks) {
+      summary += `- [${task.status}] ${task.description}\n`;
+    }
+  }
+
+  return summary;
 }
 
 export const boomerangMemory = new BoomerangMemory();

@@ -109,11 +109,12 @@ export class BoomerangMemory {
         }
     }
     // Search with strategy-aware logic
-    async searchMemory(query, limit = 5, project) {
+    async searchMemory(query, limit = 5, project, overrideStrategy) {
         if (!this.apiKey) {
             return { success: false, error: "No API key configured" };
         }
-        if (this.config.strategy === "TIERED") {
+        const strategy = overrideStrategy || this.config.strategy;
+        if (strategy === "TIERED") {
             return this.searchMemoryTiered(query, limit, project);
         }
         else {
@@ -369,6 +370,29 @@ export class BoomerangMemory {
         context += "\n";
         return context;
     }
+}
+export function generateSessionSummary(session) {
+    const completedCount = session.completedTasks.length;
+    const pendingCount = session.pendingTasks.length;
+    const decisions = session.agentDecisions;
+    let summary = `## Session Summary: ${session.sessionId}\n\n`;
+    summary += `**Status:** ${session.dirty ? "Dirty" : "Clean"}\n`;
+    summary += `**Tasks:** ${completedCount} completed, ${pendingCount} pending\n`;
+    summary += `**Duration:** ${Math.round((Date.now() - session.createdAt) / 60000)} minutes\n\n`;
+    if (decisions.length > 0) {
+        summary += `### Key Decisions\n`;
+        for (const decision of decisions.slice(-5)) {
+            summary += `- **${decision.agent}**: ${decision.summary}\n`;
+        }
+        summary += `\n`;
+    }
+    if (session.pendingTasks.length > 0) {
+        summary += `### Pending Work\n`;
+        for (const task of session.pendingTasks) {
+            summary += `- [${task.status}] ${task.description}\n`;
+        }
+    }
+    return summary;
 }
 export const boomerangMemory = new BoomerangMemory();
 //# sourceMappingURL=memory.js.map
