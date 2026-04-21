@@ -1,5 +1,12 @@
 import { MemorySearchResult, MemoryAddResult, MemorySaveLongResult, MemoryEntry, MemoryTierConfig, EmbeddingStrategy, RRFResult } from "./types.js";
 
+/*
+ * Boomerang Memory - Tiered Search System
+ * ========================================
+ * TIERED = "Fast Reply" mode: Quick MiniLM search first, BGE fallback on low confidence misses
+ * PARALLEL = "Archivist" mode: Searches both tiers simultaneously with RRF fusion for high recall
+ */
+
 export class BoomerangMemory {
   private apiKey: string;
   private apiUrl: string;

@@ -3,6 +3,11 @@
  */
 
 // Embedding Strategy
+/**
+ * Memory search strategies:
+ * - TIERED = "Fast Reply" mode: MiniLM first, BGE fallback on misses (speed-focused)
+ * - PARALLEL = "Archivist" mode: Both tiers searched with RRF fusion (recall-focused)
+ */
 export type EmbeddingStrategy = "TIERED" | "PARALLEL";
 
 // Memory Tier Configuration

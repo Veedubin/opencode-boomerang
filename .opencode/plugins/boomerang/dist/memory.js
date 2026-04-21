@@ -1,3 +1,9 @@
+/*
+ * Boomerang Memory - Tiered Search System
+ * ========================================
+ * TIERED = "Fast Reply" mode: Quick MiniLM search first, BGE fallback on low confidence misses
+ * PARALLEL = "Archivist" mode: Searches both tiers simultaneously with RRF fusion for high recall
+ */
 export class BoomerangMemory {
     apiKey;
     apiUrl;

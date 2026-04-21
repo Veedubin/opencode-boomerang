@@ -74,11 +74,11 @@ STOP. Before responding to the user, you MUST complete this checklist:
   Call super-memory_save_to_memory with a summary of what was done.
 
 MEMORY TOOLS:
-- boomerang_memory_search: Search using configured strategy (TIERED or PARALLEL)
+- boomerang_memory_search: Search using configured strategy (Fast Reply or Archivist)
 - boomerang_memory_add: Save to transient tier (MiniLM, fast/transient)
 - boomerang_memory_save_long: Archive to permanent tier (BGE-Large, slow/permanent)
-- boomerang_memory_search_tiered: Force TIERED strategy (MiniLM first, BGE fallback)
-- boomerang_memory_search_parallel: Force PARALLEL strategy (both tiers, RRF merge)
+- boomerang_memory_search_tiered: Force Fast Reply mode (MiniLM first, BGE fallback)
+- boomerang_memory_search_parallel: Force Archivist mode (both tiers, RRF merge)
 
 FAILURE TO FOLLOW THESE STEPS IS A CRITICAL ERROR.
 `;
@@ -112,7 +112,7 @@ export const BoomerangPlugin = async (ctx) => {
 - Git Commit After Work: ${config.gitCommitAfterWork}
 - Quality Gates: lint=${config.qualityGates.lint}, typecheck=${config.qualityGates.typecheck}, test=${config.qualityGates.test}
 - Memory Enabled: ${config.memoryEnabled}
-- Memory Strategy: ${config.memoryTierConfig.strategy}
+- Memory Strategy: ${config.memoryTierConfig.strategy === "TIERED" ? "Fast Reply" : "Archivist"}
 - Memory BGE Threshold: ${config.memoryTierConfig.bgeThreshold}
 - Lazy Compaction: ${config.lazyCompactionEnabled}
 
@@ -253,7 +253,7 @@ ${BOOMERANG_RULES}`;
                 },
             }),
             boomerang_memory_search_tiered: tool({
-                description: "Explicitly search using the TIERED strategy: MiniLM first, BGE fallback if confidence is low. Use when you need speed but want high recall.",
+                description: "Force Fast Reply mode: MiniLM first, BGE fallback if confidence is low. Use when you need speed but want high recall.",
                 args: {
                     query: tool.schema.string().describe("Search query"),
                     project: tool.schema.string().optional().describe("Filter by project tag"),
@@ -273,7 +273,7 @@ ${BOOMERANG_RULES}`;
                 },
             }),
             boomerang_memory_search_parallel: tool({
-                description: "Explicitly search using PARALLEL strategy: query both MiniLM and BGE simultaneously, merge with RRF. Use for high-stakes architectural decisions.",
+                description: "Force Archivist mode: query both MiniLM and BGE simultaneously, merge with RRF. Use for high-stakes architectural decisions.",
                 args: {
                     query: tool.schema.string().describe("Search query"),
                     project: tool.schema.string().optional().describe("Filter by project tag"),
