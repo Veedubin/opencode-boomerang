@@ -1,14 +1,51 @@
 # Boomerang Tasks
 
-## Current Sprint
+> **Strategic Context**: See [ROADMAP.md](./ROADMAP.md) for long-term vision and phase-based goals. This file is for tactical, immediate work.
 
-### High Priority
+## In Progress
 
-- [x] Update boomerang-orchestrator skill to allow markdown reads for context
-- [x] Update boomerang-orchestrator skill to enforce sequential thinking
-- [x] Update boomerang-orchestrator skill with session start protocol (auto-read AGENTS.md, TASKS.md, HANDOFF.md, README.md)
-- [x] Update boomerang-orchestrator skill with context compaction strategy
-- [x] Update boomerang-init skill with hard rules (protect core prompting, append-only customizations)
+### Context Compaction & Documentation
+
+- [ ] Implement context compaction agent/skill
+- [ ] Document super-memory best practices
+
+### Testing & Integration
+
+- [ ] Add web scraping integration tests
+- [ ] Create example project initialization flow
+
+## Next Up
+
+### Skill Enhancements
+
+- [ ] Review deepagents SKILL.md pattern for inspiration
+
+### Publishing & Distribution
+
+- [ ] Add NPM publishing documentation
+
+### Community & Learning
+
+- [ ] Create video/tutorial for setup
+
+## Backlog
+
+### Performance & Optimization
+
+- [ ] Agent performance metrics
+- [ ] Automatic agent routing optimization
+- [ ] Middleware hooks production implementation
+
+### Scalability & Extensibility
+
+- [ ] Support for additional LLM providers
+- [ ] Multi-project workspace support
+- [ ] Plugin marketplace integration
+
+## Recently Completed ✓
+
+- [x] Update boomerang-orchestrator skill (markdown reads, sequential thinking, session start protocol, context compaction)
+- [x] Update boomerang-init skill (hard rules, protect core prompting, append-only customizations)
 - [x] Create boomerang-handoff skill for session wrap-up
 - [x] Create boomerang-writer skill for documentation
 - [x] Create boomerang-scraper skill for web research
@@ -22,43 +59,14 @@
 - [x] Create HANDOFF.md template
 - [x] Update README.md with new skills and agents
 - [x] Test Boomerang on sports-bet project
-- [x] Package and publish v0.2.0
-
-### Medium Priority
-
-- [ ] Implement context compaction agent/skill
-- [ ] Add web scraping integration tests
-- [ ] Create example project initialization flow
-- [ ] Document super-memory best practices
-
-### Low Priority
-
-- [ ] Add NPM publishing documentation
-- [ ] Create video/tutorial for setup
-- [ ] Review deepagents SKILL.md pattern for inspiration
-
-## Backlog
-
-- [ ] Support for additional LLM providers
-- [ ] Plugin marketplace integration
-- [ ] Agent performance metrics
-- [ ] Automatic agent routing optimization
-- [ ] Multi-project workspace support
-
-## Completed
-
-- [x] Initial skill creation (orchestrator, coder, tester, architect, init)
-- [x] README.md with installation and configuration
-- [x] Super-memory integration documentation
-- [x] Basic agent roster definition
-- [x] Rebuilt TypeScript plugin runtime from compiled JS to proper TS source
+- [x] Package and publish v0.3.0
+- [x] Rebuilt TypeScript plugin runtime from compiled JS
 - [x] Added test infrastructure with 29 passing tests
-- [x] Updated sports-bet project with latest Boomerang setup
 
-## Notes
+## Guidelines
 
-- Context compaction should trigger at ~40% context usage
-- Handoff skill should be called before compaction to preserve state
 - All agents must query super-memory at start and save at end
 - Sequential thinking is mandatory for complex tasks
 - boomerang-init must only append to default personas, never replace core prompts
+- Context compaction triggers at ~40% context usage
+- Handoff skill should be called before compaction to preserve state

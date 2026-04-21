@@ -343,60 +343,53 @@ The `boomerang.tar.gz` release contains:
 │   ├── boomerang-init/
 │   ├── boomerang-orchestrator/
 │   └── boomerang-tester/
-└── plugins/boomerang/        # Plugin implementation
+└── plugins/boomerang/        # Plugin implementation (published to NPM separately)
     ├── dist/                  # Compiled JavaScript
     └── package.json
-```
+
+> **Note:** The `plugins/boomerang/` directory is bundled inside the Python package
+> assets at `src/opencode_boomerang/assets/.opencode/plugins/boomerang/`. The JavaScript
+> plugin can also be published independently to NPM as `@boomerang/opencode-plugin`.
+> See [docs/npm-publishing.md](docs/npm-publishing.md) for details.
 
 ---
 
 ## 📦 NPM Publishing
 
-> **Note:** The Boomerang package is currently not published to NPM. The following guide is for when you're ready to publish.
+> **Note:** The Boomerang JavaScript/TypeScript plugin is published to NPM as `@boomerang/opencode-plugin`. The main Python package is published to PyPI. See [docs/npm-publishing.md](docs/npm-publishing.md) for the complete guide.
 
-### Prerequisites
+### Quick Reference
 
-1. **NPM Account**: Create an account at [npmjs.com](https://www.npmjs.com) if you don't have one
-2. **Login**: Run `npm login` and authenticate with your credentials
-3. **Package Name**: Ensure the package name in `package.json` is available on NPM
+```bash
+# Navigate to plugin directory
+cd src/opencode_boomerang/assets/.opencode/plugins/boomerang
 
-### Publishing Steps
+# Install dependencies
+npm install
 
-1. **Prepare the package**:
-   ```bash
-   # Ensure version is updated in package.json
-   npm version patch|minor|major
-   
-   # Run tests and build
-   npm test
-   npm run build
-   ```
+# Typecheck and build
+npm run typecheck
+npm run build
 
-2. **Publish to NPM**:
-   ```bash
-   # Publish publicly
-   npm publish --access public
-   
-   # Or publish scoped package
-   npm publish --access public
-   ```
+# Publish (requires NPM token)
+npm publish --access public
+```
 
-3. **Verify publication**:
-   ```bash
-   npm view opencode-boomerang
-   ```
+### Publishing via GitHub Actions
 
-### Post-Publication
+Push a tag matching `plugin-v*.*.*` to trigger automated publishing:
 
-- Update installation instructions in README to use `npm install` or `pip install`
-- Tag the release on GitHub
-- Announce in relevant communities
+```bash
+git tag plugin-v0.3.0
+git push origin --tags
+```
 
-### Troubleshooting
-
-- **Name collision**: If the package name is taken, consider scoping (e.g., `@yourorg/opencode-boomerang`)
-- **Authentication errors**: Ensure you're logged in with `npm login`
-- **Version conflicts**: Update version in package.json before publishing
+See [docs/npm-publishing.md](docs/npm-publishing.md) for:
+- Complete CI/CD workflow configuration
+- Pre-publish checklist
+- Version bumping strategy
+- Semantic versioning guidelines
+- Troubleshooting guide
 
 ## 🔬 DeepAgents Research Insights
 

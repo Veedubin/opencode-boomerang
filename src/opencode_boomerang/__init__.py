@@ -17,7 +17,7 @@ For usage, see: https://github.com/Veedubin/opencode-boomerang
 from importlib.resources import files
 from pathlib import Path
 
-__version__ = "0.1.2"
+__version__ = "0.3.0"
 
 ASSETS_DIR = files(__name__) / "assets" / ".opencode"
 

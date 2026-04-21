@@ -22,7 +22,7 @@ This session accomplished:
 - 14 TypeScript source files in plugin/src/
 - 4 test files with 29 passing tests
 - Compiled dist/ output
-- Version 0.2.0
+- Version 0.3.0
 
 ### Documentation
 - README.md with DeepAgents insights
@@ -32,7 +32,7 @@ This session accomplished:
 
 ### Next Session Priorities
 1. Test Boomerang on sports-bet project
-2. Package and publish v0.2.0 to PyPI
+2. Package and publish v0.3.0 to PyPI
 3. Add more test coverage
 4. Implement middleware hooks in runtime
 

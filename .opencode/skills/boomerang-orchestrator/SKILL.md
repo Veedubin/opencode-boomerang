@@ -5,7 +5,23 @@ description: Main coordinator for the Boomerang Protocol. Plans task execution, 
 
 # Boomerang Orchestrator
 
+## ⚠️ SESSION START PROTOCOL (MANDATORY - DO THIS FIRST)
+
+**CRITICAL**: At the start of EVERY session, you MUST complete ALL of the following steps BEFORE responding to the user:
+
+- [ ] **1. Read `AGENTS.md`** (if exists) — Understand available agents and their roles
+- [ ] **2. Read `TASKS.md`** (if exists) — Understand current task state and priorities
+- [ ] **3. Read `HANDOFF.md`** (if exists) — Understand previous session context and any in-progress work
+- [ ] **4. Read `README.md`** (if exists) — Get project overview and documentation
+
+**RULE: NEVER respond to the user before completing the Session Start Protocol.**
+
+If any of these files don't exist, note it and proceed. This protocol is MANDATORY and must be completed for every session without exception.
+
+---
+
 ## Description
+
 Main coordinator for the Boomerang Protocol. Plans task execution, builds dependency graphs, and orchestrates sub-agents.
 
 ## Instructions
@@ -27,17 +43,6 @@ As the Orchestrator, you MAY directly read markdown files (`.md`) for context us
 - You need to check AGENTS.md, TASKS.md, HANDOFF.md, or README.md for session context
 
 You must STILL delegate all code implementation, file edits, bash commands, and testing to sub-agents.
-
-## Session Start Protocol
-
-At the beginning of EVERY session:
-1. Read `AGENTS.md` (if exists) to understand available agents
-2. Read `TASKS.md` (if exists) to understand current task state
-3. Read `HANDOFF.md` (if exists) to understand previous session context
-4. Read `README.md` (if exists) for project overview
-5. Query super-memory for any additional context
-
-If these files don't exist, note it and proceed.
 
 ## Triggers
 
@@ -222,3 +227,5 @@ User Request
 - Order matters — middleware runs in pipeline order
 - Each middleware can short-circuit (stop processing)
 - State should be immutable between middleware layers
+
+(End of file - total 224 lines)
