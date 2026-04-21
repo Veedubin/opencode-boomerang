@@ -4,15 +4,13 @@
 
 ## In Progress
 
-### Context Compaction & Documentation
+### Publishing & Distribution
 
-- [ ] Implement context compaction agent/skill
-- [ ] Document super-memory best practices
+- [ ] Resolve NPM token permissions (needs "Bypass 2FA" for automation)
 
 ### Testing & Integration
 
-- [ ] Add web scraping integration tests
-- [ ] Create example project initialization flow
+- [ ] Expand test coverage beyond scraper
 
 ## Next Up
 
@@ -20,11 +18,7 @@
 
 - [ ] Review deepagents SKILL.md pattern for inspiration
 
-### Publishing & Distribution
-
-- [ ] Add NPM publishing documentation
-
-### Community & Learning
+### Documentation
 
 - [ ] Create video/tutorial for setup
 
@@ -44,22 +38,23 @@
 
 ## Recently Completed ✓
 
-- [x] Update boomerang-orchestrator skill (markdown reads, sequential thinking, session start protocol, context compaction)
-- [x] Update boomerang-init skill (hard rules, protect core prompting, append-only customizations)
-- [x] Create boomerang-handoff skill for session wrap-up
+- [x] Publish @veedubin/opencode-boomerang@0.3.0 to NPM
+- [x] Fix GitHub Actions workflows (NPM-only, removed PyPI)
 - [x] Create boomerang-writer skill for documentation
 - [x] Create boomerang-scraper skill for web research
-- [x] Update all agent skills with super-memory protocol requirements
-- [x] Create missing agent skills (explorer, linter, git)
-- [x] Research LangChain deepagents for competitive insights
-- [x] Implement context isolation for subagents
-- [x] Add tool result eviction / large output offloading
-- [x] Implement middleware hooks concept (wrap_model_call, wrap_tool_call)
+- [x] Create boomerang-init skill for session initialization
+- [x] Create boomerang-handoff skill for session wrap-up
+- [x] Add comprehensive documentation (ROADMAP.md, docs/, examples/)
+- [x] Update orchestrator skill with mandatory session start protocol
+- [x] Sync framework to 4 projects (sports-bet, proxy-hop, png2svg, resume-workspace)
+- [x] Remove misleading compactor skill
+- [x] Add 29 integration tests for scraper (58 total tests passing)
+- [x] Fix .gitignore to track TypeScript source files
+- [x] Update boomerang-orchestrator skill (markdown reads, sequential thinking, session start protocol, context compaction)
+- [x] Update boomerang-init skill (hard rules, protect core prompting, append-only customizations)
 - [x] Create/update AGENTS.md with full agent roster
 - [x] Create HANDOFF.md template
 - [x] Update README.md with new skills and agents
-- [x] Test Boomerang on sports-bet project
-- [x] Package and publish v0.3.0
 - [x] Rebuilt TypeScript plugin runtime from compiled JS
 - [x] Added test infrastructure with 29 passing tests
 
