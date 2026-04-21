@@ -20,7 +20,6 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           echo "Tag: $TAG"
-
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "ERROR: Invalid tag format. Expected v*.*.* (e.g., v1.2.3)"
             exit 1
@@ -34,40 +33,24 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           scope: '@veedubin'
 
-      - name: Verify working directory
-        run: |
-          if [ ! -d ".opencode/plugins/boomerang" ]; then
-            echo "ERROR: Plugin directory not found at .opencode/plugins/boomerang"
-            exit 1
-          fi
-          echo "Plugin directory verified"
-
       - name: Install dependencies
-        run: |
-          cd .opencode/plugins/boomerang
-          npm install
+        run: npm ci
 
       - name: Run typecheck
-        run: |
-          cd .opencode/plugins/boomerang
-          npm run typecheck
+        run: npm run typecheck
 
       - name: Build
-        run: |
-          cd .opencode/plugins/boomerang
-          npm run build
+        run: npm run build
 
       - name: Verify dist exists
         run: |
-          if [ ! -d ".opencode/plugins/boomerang/dist" ]; then
+          if [ ! -d "dist" ]; then
             echo "ERROR: dist directory not found after build"
             exit 1
           fi
           echo "Build output verified"
 
       - name: Publish to NPM
-        run: |
-          cd .opencode/plugins/boomerang
-          npm publish --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
