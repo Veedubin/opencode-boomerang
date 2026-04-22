@@ -28,7 +28,7 @@ Use this skill when:
 
 ## Model
 
-Use **GPT-5.4** or **Kimi K2.5** for strategic architecture decisions.
+Use **Kimi K2.6** for strategic architecture decisions.
 
 ## Guidelines
 

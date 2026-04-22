@@ -54,7 +54,7 @@ Use this skill when:
 
 ## Model
 
-Use **Kimi K2.5** for orchestration planning.
+Use **Kimi K2.6** for orchestration planning.
 
 ## Protocol Rules
 

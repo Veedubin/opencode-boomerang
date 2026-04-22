@@ -9,3 +9,4 @@ node_modules/
 !.opencode/plugins/boomerang/src/**/*.ts
 .opencode/plugins/boomerang/node_modules/
 *.tar.gz
+memory_data/

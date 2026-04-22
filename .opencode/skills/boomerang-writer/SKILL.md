@@ -1,13 +1,13 @@
 ---
 name: boomerang-writer
-description: Documentation and markdown writing specialist. Uses Kimi K2.5 for high-quality document generation.
+description: Documentation and markdown writing specialist. Uses Kimi K2.6 for high-quality document generation.
 ---
 
 # Boomerang Writer
 
 ## Description
 
-Documentation and markdown writing specialist. Uses Kimi K2.5 for high-quality document generation. Handles READMEs, API docs, technical documentation, and any markdown content.
+Documentation and markdown writing specialist. Uses Kimi K2.6 for high-quality document generation. Handles READMEs, API docs, technical documentation, and any markdown content.
 
 ## Instructions
 
@@ -29,7 +29,7 @@ Use this skill when:
 
 ## Model
 
-Use **Kimi K2.5** for documentation writing. Kimi is slower but smarter, making it ideal for documentation where accuracy and clarity matter more than speed.
+Use **Kimi K2.6** for documentation writing. Kimi is slower but smarter, making it ideal for documentation where accuracy and clarity matter more than speed.
 
 ## Guidelines
 
