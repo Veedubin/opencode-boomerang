@@ -327,7 +327,7 @@ export function getProjectIndexStatus() {
   };
 }
 
-export async function searchProjectFiles(query: string, limit?: number) {
+export async function searchProjectFiles(query: string, limit?: number): Promise<{ success: boolean; results?: any[]; error?: string }> {
   try {
     const manager = WorkspaceManager.getInstance();
     const memory = manager.getActiveMemory();

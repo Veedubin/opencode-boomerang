@@ -33,7 +33,7 @@ export class MemoryEngine {
 
     this.process.stdout?.on('data', (data: Buffer) => this.handleResponse(data.toString()));
     this.process.stderr?.on('data', (data: Buffer) => console.log(`[super-memory] ${data.toString().trim()}`));
-    this.process.on('exit', (code) => { this.process = null; });
+    this.process.on('exit', (_code) => { this.process = null; });
 
     await this.waitForReady();
   }

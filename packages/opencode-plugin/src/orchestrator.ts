@@ -1,35 +1,11 @@
-import {
-  parseTasksFromPrompt,
-  buildDAG,
-  createExecutionPlan,
-  assignAgentsToTasks,
-} from "./task-parser.js";
-import {
-  executeParallelTasks,
-  executeSequentialTasks,
-  aggregateResults,
-} from "./task-executor.js";
+import { parseTasksFromPrompt, buildDAG, createExecutionPlan, assignAgentsToTasks } from "./task-parser.js";
+import { executeParallelTasks, executeSequentialTasks, aggregateResults } from "./task-executor.js";
 import { boomerangMemory } from "./memory.js";
-import {
-  checkGitStatus,
-  commitCheckpoint,
-  commitWithMessage,
-  generateCommitMessage,
-} from "./git.js";
+import { checkGitStatus, commitCheckpoint, commitWithMessage, generateCommitMessage } from "./git.js";
 import { runAllQualityGates, DEFAULT_QUALITY_GATES } from "./quality-gates.js";
-import {
-  OrchestratorContext,
-  BoomerangConfig,
-  ExecutionPlan,
-  PhaseResult,
-  AggregatedResults,
-  GitStatus,
-  DEFAULT_EXECUTION_CONFIG,
-} from "./types.js";
+import { OrchestratorContext, BoomerangConfig, ExecutionPlan, PhaseResult, AggregatedResults, GitStatus, DEFAULT_EXECUTION_CONFIG } from "./types.js";
 import { isolateResult } from "./context-isolation.js";
 import { globalMiddleware } from "./middleware.js";
-import { MetricsCollector } from "../../../src/opencode_boomerang/metrics/collector.js";
-import { TaskType } from "../../../src/opencode_boomerang/metrics/types.js";
 
 export class BoomerangOrchestrator {
   private ctx: OrchestratorContext;
@@ -83,10 +59,7 @@ export class BoomerangOrchestrator {
 
     // Parse and plan
     const tasks = parseTasksFromPrompt(prompt);
-    let tasksWithAgents = assignAgentsToTasks(tasks);
-
-    // Apply routing optimization based on historical performance
-    tasksWithAgents = await this.optimizeRouting(tasksWithAgents);
+    const tasksWithAgents = assignAgentsToTasks(tasks);
 
     const dag = buildDAG(tasksWithAgents);
     const executionPlan = createExecutionPlan(dag);
@@ -264,84 +237,6 @@ export class BoomerangOrchestrator {
       summary += "\n*Context isolation enabled — large outputs evicted to files*\n";
     }
     return summary;
-  }
-
-  /**
-   * Optimize agent routing based on historical performance metrics.
-   *
-   * For each task, checks if there's a better-performing agent for the
-   * inferred task type and overrides the default assignment if confidence
-   * is high enough.
-   */
-  private async optimizeRouting(
-    tasks: typeof tasksWithAgents
-  ): Promise<typeof tasksWithAgents> {
-    const metricsCollector = MetricsCollector.getInstance();
-    if (!metricsCollector.isInitialized()) {
-      return tasks;
-    }
-
-    const optimized = [];
-    for (const task of tasks) {
-      try {
-        // Infer task type from description
-        const taskType = this.inferTaskType(task.description, task.agent);
-
-        // Get routing recommendation
-        const recommendation = await metricsCollector.getRoutingRecommendation(taskType);
-
-        // Only override if confidence is high enough and it's a different agent
-        if (
-          recommendation.confidence >= 0.5 &&
-          recommendation.agent !== task.agent &&
-          recommendation.dataPoints >= 3
-        ) {
-          try {
-            this.ctx.client.app.log(
-              `Routing optimization: ${task.agent} → ${recommendation.agent} for task "${task.description.substring(0, 50)}..." (${recommendation.reasoning})`
-            );
-          } catch {}
-          optimized.push({ ...task, agent: recommendation.agent });
-        } else {
-          optimized.push(task);
-        }
-      } catch {
-        // If routing fails, keep original assignment
-        optimized.push(task);
-      }
-    }
-
-    return optimized;
-  }
-
-  /**
-   * Infer task type from description and agent.
-   */
-  private inferTaskType(description: string, agent: string): TaskType {
-    const lowerDesc = description.toLowerCase();
-
-    switch (agent) {
-      case "coder":
-        if (lowerDesc.includes("fix") || lowerDesc.includes("bug")) return "code-modification";
-        if (lowerDesc.includes("test")) return "testing";
-        return "code-generation";
-      case "architect":
-        return "architecture-design";
-      case "tester":
-        return "testing";
-      case "linter":
-        return "linting";
-      case "git":
-        return "git-operations";
-      case "explorer":
-        return "code-exploration";
-      case "writer":
-        return "documentation";
-      case "scraper":
-        return lowerDesc.includes("research") ? "web-research" : "web-scraping";
-      default:
-        return "unknown";
-    }
   }
 }
 

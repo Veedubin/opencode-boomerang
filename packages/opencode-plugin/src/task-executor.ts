@@ -1,19 +1,6 @@
-import {
-  TaskWithAgent,
-  TaskResult,
-  PhaseResult,
-  AggregatedResults,
-  ExecutionConfig,
-  DEFAULT_EXECUTION_CONFIG,
-  GuardResult,
-} from "./types.js";
+import { TaskWithAgent, TaskResult, PhaseResult, AggregatedResults, ExecutionConfig, DEFAULT_EXECUTION_CONFIG, GuardResult } from "./types.js";
 import { OrchestratorContext } from "./types.js";
-import {
-  incrementExecutionDepth,
-  decrementExecutionDepth,
-  recordExecution,
-} from "./session-state.js";
-import { MetricsCollector } from "../../../src/opencode_boomerang/metrics/collector.js";
+import { incrementExecutionDepth, decrementExecutionDepth, recordExecution } from "./session-state.js";
 
 export const MODEL_ROUTING: Record<string, string> = {
   orchestrator: "kimi-for-coding/k2.5",
@@ -506,34 +493,17 @@ export async function executeTaskInSession(
   const executionConfig = config || DEFAULT_EXECUTION_CONFIG;
   const startTime = Date.now();
 
-  // Start metrics collection
-  const metricsCollector = MetricsCollector.getInstance();
-  const metricSession = metricsCollector.recordStart(
-    task.id,
-    task.agent,
-    undefined,
-    task.description,
-    ctx.sessionId
-  );
-
   // Track depth
   const depth = incrementExecutionDepth(ctx.sessionId);
 
-  try {
-    // Create guard
-    const guard = new ExecutionGuard(executionConfig, depth);
+  // Create guard
+  const guard = new ExecutionGuard(executionConfig, depth);
 
+  try {
     // Initial guard check
     const initialCheck = guard.check();
     if (!initialCheck.allowed) {
-      const result = createEarlyStopResult(task, initialCheck, startTime, "", 0);
-      // Record metrics for early stop
-      await metricsCollector.recordEnd(metricSession.id, false, {
-        stoppedEarly: true,
-        stopReason: initialCheck.reason,
-        iterationsUsed: 0,
-      });
-      return result;
+      return createEarlyStopResult(task, initialCheck, startTime, "", 0);
     }
 
     // Build comprehensive prompt
@@ -567,20 +537,13 @@ export async function executeTaskInSession(
           guard.getStats()
         );
       }
-      const earlyResult = createEarlyStopResult(
+      return createEarlyStopResult(
         task,
         outputCheck,
         startTime,
         finalOutput,
         guard.getStats().iterations
       );
-      // Record metrics for early stop
-      await metricsCollector.recordEnd(metricSession.id, false, {
-        stoppedEarly: true,
-        stopReason: outputCheck.reason,
-        iterationsUsed: guard.getStats().iterations,
-      });
-      return earlyResult;
     }
 
     // Check for TASK_COMPLETE signal
@@ -599,11 +562,6 @@ export async function executeTaskInSession(
       stoppedEarly: false,
     });
 
-    // Record successful metrics
-    await metricsCollector.recordEnd(metricSession.id, true, {
-      iterationsUsed: guard.getStats().iterations,
-    });
-
     return {
       taskId: task.id,
       success: true,
@@ -612,18 +570,11 @@ export async function executeTaskInSession(
       iterationsUsed: guard.getStats().iterations,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    // Record failed metrics
-    await metricsCollector.recordEnd(metricSession.id, false, {
-      error: errorMessage,
-      iterationsUsed: guard.getStats()?.iterations || 0,
-    });
-
     return {
       taskId: task.id,
       success: false,
       output: "",
-      error: errorMessage,
+      error: error instanceof Error ? error.message : String(error),
       executionTime: Date.now() - startTime,
     };
   } finally {
