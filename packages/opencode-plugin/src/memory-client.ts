@@ -4,8 +4,8 @@
  * Uses StdioClientTransport to communicate with the Super-Memory-TS MCP server.
  */
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport, StdioServerParameters } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "@modelcontextprotocol/sdk/client";
+import { StdioClientTransport, StdioServerParameters } from "@modelcontextprotocol/sdk/client/stdio";
 import type { MemoryClientConfig, McpMemoryEntry, ProjectSearchResult, QueryResult, AddMemoryResult, SearchProjectResult, IndexProjectResult } from "./types.js";
 
 /**
@@ -231,7 +231,7 @@ export class MemoryClient {
 
     try {
       const result = await this.client.listTools();
-      return result.tools.map((t) => t.name);
+      return result.tools.map((t: { name: string }) => t.name);
     } catch {
       return [];
     }
