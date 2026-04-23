@@ -2,6 +2,54 @@
  * Boomerang Protocol - Core Type Definitions
  */
 
+// Execution Configuration
+/**
+ * Execution Configuration
+ * Controls safety limits for agent task execution.
+ */
+export interface ExecutionConfig {
+  maxIterations: number;              // default: 15
+  maxExecutionDepth: number;          // default: 5
+  maxExecutionTimeMs: number;         // default: 120000 (2 minutes)
+  loopDetectionWindow: number;        // default: 5 (recent outputs to track)
+  loopSimilarityThreshold: number;    // default: 0.9 (90%)
+  earlyStoppingEnabled: boolean;      // default: true
+}
+
+/**
+ * Default execution configuration.
+ */
+export const DEFAULT_EXECUTION_CONFIG: ExecutionConfig = {
+  maxIterations: 15,
+  maxExecutionDepth: 5,
+  maxExecutionTimeMs: 120000,
+  loopDetectionWindow: 5,
+  loopSimilarityThreshold: 0.9,
+  earlyStoppingEnabled: true,
+};
+
+/**
+ * Guard Result — returned by execution guard checks.
+ */
+export interface GuardResult {
+  allowed: boolean;
+  reason?: string;
+  guardType: "depth" | "iterations" | "loop" | "timeout" | "none";
+}
+
+/**
+ * Execution Record — audit trail for each task execution.
+ */
+export interface ExecutionRecord {
+  taskId: string;
+  agent: AgentType;
+  startedAt: number;
+  completedAt: number;
+  iterations: number;
+  stoppedEarly: boolean;
+  stopReason?: string;
+}
+
 // Embedding Strategy
 /**
  * Memory search strategies:
@@ -78,6 +126,7 @@ export interface BoomerangConfig {
   contextIsolationEnabled: boolean;
   toolResultEvictionThreshold: number;
   middlewareEnabled: boolean;
+  executionConfig?: ExecutionConfig;     // optional execution config
 }
 
 // Agent Types
@@ -134,6 +183,9 @@ export interface TaskResult {
   output: string;
   error?: string;
   executionTime: number;
+  stoppedEarly?: boolean;             // true if guard triggered
+  stopReason?: string;               // why it stopped
+  iterationsUsed?: number;           // how many iterations consumed
 }
 
 export interface PhaseResult {
@@ -210,6 +262,8 @@ export interface SessionState {
   createdAt: number;
   lastUsedAt: number;
   notes: Map<string, string>;
+  executionDepth: number;             // current nesting depth
+  executionHistory: ExecutionRecord[]; // audit trail
 }
 
 // Orchestrator Context

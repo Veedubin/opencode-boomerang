@@ -24,6 +24,7 @@ import {
   PhaseResult,
   AggregatedResults,
   GitStatus,
+  DEFAULT_EXECUTION_CONFIG,
 } from "./types.js";
 import { isolateResult } from "./context-isolation.js";
 import { globalMiddleware } from "./middleware.js";
@@ -136,6 +137,7 @@ export class BoomerangOrchestrator {
   }
 
   private async executePlan(plan: ExecutionPlan): Promise<PhaseResult[]> {
+    const executionConfig = this.config.executionConfig || DEFAULT_EXECUTION_CONFIG;
     const results: PhaseResult[] = [];
     for (const phase of plan.executionOrder) {
       const phaseResult: PhaseResult = {
@@ -161,7 +163,8 @@ export class BoomerangOrchestrator {
                     status: t.status,
                     dependencies: t.dependencies,
                   })),
-                  this.config.coderModel
+                  this.config.coderModel,
+                  executionConfig
                 )
               : await executeSequentialTasks(
                   this.ctx,
@@ -172,7 +175,8 @@ export class BoomerangOrchestrator {
                     status: t.status,
                     dependencies: t.dependencies,
                   })),
-                  this.config.coderModel
+                  this.config.coderModel,
+                  executionConfig
                 );
           }
         );
@@ -188,7 +192,8 @@ export class BoomerangOrchestrator {
                   status: t.status,
                   dependencies: t.dependencies,
                 })),
-                this.config.coderModel
+                this.config.coderModel,
+                executionConfig
               )
             : await executeSequentialTasks(
                 this.ctx,
@@ -199,7 +204,8 @@ export class BoomerangOrchestrator {
                   status: t.status,
                   dependencies: t.dependencies,
                 })),
-                this.config.coderModel
+                this.config.coderModel,
+                executionConfig
               );
       }
 

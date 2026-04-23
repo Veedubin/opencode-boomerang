@@ -1,4 +1,4 @@
-import { SessionState, Task } from "./types.js";
+import { SessionState, Task, ExecutionRecord } from "./types.js";
 
 const sessions = new Map<string, SessionState>();
 
@@ -13,11 +13,44 @@ export function getOrCreateSession(sessionId: string): SessionState {
       createdAt: Date.now(),
       lastUsedAt: Date.now(),
       notes: new Map(),
+      executionDepth: 0,
+      executionHistory: [],
     });
   }
   const session = sessions.get(sessionId)!;
   session.lastUsedAt = Date.now();
   return session;
+}
+
+// Depth tracking
+export function incrementExecutionDepth(sessionId: string): number {
+  const session = getOrCreateSession(sessionId);
+  session.executionDepth = (session.executionDepth || 0) + 1;
+  return session.executionDepth;
+}
+
+export function decrementExecutionDepth(sessionId: string): number {
+  const session = getOrCreateSession(sessionId);
+  session.executionDepth = Math.max(0, (session.executionDepth || 0) - 1);
+  return session.executionDepth;
+}
+
+export function getExecutionDepth(sessionId: string): number {
+  const session = getSessionState(sessionId);
+  return session?.executionDepth || 0;
+}
+
+// Execution history
+export function recordExecution(
+  sessionId: string,
+  record: ExecutionRecord
+): void {
+  const session = getOrCreateSession(sessionId);
+  if (!session.executionHistory) {
+    session.executionHistory = [];
+  }
+  session.executionHistory.push(record);
+  markDirty(sessionId);
 }
 
 export function getSessionState(sessionId: string): SessionState | null {
