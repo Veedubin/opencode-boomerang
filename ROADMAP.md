@@ -54,18 +54,24 @@ Boomerang is a multi-agent orchestration system for OpenCode that enables intell
 
 ---
 
-## Phase 3: Context Compaction, Documentation & Testing (Current)
+## Phase 3: Context Compaction, Documentation & Testing (Completed)
 
 ### Goals
 - Implement context compaction to handle long-running sessions
 - Complete documentation for all skills and agents
 - Add integration tests for web research workflows
+- Fix super-memory protocol to be mandatory
 
 ### Deliverables
-- [ ] Implement context compaction agent/skill
-- [ ] Add web scraping integration tests
-- [ ] Create example project initialization flow
-- [ ] Document super-memory best practices
+- [x] Implement context compaction via handoff skill (trigger at ~40% context usage)
+- [x] Add web scraping integration tests (29 tests, 58 total passing)
+- [x] Create example project initialization flow
+- [x] Document super-memory best practices and tiered architecture
+- [x] Make super-memory protocol MANDATORY for all 11 sub-agents
+- [x] Upgrade all models to Kimi K2.6 / MiniMax M2.7
+- [x] Add per-project DB isolation (memory_data/ directories)
+- [x] Add tiered memory search (Fast Reply + Archivist modes)
+- [x] Fix hanging issues (steps:50 limit, anti-loop safety)
 
 ### Context Compaction Strategy
 - Trigger at ~40% context usage
@@ -85,7 +91,7 @@ Boomerang is a multi-agent orchestration system for OpenCode that enables intell
 
 ---
 
-## Phase 4: Middleware, Performance Metrics & Routing (Planned)
+## Phase 4: Middleware, Performance Metrics & Routing (Current)
 
 ### Goals
 - Implement production-ready middleware hooks

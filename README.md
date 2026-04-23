@@ -48,7 +48,7 @@ Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](http
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              🎯 ORCHESTRATOR (Kimi K2.5)                         │
+│              🎯 ORCHESTRATOR (Kimi K2.6)                         │
 │   • Plans task execution & dependency graph                       │
 │   • Delegates to specialized sub-agents                          │
 │   • Enforces quality gates                                       │
@@ -60,7 +60,7 @@ Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](http
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
 │   💻        │      │   🏗️        │      │   🔍        │
 │  CODER      │      │ ARCHITECT  │      │ EXPLORER   │
-│ MiniMax M2.7│      │ Kimi K2.5  │      │ MiniMax M2.7│
+│ MiniMax M2.7│      │ Kimi K2.6  │      │ MiniMax M2.7│
 └─────────────┘      └─────────────┘      └─────────────┘
          │                   │                   │
          └───────────────────┼───────────────────┘
@@ -91,16 +91,16 @@ Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](http
 
 | Agent | Model | Role |
 |-------|-------|------|
-| **boomerang** | Kimi K2.5 | 🎯 **Orchestrator** — Plans, coordinates, enforces protocol |
+| **boomerang** | Kimi K2.6 | 🎯 **Orchestrator** — Plans, coordinates, enforces protocol |
 | **boomerang-coder** | MiniMax M2.7 | 💻 **Fast code generation** — Write and modify code efficiently |
-| **boomerang-architect** | Kimi K2.5 | 🏗️ **Design decisions** — Trade-off analysis and architecture |
+| **boomerang-architect** | Kimi K2.6 | 🏗️ **Design decisions** — Trade-off analysis and architecture |
 | **boomerang-explorer** | MiniMax M2.7 | 🔍 **Codebase exploration** — Find files, search patterns, understand structure |
 | **boomerang-tester** | MiniMax M2.7 | 🧪 **Testing specialist** — Unit/integration tests, verification |
 | **boomerang-linter** | MiniMax M2.7 | ✅ **Quality enforcement** — Lint, format, style consistency |
 | **boomerang-git** | MiniMax M2.7 | 📦 **Version control** — Commits, branches, history discipline |
-| **boomerang-writer** | Kimi K2.5 | 📝 **Documentation** — Markdown writing and documentation |
+| **boomerang-writer** | Kimi K2.6 | 📝 **Documentation** — Markdown writing and documentation |
 | **boomerang-scraper** | MiniMax M2.7 | 🌐 **Web scraping** — Research and information gathering |
-| **boomerang-handoff** | Kimi K2.5 | 🔄 **Session wrap-up** — Context saving and handoff |
+| **boomerang-handoff** | Kimi K2.6 | 🔄 **Session wrap-up** — Context saving and handoff |
 | **researcher** | MiniMax M2.7 | 🌐 **Web research** — Search, fetch, and synthesize online information |
 
 ---
