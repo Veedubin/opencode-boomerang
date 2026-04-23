@@ -8,9 +8,13 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for npm provenance
+
     defaults:
       run:
-        working-directory: .opencode/plugins/boomerang
+        working-directory: packages/opencode-plugin
 
     steps:
       - name: Checkout code
@@ -55,7 +59,7 @@ jobs:
           fi
           echo "Build output verified"
 
-      - name: Publish to NPM
-        run: npm publish --access public
+      - name: Publish to NPM with provenance
+        run: npm publish --access public --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTOMATION_TOKEN }}

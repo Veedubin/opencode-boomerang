@@ -35,7 +35,7 @@ jobs:
         run: |
           set -e
 
-          ASSETS_DIR=".opencode"
+          ASSETS_DIR="packages/opencode-plugin"
 
           if [ ! -d "$ASSETS_DIR" ]; then
             echo "ERROR: Assets directory not found: $ASSETS_DIR"
@@ -43,7 +43,7 @@ jobs:
           fi
 
           echo "Creating tarball from $ASSETS_DIR"
-          tar -czf boomerang.tar.gz .opencode
+          tar -czf boomerang.tar.gz -C packages opencode-plugin
           
           if [ ! -f boomerang.tar.gz ]; then
             echo "ERROR: Failed to create boomerang.tar.gz"
