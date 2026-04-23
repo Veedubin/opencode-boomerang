@@ -3,12 +3,29 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![Multi-Agent Orchestration](https://img.shields.io/badge/Multi--Agent-Orchestration-7c3aed?style=flat-square)]()
+[![v1.0.0](https://img.shields.io/badge/v1.0.0-Built--in%20Memory-2ecc71?style=flat-square)]()
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🚀 Vanilla OpenCode Install (One-Click Prompt)
+## 🎉 v1.0.0 Highlights
+
+> **First Stable Release!** Built-in Super-Memory is here with zero external dependencies.
+
+| Feature | Description |
+|---------|-------------|
+| **Built-in Memory** | Super-Memory-TS core imported directly — no external server needed |
+| **Auto Indexing** | Project files indexed automatically on plugin load |
+| **Background Watching** | chokidar detects changes and updates index incrementally |
+| **Metrics Collection** | Track agent performance and routing efficiency |
+| **Multi-Project Workspaces** | Switch between projects with isolated memory contexts |
+
+---
+
+## 🚚 Quick Start
+
+### Option 1: One-Click Install (Recommended)
 
 > **Copy and paste the following prompt into a fresh OpenCode Builder session. It will do everything automatically.**
 
@@ -28,6 +45,19 @@ I want you to install the Boomerang multi-agent plugin for OpenCode. Do this ste
    a) Restart OpenCode completely
    b) After restart, open the Skills panel (type /skills) and select "boomerang-init" to run the initialization skill
 ```
+
+---
+
+### Option 2: Manual Install
+
+1. Install Boomerang from PyPI:
+   ```bash
+   pip install opencode-boomerang
+   # Or if using uv
+   uv pip install opencode-boomerang
+   ```
+2. Start OpenCode and run `/boomerang-init` skill
+3. Restart OpenCode for agents to load
 
 ---
 
@@ -67,10 +97,12 @@ Boomerang is an intelligent multi-agent orchestration plugin for [OpenCode](http
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  🔄 THE BOOMERANG PROTOCOL                       │
+│                  🧠 BUILT-IN SUPER-MEMORY                        │
 │                                                                 │
-│   1️⃣ Memory   →   2️⃣ Think (Sequential)   →   3️⃣ Delegate   │
-│   4️⃣ Git Check →   5️⃣ Quality Gates →   6️⃣ Save Memory        │
+│   • Direct module import — zero MCP overhead                    │
+│   • Automatic project indexing on startup                       │
+│   • Background file watching with incremental updates           │
+│   • Per-project database isolation                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

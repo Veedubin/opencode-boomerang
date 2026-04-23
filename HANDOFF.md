@@ -2,6 +2,95 @@
 
 ## Session History
 
+### 2026-04-23 — v1.0.0 Documentation Audit
+
+**Status**: v1.0.0 release documentation complete
+
+#### What Was Accomplished
+
+1. **Documentation Audit Completed**
+   - Checked all core docs against audit checklist
+   - Updated CHANGELOG.md with v1.0.0 features
+   - Updated README.md with v1.0.0 highlights section
+   - Updated ROADMAP.md with Phase 4 complete, Phase 5 in progress
+
+2. **Version Bumps**
+   - pyproject.toml: 0.6.0 → 1.0.0
+   - package.json: 0.6.0 → 1.0.0
+
+3. **Documentation Created**
+   - docs/METRICS.md - Metrics overview and collection guide
+   - docs/WORKSPACES.md - Multi-project workspace management
+   - docs/MIGRATION-v0.5-to-v1.0.md - Migration guide for v0.5.x users
+   - docs/LLM_PROVIDER_GUIDE.md - Provider comparison and agent assignments
+
+4. **Docs Marked Deprecated**
+   - docs/super-memory-mcp-update-spec.md - Legacy doc (built-in is now default)
+
+#### Key Decisions This Session
+
+- Built-in memory is now the primary integration path
+- MCP mode remains available for external tool compatibility
+- Version alignment: Boomerang v1.0.0 with Super-Memory-TS v1.0.0
+
+#### Files Modified
+
+- boomerang/CHANGELOG.md — v1.0.0 entry with breaking changes
+- boomerang/README.md — v1.0.0 highlights and architecture update
+- boomerang/ROADMAP.md — Phase 4 complete, Phase 5 details
+- boomerang/pyproject.toml — version 0.6.0 → 1.0.0
+- boomerang/package.json — version 0.6.0 → 1.0.0
+
+#### Files Created
+
+- boomerang/docs/METRICS.md
+- boomerang/docs/WORKSPACES.md
+- boomerang/docs/MIGRATION-v0.5-to-v1.0.md
+- boomerang/docs/LLM_PROVIDER_GUIDE.md
+
+---
+
+#### What Was Accomplished
+
+1. **Built-in Super-Memory Architecture**
+   - Super-Memory-TS core modules now imported directly into Boomerang
+   - No MCP server required for Boomerang operation
+   - Eliminates HTTP latency and protocol overhead
+
+2. **Automatic Project Indexing**
+   - Project indexing starts automatically when Boomerang plugin loads
+   - File watcher (chokidar) runs continuously in background
+   - Incremental updates via SHA-256 hash comparison
+
+3. **Version Alignment**
+   - Boomerang: v0.5.0 → v0.6.0
+   - Super-Memory-TS: v0.2.0 → v0.6.0
+   - Both projects now version-aligned for tandem development
+
+4. **Documentation Updates**
+   - ROADMAP.md: Added Phase 4 built-in memory deliverables
+   - AGENTS.md: Documented dual integration architecture (built-in vs MCP)
+   - HANDOFF.md: Added v0.6.0 session entry
+   - Super-Memory-TS README.md: Clarified dual use cases
+   - Super-Memory-TS CHANGELOG.md: Expanded v0.6.0 entry
+
+#### Key Decisions This Session
+
+- **Built-in is default**: Direct module import is the primary integration path
+- **MCP is for external tools**: Cross-session persistence only when needed by other frameworks
+- **Version sync**: Both projects at v0.6.0 to indicate breaking-change alignment
+- **Automatic indexing**: No manual intervention required for project setup
+
+#### Files Modified
+
+- boomerang/ROADMAP.md — Phase 4 with built-in memory
+- boomerang/AGENTS.md — Dual integration architecture
+- boomerang/HANDOFF.md — v0.6.0 session entry
+- Super-Memory-TS/README.md — Architecture section updated
+- Super-Memory-TS/CHANGELOG.md — v0.6.0 entry expanded
+
+---
+
 ### 2026-04-22 — v0.5.0 Massive Update Session
 
 **Status**: v0.5.0 tagged, ready to push to GitHub and publish to NPM

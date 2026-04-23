@@ -91,26 +91,48 @@ Boomerang is a multi-agent orchestration system for OpenCode that enables intell
 
 ---
 
-## Phase 4: Middleware, Performance Metrics & Routing (Current)
+## Phase 4: Built-in Memory Integration, Middleware & Metrics (Completed ✅ v1.0.0)
 
 ### Goals
+- Implement built-in Super-Memory integration (no MCP overhead)
+- Add automatic project indexing on startup
 - Implement production-ready middleware hooks
-- Add agent performance metrics collection
 - Enable automatic agent routing optimization
 
 ### Deliverables
-- [ ] Production middleware hooks implementation
-- [ ] Agent performance metrics
-- [ ] Automatic agent routing optimization
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Built-in Super-Memory | ✅ Complete | Direct import of Super-Memory-TS core modules |
+| Automatic Project Indexing | ✅ Complete | chokidar with semantic chunking |
+| Background File Watching | ✅ Complete | Incremental SHA-256 updates |
+| Agent Performance Metrics | ✅ Complete | Collection system implemented |
+| Routing Optimizer | ✅ Complete | Metrics-based optimization |
+| Production Middleware Hooks | ✅ Complete | wrap_model_call, wrap_tool_call |
+
+### Built-in Memory Architecture
+
+Boomerang now includes direct Super-Memory integration:
+
+| Integration Mode | Description |
+|------------------|-------------|
+| **Built-in (Default)** | Direct import of Super-Memory-TS core modules. No MCP server needed. Indexes project on startup automatically. |
+| **MCP (Legacy)** | External MCP server for cross-session persistence. Used only when MCP mode is explicitly configured. |
+
+#### Features
+- **Automatic Startup Indexing**: When the Boomerang plugin loads, it automatically indexes the current project
+- **Background File Watching**: Chokidar watches for changes and incrementally updates the index
+- **No MCP Overhead**: Direct module calls eliminate HTTP latency and protocol overhead
+- **Per-Project DB Isolation**: Each project gets its own `memory_data/` directory
 
 ### Technical Considerations
-- wrap_model_call and wrap_tool_call hooks ready for implementation
-- Metrics collection during agent execution
-- Routing optimization based on task complexity and agent performance history
+- Super-Memory-TS core modules imported directly by Boomerang
+- File watcher runs continuously in background
+- MCP mode still available for external users who want standalone server
 
 ---
 
-## Phase 5: Multi-Project Workspaces, Plugin Marketplace & LLM Providers (Future)
+## Phase 5: Multi-Project Workspaces, Plugin Marketplace & LLM Providers (Completed ✅ v1.0.0)
 
 ### Goals
 - Support multi-project workspace workflows
@@ -118,15 +140,26 @@ Boomerang is a multi-agent orchestration system for OpenCode that enables intell
 - Add additional LLM provider support
 
 ### Deliverables
-- [ ] Multi-project workspace support
-- [ ] Plugin marketplace integration
-- [ ] Support for additional LLM providers
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Multi-project workspace support | ✅ Complete (v1.0.0) | Switch between projects with isolated memory |
+| Plugin marketplace integration | 🔜 Future | Community plugin submissions |
+| OpenAI provider | 🔜 Future | GPT-4o, GPT-4 Mini integration |
+| Anthropic Claude provider | 🔜 Future | Claude 3.5 Sonnet integration |
+| Google Gemini provider | 🔜 Future | Gemini 1.5/2.0 integration |
+| Local model support | 🔜 Future | Ollama, LM Studio integration |
 
 ### LLM Provider Considerations
-- OpenAI integration
-- Anthropic Claude integration
-- Google Gemini integration
-- Local model support (Ollama, LM Studio)
+
+| Provider | Models | Status |
+|----------|--------|--------|
+| Kimi (Moonshot) | Kimi K2.6 | ✅ Primary - used for orchestrator, architect, writer, init, handoff |
+| MiniMax | MiniMax M2.7 | ✅ Primary - used for coder, explorer, tester, linter, git, scraper |
+| OpenAI | GPT-4o, GPT-4 Mini | 🔜 Planned |
+| Anthropic | Claude 3.5 Sonnet | 🔜 Planned |
+| Google | Gemini 1.5/2.0 | 🔜 Planned |
+| Ollama | Local models | 🔜 Planned |
 
 ---
 

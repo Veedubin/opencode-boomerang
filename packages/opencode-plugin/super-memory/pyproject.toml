@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "super-memory-mcp"
+version = "0.5.1"
+description = "A semantic memory storage and retrieval system using LanceDB and sentence transformers"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "lancedb",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "sentence-transformers",
+    "fastmcp",
+    "markitdown>=0.1.5",
+    "onnxruntime-gpu>=1.24.2",
+    "pydantic<2.12",
+]
+
+[project.scripts]
+super-memory-mcp = "super_memory:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/super_memory"]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu12"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.11.0",
+]

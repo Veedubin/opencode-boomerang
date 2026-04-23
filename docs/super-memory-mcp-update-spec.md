@@ -1,9 +1,98 @@
-# Super-Memory-MCP Server Update Specification
+# ⚠️ DEPRECATED: Super-Memory-MCP Server Update Specification
 
-**Document Version:** 1.0  
-**Date:** 2026-04-22  
-**Prepared For:** super-memory-mcp maintenance team  
-**Context:** Boomerang agent system now requires mandatory super-memory usage; current implementation has path confusion, missing tool wrappers, and database recovery issues.
+> **Document Status**: DEPRECATED — Built-in Super-Memory is now the default integration path
+> **Superseded By**: Built-in Super-Memory (direct module import)
+> **Last Updated**: 2026-04-22
+> **Reason**: This spec was for MCP mode only. Boomerang v1.0.0 uses built-in memory by default.
+
+---
+
+## Legacy Document Notice
+
+**This document describes MCP-specific updates that are no longer the primary integration path.**
+
+Boomerang v1.0.0 includes built-in Super-Memory integration via direct module import. The MCP server (super-memory-mcp) is now:
+
+- **Optional**: Only needed for cross-session persistence with external tools
+- **Legacy**: MCP mode is maintained for compatibility but not required for Boomerang
+- **Deprecated path**: The database path fixes and tool wrappers described here are handled automatically by the built-in integration
+
+### When to Use MCP Mode
+
+Use the MCP server only if:
+1. External tools (non-Boomerang) need super-memory access
+2. You require standalone server architecture
+3. Sharing memory across different AI frameworks
+
+### Migration from MCP to Built-in
+
+If you were using MCP mode with Boomerang:
+
+| Before (MCP) | After (Built-in) |
+|--------------|------------------|
+| `uvx super-memory-mcp` running | No separate process needed |
+| `SUPER_MEMORY_DB_PATH` env var | Automatic per-project DB |
+| `mcp.super-memory` in config | Removed (built-in handles) |
+| Manual `index_project` calls | Automatic on plugin load |
+
+---
+
+## Original Document Content
+
+This section preserves the original specification for historical reference and for users who still use MCP mode.
+
+### Issue 1: Database Path Resolution
+
+*See original document for path validation warning implementation.*
+
+### Issue 2: Missing Tool Wrappers
+
+*See original document for `boomerang_memory_search_tiered` and `boomerang_memory_search_parallel` implementation.*
+
+### Issue 3: Database Corruption Recovery
+
+*See original document for corruption detection and auto-recovery implementation.*
+
+---
+
+## Quick Reference for MCP Mode Users
+
+If you still need MCP mode for external tool integration:
+
+```bash
+# Install MCP server
+uv tool install super-memory-mcp
+
+# Set explicit database path
+export SUPER_MEMORY_DB_PATH=/path/to/your/memory_data
+
+# Run MCP server
+uvx super-memory-mcp
+```
+
+### Configuration for MCP Mode
+
+In your `opencode.json`:
+
+```json
+{
+  "mcp": {
+    "super-memory": {
+      "type": "local",
+      "command": ["uvx", "super-memory-mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+---
+
+## Getting Help
+
+- **Built-in Memory**: See [AGENTS.md](../AGENTS.md) for built-in memory architecture
+- **Migration**: See [MIGRATION-v0.5-to-v1.0.md](./MIGRATION-v0.5-to-v1.0.md)
+- **Issues**: https://github.com/Veedubin/opencode-boomerang/issues
 
 ---
 
