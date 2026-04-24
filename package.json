@@ -2,6 +2,14 @@
   "name": "@veedubin/boomerang-v2",
   "version": "2.0.1",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Veedubin/opencode-boomerang.git"
+  },
+  "homepage": "https://github.com/Veedubin/opencode-boomerang#readme",
+  "bugs": {
+    "url": "https://github.com/Veedubin/opencode-boomerang/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
