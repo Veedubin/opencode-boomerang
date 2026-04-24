@@ -12,13 +12,80 @@
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Common search paths for legacy super-memory data
+const COMMON_MEMORY_PATHS = [
+  './memory_data',
+  './.super-memory/memory',
+  '../memory_data',
+  '../../memory_data',
+  path.join(os.homedir(), 'memory_data'),
+  path.join(os.homedir(), '.super-memory/memory'),
+  path.join(os.homedir(), 'Projects/MCP-Servers/Super-Memory/memory_data'),
+  path.join(os.homedir(), 'Projects/MCP-Servers/memory_data'),
+];
+
 const OLD_PACKAGE_NAME = 'super-memory-mcp';
 const NEW_PACKAGE_NAME = '@veedubin/opencode-boomerang';
+const DEFAULT_MIGRATION_TARGET = path.join(os.homedir(), '.local', 'share', 'opencode-boomerang', 'memory');
+
+// Helper: check if file/directory exists
+async function fileExists(filePath) {
+  try {
+    await fs.promises.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Find LanceDB files in a directory
+async function findLanceDBFiles(dir) {
+  try {
+    const files = await fs.promises.readdir(dir);
+    return files.filter(f => f.endsWith('.lance') || f === 'memories.lance');
+  } catch {
+    return [];
+  }
+}
+
+// Search common locations for legacy memory data
+async function findLegacyMemoryData() {
+  const found = [];
+  
+  for (const memPath of COMMON_MEMORY_PATHS) {
+    if (await fileExists(memPath)) {
+      // Check if it contains LanceDB data or JSON memory files
+      const lanceFiles = await findLanceDBFiles(memPath);
+      let hasData = lanceFiles.length > 0;
+      
+      // Also check for JSON memory files (legacy format)
+      if (!hasData) {
+        try {
+          const files = await fs.promises.readdir(memPath);
+          hasData = files.some(f => f.endsWith('.json'));
+        } catch {
+          // ignore
+        }
+      }
+      
+      if (hasData) {
+        found.push({
+          path: memPath,
+          type: lanceFiles.length > 0 ? 'lancedb' : 'json',
+          lanceFiles
+        });
+      }
+    }
+  }
+  
+  return found;
+}
 
 function log(message, type = 'info') {
   const prefix = {
@@ -66,41 +133,98 @@ function getMemoryDataPath() {
   return path.join(home, '.super-memory', 'data');
 }
 
-function migrateMemoryData() {
-  const oldPath = getMemoryDataPath();
-  const newPath = path.join(process.env.HOME || '.', '.opencode-boomerang', 'memory');
-  
-  if (!fs.existsSync(oldPath)) {
+async function copyDir(src, dst) {
+  try {
+    await fs.promises.mkdir(dst, { recursive: true });
+    const entries = await fs.promises.readdir(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const dstPath = path.join(dst, entry.name);
+      if (entry.isDirectory()) {
+        await copyDir(srcPath, dstPath);
+      } else {
+        await fs.promises.copyFile(srcPath, dstPath);
+      }
+    }
+    return true;
+  } catch (err) {
+    throw err;
+  }
+}
+
+// Migrate a single location's memory data
+async function migrateFromLocation(loc, newPath) {
+  try {
+    const files = await fs.promises.readdir(loc.path);
+    let count = 0;
+    
+    for (const file of files) {
+      const src = path.join(loc.path, file);
+      const dst = path.join(newPath, `${path.basename(loc.path)}_${file}`);
+      
+      const stat = await fs.promises.stat(src);
+      if (stat.isDirectory()) {
+        // LanceDB data is stored as directory
+        await copyDir(src, dst);
+        count++;
+      } else if (file.endsWith('.json')) {
+        // JSON memory files
+        await fs.promises.copyFile(src, dst);
+        count++;
+      }
+    }
+    
+    return { path: loc.path, count, success: true };
+  } catch (err) {
+    return { path: loc.path, count: 0, success: false, error: err.message };
+  }
+}
+
+async function migrateMemoryData(foundLocations) {
+  if (foundLocations.length === 0) {
     log('No legacy memory data found to migrate', 'info');
     return { migrated: false };
   }
-  
-  log(`Found legacy memory data at: ${oldPath}`, 'info');
+
+  // Show found locations
+  log(`Found ${foundLocations.length} legacy memory location(s):`, 'info');
+  foundLocations.forEach((loc, i) => {
+    log(`  ${i + 1}. ${loc.path} (${loc.type})`, 'info');
+  });
+
+  // For non-interactive usage, migrate all
+  const migrateIndices = foundLocations.map((_, i) => i);
+
+  const newPath = DEFAULT_MIGRATION_TARGET;
   
   // Create new directory if needed
-  const newDir = path.dirname(newPath);
-  if (!fs.existsSync(newDir)) {
-    fs.mkdirSync(newDir, { recursive: true });
+  if (!fs.existsSync(newPath)) {
+    fs.mkdirSync(newPath, { recursive: true });
   }
-  
-  try {
-    // Copy memory data
-    const memories = fs.readdirSync(oldPath).filter(f => f.endsWith('.json'));
-    let count = 0;
+
+  let totalMigrated = 0;
+  const results = [];
+
+  for (const idx of migrateIndices) {
+    const loc = foundLocations[idx];
+    log(`\nMigrating from: ${loc.path}`, 'info');
     
-    for (const file of memories) {
-      const src = path.join(oldPath, file);
-      const dst = path.join(newPath, file);
-      fs.copyFileSync(src, dst);
-      count++;
+    const result = await migrateFromLocation(loc, newPath);
+    if (result.success) {
+      log(`Migrated ${result.count} files from ${loc.path}`, 'success');
+    } else {
+      log(`Failed to migrate ${loc.path}: ${result.error}`, 'error');
     }
-    
-    log(`Migrated ${count} memory files`, 'success');
-    return { migrated: true, count, oldPath, newPath };
-  } catch (err) {
-    log(`Failed to migrate memory data: ${err.message}`, 'error');
-    return { migrated: false, error: err.message };
+    totalMigrated += result.count;
+    results.push(result);
   }
+
+  return {
+    migrated: totalMigrated > 0,
+    count: totalMigrated,
+    results,
+    newPath
+  };
 }
 
 function updateOpenCodeConfig() {
@@ -182,20 +306,23 @@ async function main() {
   
   console.log('');
   
-  // Step 2: Migrate memory data
-  log('Step 2: Migrating memory data...');
-  const migrationResult = migrateMemoryData();
+  // Step 2: Search for and migrate memory data
+  log('Step 2: Searching for legacy memory data...');
+  const foundLocations = await findLegacyMemoryData();
+  
+  log('Step 3: Migrating memory data...');
+  const migrationResult = await migrateMemoryData(foundLocations);
   
   console.log('');
-  
-  // Step 3: Update config
-  log('Step 3: Updating OpenCode configuration...');
+
+  // Step 4: Update config
+  log('Step 4: Updating OpenCode configuration...');
   const configResult = updateOpenCodeConfig();
-  
+
   console.log('');
-  
-  // Step 4: Report artifacts
-  log('Step 4: Checking for old artifacts...');
+
+  // Step 5: Report artifacts
+  log('Step 5: Checking for old artifacts...');
   const cleanupResult = removeOldArtifacts();
   
   console.log('\n==============================');
