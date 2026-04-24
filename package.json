@@ -1,0 +1,32 @@
+{
+  "name": "@boomerang/v2",
+  "version": "2.0.0-alpha.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "test": "vitest",
+    "coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "@lancedb/lancedb": "latest",
+    "@modelcontextprotocol/sdk": "latest",
+    "@xenova/transformers": "latest",
+    "chokidar": "latest",
+    "fuse.js": "latest",
+    "ink": "latest",
+    "ink-text-input": "^6.0.0",
+    "react": "latest",
+    "uuid": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/uuid": "latest",
+    "@vitest/coverage-v8": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
