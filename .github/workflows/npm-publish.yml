@@ -33,14 +33,19 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           scope: '@veedubin'
 
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Run typecheck
-        run: npx tsc --noEmit
+        run: bunx tsc --noEmit
 
       - name: Build
-        run: npm run build
+        run: bun run build
 
       - name: Verify dist exists
         run: |
