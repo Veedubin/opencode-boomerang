@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target node",
+    "build": "tsc",
     "test": "vitest",
     "coverage": "vitest --coverage"
   },
@@ -26,6 +26,7 @@
     "@types/react": "latest",
     "@types/uuid": "latest",
     "@vitest/coverage-v8": "latest",
+    "react-devtools-core": "latest",
     "typescript": "latest",
     "vitest": "latest"
   }
