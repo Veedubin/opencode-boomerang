@@ -38,6 +38,9 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Remove conflicting lock file
+        run: rm -f package-lock.json
+
       - name: Install dependencies
         run: bun install
 
