@@ -40,26 +40,40 @@
 
 > **⚠️ IMPORTANT**: All sub-agents are required to follow the super-memory protocol. Prompts have been updated to make this MANDATORY, not optional.
 
-### MCP-Only Architecture (v2.0.0)
+### Built-in Integration Architecture (v2.1.4+)
 
-Boomerang v2.0.0 uses **MCP exclusively** for Super-Memory integration. No direct imports from Super-Memory-TS.
+Boomerang v2 uses **built-in direct integration** with Super-Memory-TS core modules.
 
 | Integration | Description |
 |-------------|-------------|
-| **MCP Only** | All memory operations go through MCP tool calls |
+| **Built-in (Default)** | Direct import of Super-Memory-TS core modules — zero overhead |
+| **MCP (External)** | Standalone MCP server for non-boomerang users |
 
-#### How MCP Memory Works
+#### How Built-in Memory Works
 
-- Boomerang initializes a MemoryClient that connects to Super-Memory-TS MCP server
-- All memory tool calls route through MCP to the external Super-Memory-TS server
-- Boomerang no longer imports Super-Memory-TS core modules directly
-- Memory operations use these MCP tool names:
-  - `super-memory_query_memories` - Search memories (use `strategy` parameter for tiered/vector_only/text_only)
-  - `super-memory_add_memory` - Save to memory (all saves go through this tool)
+- Boomerang imports `MemorySystem` directly from `src/memory/index.js`
+- `MemoryService` wraps core modules with a clean API
+- All memory operations are direct function calls (no serialization)
+- Project indexing runs via `ProjectIndexer` directly
+- The MCP server (`src/server.ts`) is ONLY for external users
+
+#### Memory Operations (Direct)
+
+All agents MUST:
+1. **Query memory FIRST** — `memoryService.queryMemories()` before work
+2. **Use sequential-thinking** — For complex tasks
+3. **Save results** — `memoryService.addMemory()` when complete
+
+### Legacy: MCP-Only Architecture (v2.0.0 - REPLACED)
+
+> **⚠️ DEPRECATED**: The MCP-only architecture (v2.0.0) has been replaced by built-in integration. The MCP server is retained only for external users who don't use Boomerang.
+
+- Boomerang v2.1.4+ uses direct imports from `src/memory/` instead of MCP tool calls
+- MCP tool names below are only for external users connecting to the standalone server:
+  - `super-memory_query_memories` - Search memories
+  - `super-memory_add_memory` - Save to memory
   - `super-memory_search_project` - Search indexed project files
   - `super-memory_index_project` - Index project files
-
-All agents use MCP tools to interact with Super-Memory-TS.
 
 ### Memory Operations
 

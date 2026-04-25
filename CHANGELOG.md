@@ -14,6 +14,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **npm provenance**: Fixed package name mismatch blocking npm provenance attestation
 
+## [2.1.6] - 2026-04-25
+
+### Fixed (Critical Architecture Recovery)
+- **Restored built-in memory integration** — Removed broken MCP-only architecture
+- **Deleted memory-client.ts** — Eliminated circular indirection (same codebase spawning itself)
+- **Created memory-service.ts** — Direct imports from src/memory/ with zero overhead
+- **Protocol enforcement** — Code-level validation replaces honor-system prompts
+- **Context monitoring** — Automatic compaction at 40%, handoff at 80%
+- **Metrics collection** — Actually wired into task execution
+- **Intelligent routing** — Metrics-based agent selection with keyword fallback
+
+### Added
+- `src/protocol/tracker.ts` — Session compliance tracking
+- `src/protocol/enforcer.ts` — Auto-remediation for protocol violations
+- `src/middleware/pipeline.ts` — Composable execution middleware
+- `src/context/monitor.ts` — Context window threshold detection
+- `src/context/compactor.ts` — Automatic save-and-summarize compaction
+- `src/metrics/collector.ts` — Event-driven metrics with JSONL storage
+- `src/routing/scoring-router.ts` — Performance-based agent routing
+
+### Changed
+- `src/orchestrator.ts` — Uses MemoryService, context monitoring, scoring router
+- `src/task-executor.ts` — Protocol enforcement, middleware, metrics emission
+- `src/index.ts` — MemoryService initialization
+
 ## [2.1.4] - 2026-04-25
 
 ### Sync with super-memory-ts v2.1.4

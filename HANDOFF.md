@@ -2,6 +2,80 @@
 
 ## Session History
 
+### 2026-04-25 — v2.1.6 (Architectural Recovery)
+
+**Status**: v2.1.6 committed, all 5 phases complete
+
+#### What Was Accomplished
+
+1. **Phase 1: Restored Built-in Integration**
+   - Created `src/memory-service.ts` with direct imports from `src/memory/`
+   - Deleted `src/memory-client.ts` (circular MCP indirection)
+   - Modified `src/index.ts`, `src/orchestrator.ts`, `src/task-executor.ts` to use MemoryService
+   - Zero serialization overhead for memory operations
+
+2. **Phase 2: Protocol Enforcement**
+   - Created `src/protocol/tracker.ts` — per-session compliance tracking
+   - Created `src/protocol/enforcer.ts` — blocks execution on violations, auto-fixes when possible
+   - Created `src/middleware/pipeline.ts` — composable middleware
+   - Git check and quality gates are now automatic, not optional
+
+3. **Phase 3: Metrics Collection**
+   - Created `src/metrics/collector.ts` — event-driven with JSONL storage
+   - Emits task.started, task.completed, task.failed, routing.decision events
+   - Actually wired into task-executor.ts and orchestrator.ts
+
+4. **Phase 4: Context Monitoring**
+   - Created `src/context/monitor.ts` — 40% compaction, 80% handoff thresholds
+   - Created `src/context/compactor.ts` — save summary to memory, reset context
+   - Automatic triggers in orchestrator lifecycle
+
+5. **Phase 5: Intelligent Routing**
+   - Created `src/routing/scoring-router.ts` — weighted scoring from metrics
+   - Falls back to keyword routing when < 5 samples
+   - Integrated into orchestrator.ts planTask()
+
+#### Key Decisions
+
+- Built-in integration is the ONLY path for boomerang-v2
+- MCP server remains for external users (src/server.ts)
+- Protocol enforcement is configurable via EnforcementConfig
+- Auto-fix attempts remediation before blocking
+- Metrics require 5+ samples before affecting routing
+
+#### Files Created
+
+- src/memory-service.ts
+- src/protocol/tracker.ts
+- src/protocol/enforcer.ts
+- src/middleware/pipeline.ts
+- src/context/monitor.ts
+- src/context/compactor.ts
+- src/metrics/collector.ts
+- src/routing/scoring-router.ts
+
+#### Files Modified
+
+- src/index.ts (MemoryService integration)
+- src/orchestrator.ts (MemoryService, context monitor, scoring router)
+- src/task-executor.ts (protocol enforcement, middleware, metrics)
+- src/tui/index.tsx, src/tui/hooks/useAgent.ts (MemoryService)
+- tests/integration/mcp-memory.test.ts (MemoryService tests)
+- tests/performance/mcp-benchmark.test.ts (MemoryService benchmarks)
+
+#### Files Deleted
+
+- src/memory-client.ts (broken MCP indirection)
+
+#### Next Session Priorities
+
+1. Test protocol enforcement in real workflows
+2. Verify context compaction triggers correctly
+3. Collect enough metrics for routing to be meaningful
+4. Push to GitHub and verify CI passes
+
+---
+
 ### 2026-04-25 — v1.1.0 (MCP-Only Release)
 
 **Status**: v1.1.0 tagged and committed
