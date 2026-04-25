@@ -104,7 +104,7 @@ export function useAgent() {
 
         if (orchestratorInstance) {
           // Use real orchestrator
-          taskGraph = orchestratorInstance.planTask(message);
+          taskGraph = await orchestratorInstance.planTask(message);
           console.debug('[useAgent] Planned task graph:', taskGraph.tasks.length, 'tasks');
         } else {
           // Fallback to mock task graph
@@ -210,7 +210,7 @@ export function useAgent() {
         let taskGraph: TaskGraph;
 
         if (orchestratorInstance) {
-          taskGraph = orchestratorInstance.planTask(task);
+          taskGraph = await orchestratorInstance.planTask(task);
         } else {
           taskGraph = {
             tasks: [{

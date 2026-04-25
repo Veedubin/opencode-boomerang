@@ -4,6 +4,10 @@
 
 import type { Task, TaskGraph, TaskResult, TaskStatus } from './orchestrator.js';
 import { Orchestrator } from './orchestrator.js';
+import { ProtocolEnforcer, DEFAULT_ENFORCEMENT_CONFIG } from './protocol/enforcer.js';
+import { globalMiddleware, type MiddlewareContext } from './middleware/pipeline.js';
+import { protocolTracker } from './protocol/tracker.js';
+import { metricsCollector } from './metrics/collector.js';
 
 const TASK_COMPLETE_SIGNAL = 'TASK_COMPLETE';
 
@@ -295,22 +299,101 @@ export class TaskExecutor {
    */
   async executeSingle(task: Task): Promise<TaskResult> {
     const startTime = Date.now();
+    const sessionId = this.orchestrator.sessionId || 'default';
+    const enforcer = new ProtocolEnforcer(DEFAULT_ENFORCEMENT_CONFIG);
+
+    // Emit metrics
+    metricsCollector.emit({
+      type: 'task.started',
+      sessionId,
+      data: { taskId: task.id, agent: task.agent, taskType: task.type },
+    });
 
     try {
-      // Execute agent with timeout protection
-      const result = await this.executeWithTimeout(task);
+      // PRE-CONDITION CHECKS
+      const preCheck = await enforcer.validatePreConditions(sessionId, task.description);
+      if (!preCheck.passed) {
+        metricsCollector.emit({
+          type: 'protocol.violation',
+          sessionId,
+          data: { taskId: task.id, violations: preCheck.violations.map(v => v.rule) },
+        });
+        if (preCheck.autoFixed.length !== preCheck.violations.length) {
+          return {
+            taskId: task.id, success: false, output: '',
+            error: `Protocol violations: ${preCheck.violations.map(v => v.message).join(', ')}`,
+            duration: Date.now() - startTime,
+          };
+        }
+      }
 
-      return {
-        taskId: task.id,
-        success: true,
-        output: result,
-        duration: Date.now() - startTime,
+      // Git check before code changes
+      if (task.type === 'code') {
+        const gitCheck = await enforcer.enforceGitCheck(sessionId);
+        if (!gitCheck.clean) {
+          return {
+            taskId: task.id, success: false, output: '',
+            error: `Working tree not clean. Branch: ${gitCheck.branch}. Commit or stash first.`,
+            duration: Date.now() - startTime,
+          };
+        }
+      }
+
+      // Execute via middleware pipeline
+      const ctx: MiddlewareContext = {
+        sessionId, taskId: task.id, agent: task.agent,
+        taskDescription: task.description, metadata: {},
       };
+
+      let result: string = '';
+      await globalMiddleware.execute(ctx, async () => {
+        result = await this.executeWithTimeout(task);
+      });
+
+      // Track code changes
+      if (task.type === 'code') {
+        protocolTracker.markCodeChanges(sessionId);
+      }
+
+      // POST-CONDITION CHECKS
+      const postCheck = await enforcer.validatePostConditions(sessionId);
+      if (!postCheck.passed) {
+        return {
+          taskId: task.id, success: false, output: result,
+          error: `Post-execution violations: ${postCheck.violations.map(v => v.message).join(', ')}`,
+          duration: Date.now() - startTime,
+        };
+      }
+
+      // Quality gates after code changes
+      if (task.type === 'code') {
+        const quality = await enforcer.enforceQualityGates(sessionId);
+        if (!quality.passed) {
+          return {
+            taskId: task.id, success: false, output: result,
+            error: `Quality gates failed: ${quality.errors.join(', ')}`,
+            duration: Date.now() - startTime,
+          };
+        }
+      }
+
+      // Success metrics
+      metricsCollector.emit({
+        type: 'task.completed',
+        sessionId,
+        data: { taskId: task.id, duration: Date.now() - startTime, success: true },
+      });
+
+      return { taskId: task.id, success: true, output: result, duration: Date.now() - startTime };
+
     } catch (error) {
+      metricsCollector.emit({
+        type: 'task.failed',
+        sessionId,
+        data: { taskId: task.id, duration: Date.now() - startTime, error: error instanceof Error ? error.message : 'Unknown' },
+      });
       return {
-        taskId: task.id,
-        success: false,
-        output: '',
+        taskId: task.id, success: false, output: '',
         error: error instanceof Error ? error.message : 'Unknown error',
         duration: Date.now() - startTime,
       };

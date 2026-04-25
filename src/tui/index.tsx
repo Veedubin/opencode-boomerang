@@ -11,7 +11,7 @@ import { loadAgentsFromDirectory } from './components/AgentSelector.js';
 import { useSession } from './hooks/useSession.js';
 import { useMemory } from './hooks/useMemory.js';
 import { useAgent } from './hooks/useAgent.js';
-import { MemoryClient } from '../memory-client.js';
+import { getMemoryService, type MemoryService } from '../memory-service.js';
 import { Orchestrator, DEFAULT_AGENTS } from '../orchestrator.js';
 import { loadAgents } from '../asset-loader.js';
 import type { Message, Agent, ConnectionStatus, MemoryStats } from './types.js';
@@ -30,7 +30,7 @@ const App: React.FC<AppProps> = ({ initialAgent }) => {
   const [memoryStats, setMemoryStats] = useState<MemoryStats>({ count: 0 });
   const [isReady, setIsReady] = useState(false);
   const [orchestratorInstance, setOrchestratorInstance] = useState<Orchestrator | null>(null);
-  const [memoryClientInstance, setMemoryClientInstance] = useState<MemoryClient | null>(null);
+  const [memoryClientInstance, setMemoryClientInstance] = useState<MemoryService | null>(null);
 
   // Hooks
   const sessionManager = useSession();
@@ -57,13 +57,13 @@ const App: React.FC<AppProps> = ({ initialAgent }) => {
         const orch = new Orchestrator(agentDefs);
         setOrchestratorInstance(orch);
 
-        // Initialize memory client
-        const mc = new MemoryClient();
+        // Initialize memory service
+        const mc = getMemoryService();
         try {
-          await mc.connect();
+          await mc.initialize();
           setConnectionStatus({ connected: true, lastHeartbeat: new Date() });
         } catch {
-          console.warn('[App] Memory client connection failed - running in offline mode');
+          console.warn('[App] Memory service initialization failed - running in offline mode');
           setConnectionStatus({ connected: false });
         }
         setMemoryClientInstance(mc);
@@ -91,9 +91,7 @@ const App: React.FC<AppProps> = ({ initialAgent }) => {
 
     // Cleanup on unmount
     return () => {
-      if (memoryClientInstance) {
-        memoryClientInstance.disconnect().catch(console.error);
-      }
+      // MemoryService doesn't need disconnect
     };
   }, []);
 
@@ -149,14 +147,11 @@ const App: React.FC<AppProps> = ({ initialAgent }) => {
   useEffect(() => {
     let isRunning = true;
     const handleSigint = () => {
-      if (isRunning) {
-        isRunning = false;
-        // Cleanup
-        if (memoryClientInstance) {
-          memoryClientInstance.disconnect().catch(console.error);
-        }
-        process.exit(0);
-      }
+if (isRunning) {
+      isRunning = false;
+      // MemoryService doesn't need cleanup
+      process.exit(0);
+    }
     };
     process.on('SIGINT', handleSigint);
     return () => {
@@ -187,7 +182,7 @@ const App: React.FC<AppProps> = ({ initialAgent }) => {
       await agentRunner.sendMessage(text.trim(), targetAgent);
 
       // Save conversation to memory if connected
-      if (memoryClientInstance?.isConnected()) {
+      if (memoryClientInstance?.isInitialized()) {
         try {
           await memoryClientInstance.addMemory({
             content: `User: ${text.trim()}`,

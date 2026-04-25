@@ -33,10 +33,10 @@ export interface SkillDefinition {
 }
 
 import { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
-import { MemoryClient } from './memory-client.js';
+import { MemoryService, getMemoryService } from './memory-service.js';
 import { spawn } from 'child_process';
 
-let memoryClient: MemoryClient | null = null;
+let memoryService: MemoryService | null = null;
 
 /**
  * Register the plugin with the OpenCode registry
@@ -70,8 +70,8 @@ export async function execute(context: PluginContext): Promise<void> {
   const [command, ...args] = context.args;
 
   // Initialize memory system
-  memoryClient = new MemoryClient();
-  await memoryClient.connect();
+  memoryService = getMemoryService();
+  await memoryService.initialize();
 
   try {
     if (context.interactive) {
@@ -97,7 +97,7 @@ export async function execute(context: PluginContext): Promise<void> {
       }
     }
   } finally {
-    await memoryClient?.disconnect();
+    memoryService = null;
   }
 }
 
@@ -127,8 +127,8 @@ async function handleBoomerangCommand(context: PluginContext): Promise<void> {
 async function handleChatCommand(context: PluginContext): Promise<void> {
   console.log('Starting interactive chat mode...');
 
-  if (!memoryClient) {
-    console.error('Memory client not initialized');
+  if (!memoryService) {
+    console.error('Memory service not initialized');
     return;
   }
 
@@ -136,7 +136,7 @@ async function handleChatCommand(context: PluginContext): Promise<void> {
   if (context.args.length > 0) {
     const query = context.args.join(' ');
     console.log(`Searching memories for: ${query}`);
-    const results = await memoryClient.queryMemories(query, {});
+    const results = await memoryService.queryMemories(query, {});
     console.log(`Found ${results.length} memories`);
   } else {
     console.log('Chat mode ready. Type your queries.');
@@ -149,15 +149,15 @@ async function handleChatCommand(context: PluginContext): Promise<void> {
 async function handleIndexCommand(context: PluginContext): Promise<void> {
   console.log('Indexing project...');
 
-  if (!memoryClient) {
-    console.error('Memory client not initialized');
+  if (!memoryService) {
+    console.error('Memory service not initialized');
     return;
   }
 
   const path = context.args[0] || context.cwd;
   console.log(`Indexing path: ${path}`);
 
-  await memoryClient.indexProject(path);
+  await memoryService.indexProject(path);
   console.log('Project indexed successfully');
 }
 
@@ -195,4 +195,4 @@ async function startTUI(context: PluginContext): Promise<void> {
 
 // Re-export for external use
 export { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
-export { MemoryClient } from './memory-client.js';
+export { MemoryService, getMemoryService } from './memory-service.js';

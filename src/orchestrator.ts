@@ -3,8 +3,13 @@
  * Plans tasks, assigns agents, builds dependency graphs
  */
 
-import type { MemoryEntry, SearchOptions } from './memory/schema.js';
-import { getMemorySystem } from './memory/index.js';
+import { getMemoryService, MemoryService } from './memory-service.js';
+import { ProtocolEnforcer, DEFAULT_ENFORCEMENT_CONFIG } from './protocol/enforcer.js';
+import { protocolTracker } from './protocol/tracker.js';
+import { contextMonitor } from './context/monitor.js';
+import { contextCompactor } from './context/compactor.js';
+import { metricsCollector } from './metrics/collector.js';
+import { scoringRouter } from './routing/scoring-router.js';
 
 // Task types for agent assignment
 export type TaskType = 'explore' | 'code' | 'test' | 'review' | 'write' | 'git' | 'general';
@@ -138,19 +143,31 @@ function assignAgent(taskType: TaskType, agents: AgentDefinition[]): string {
  */
 export class Orchestrator {
   private agents: AgentDefinition[];
-  private memoryClient: ReturnType<typeof getMemorySystem> | null = null;
+  private memoryService: MemoryService;
   private autoMemory: boolean = true;
+  public sessionId: string = 'orchestrator';
 
   /**
    * Create a new Orchestrator
    * @param agents - Agent definitions available for task assignment
-   * @param memoryClient - Optional memory system client for context queries
+   * @param memoryService - Optional memory service for context queries
    */
-  constructor(agents: AgentDefinition[] = DEFAULT_AGENTS, memoryClient?: ReturnType<typeof getMemorySystem>) {
+  constructor(agents: AgentDefinition[] = DEFAULT_AGENTS, memoryService?: MemoryService) {
     this.agents = agents;
-    if (memoryClient) {
-      this.memoryClient = memoryClient;
-    }
+    this.memoryService = memoryService || getMemoryService();
+
+    // Context monitoring thresholds
+    contextMonitor.onThreshold(40, 'compact', async () => {
+      const result = await contextCompactor.compact(this.sessionId);
+      if (result.success) {
+        console.log(`[Context] Compacted: ${result.summary}`);
+      }
+    });
+
+    contextMonitor.onThreshold(80, 'handoff', async () => {
+      await contextCompactor.compact(this.sessionId);
+      throw new Error('CONTEXT_FULL_HANDOFF_REQUIRED: Context at 80%. Start new session.');
+    });
   }
 
   /**
@@ -163,17 +180,12 @@ export class Orchestrator {
   /**
    * Query memories for relevant context before planning
    */
-  async queryContext(request: string): Promise<MemoryEntry[]> {
+  async queryContext(query: string): Promise<any[]> {
     if (!this.autoMemory) return [];
     
     try {
-      const memorySystem = getMemorySystem();
-      if (!memorySystem.isInitialized()) {
-        await memorySystem.initialize();
-      }
-      
-      const results = await memorySystem.search(request, { topK: 5 });
-      return results.map(r => r.entry);
+      const results = await this.memoryService.queryMemories(query, { limit: 10 });
+      return results;
     } catch {
       return [];
     }
@@ -186,27 +198,16 @@ export class Orchestrator {
     if (!this.autoMemory || results.length === 0) return;
 
     try {
-      const memorySystem = getMemorySystem();
-      if (!memorySystem.isInitialized()) {
-        try {
-          await memorySystem.initialize();
-        } catch {
-          // Memory initialization failed - skip saving
-          return;
-        }
-      }
-
       for (const result of results) {
-        const text = result.success
+        const summary = result.success
           ? `Task completed: ${result.output}`
           : `Task failed: ${result.error ?? 'Unknown error'}`;
 
-        await memorySystem.addMemory({
-          text,
+        await this.memoryService.addMemory({
+          content: summary,
           sourceType: 'conversation',
-          sourcePath: `task://${result.taskId}`,
-          metadataJson: JSON.stringify({ taskId: result.taskId, success: result.success }),
-          sessionId: 'orchestrator',
+          sessionId: this.sessionId,
+          metadata: { type: 'session_summary' },
         });
       }
     } catch {
@@ -217,22 +218,41 @@ export class Orchestrator {
   /**
    * Parse user request and create task graph
    */
-  planTask(request: string): TaskGraph {
+  async planTask(request: string): Promise<TaskGraph> {
     // Parse request into subtasks
     const subtasks = this.parseRequest(request);
     
     // Build tasks with agent assignments
-    const tasks: Task[] = subtasks.map((desc, idx) => {
+    const tasks: Task[] = [];
+    for (const desc of subtasks) {
       const type = detectTaskType(desc);
-      return {
+      
+      // Try metrics-based routing first
+      let assignedAgent = 'boomerang';
+      try {
+        const routing = await scoringRouter.selectAgent(type);
+        assignedAgent = routing.agent;
+      } catch {
+        // Fallback to keyword-based routing
+        assignedAgent = assignAgent(type, this.agents);
+      }
+      
+      // Emit routing decision metrics
+      metricsCollector.emit({
+        type: 'routing.decision',
+        sessionId: this.sessionId,
+        data: { taskType: type, agent: assignedAgent, method: 'keyword' },
+      });
+      
+      tasks.push({
         id: generateTaskId(),
         type,
         description: desc,
-        agent: assignAgent(type, this.agents),
+        agent: assignedAgent,
         dependencies: [],
         status: 'pending' as TaskStatus,
-      };
-    });
+      });
+    }
     
     // Build dependency graph
     const edges = this.buildEdges(tasks);
