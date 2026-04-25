@@ -185,6 +185,8 @@ export class Orchestrator {
     
     try {
       const results = await this.memoryService.queryMemories(query, { limit: 10 });
+      const resultTexts = results.map(r => r.content);
+      contextMonitor.estimateUsageBatch([query, ...resultTexts]);
       return results;
     } catch {
       return [];
@@ -265,6 +267,10 @@ export class Orchestrator {
       }
     }
     
+    // Estimate context usage after planning
+    const taskTexts = tasks.map(t => t.description);
+    contextMonitor.estimateUsageBatch([request, ...taskTexts]);
+
     return { tasks, edges };
   }
 

@@ -74,6 +74,10 @@ export class ProtocolTracker {
   clearSession(sessionId: string) {
     this.sessions.delete(sessionId);
   }
+
+  recordInternalToolCall(toolName: string, args: Record<string, unknown>) {
+    this.recordToolCall('system', toolName, args);
+  }
 }
 
 export const protocolTracker = new ProtocolTracker();

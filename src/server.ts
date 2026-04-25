@@ -13,6 +13,7 @@ import { search as memorySearch } from './memory/search.js';
 import { searchProject } from './project-index/search.js';
 import { ProjectIndexer } from './project-index/indexer.js';
 import { MemoryError, ValidationError, NotFoundError, createErrorResponse } from './utils/errors.js';
+import { protocolTracker } from './protocol/tracker.js';
 
 // Server configuration
 const SERVER_NAME = 'super-memory';
@@ -181,6 +182,7 @@ const indexProjectSchema = z.object({
  * Tool: query_memories - Search memories
  */
 async function handleQueryMemories(args: unknown) {
+  protocolTracker.recordToolCall('mcp-session', 'query_memories', args as Record<string, unknown>);
   const parsed = queryMemoriesSchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));
@@ -224,6 +226,7 @@ async function handleQueryMemories(args: unknown) {
  * Tool: add_memory - Add a memory entry
  */
 async function handleAddMemory(args: unknown) {
+  protocolTracker.recordToolCall('mcp-session', 'add_memory', args as Record<string, unknown>);
   const parsed = addMemorySchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));
@@ -261,6 +264,7 @@ async function handleAddMemory(args: unknown) {
  * Tool: search_project - Search project chunks
  */
 async function handleSearchProject(args: unknown) {
+  protocolTracker.recordToolCall('mcp-session', 'search_project', args as Record<string, unknown>);
   const parsed = searchProjectSchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));
@@ -297,6 +301,7 @@ async function handleSearchProject(args: unknown) {
  * Tool: index_project - Start project indexing
  */
 async function handleIndexProject(args: unknown) {
+  protocolTracker.recordToolCall('mcp-session', 'index_project', args as Record<string, unknown>);
   const parsed = indexProjectSchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));

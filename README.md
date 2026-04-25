@@ -186,6 +186,62 @@ super-memory-mcp --version
 
 ---
 
+## 🔌 Standalone Super-Memory-TS Server
+
+For users who want Super-Memory-TS as a standalone MCP server (without Boomerang):
+
+### Running the Server
+
+```bash
+# From the project root
+node src/server.ts
+
+# Or with bun
+bun run src/server.ts
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LANCEDB_URI` | `memory://` | LanceDB storage location |
+| `MODEL_PATH` | (auto) | Path to embedding model |
+
+### MCP Configuration
+
+Add to your MCP client config:
+
+```json
+{
+  "mcp": {
+    "super-memory": {
+      "type": "local",
+      "command": ["node", "/path/to/boomerang-v2/src/server.ts"],
+      "enabled": true
+    }
+  }
+}
+```
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `query_memories` | Search memories using semantic similarity |
+| `add_memory` | Store a new memory entry |
+| `search_project` | Search indexed project files |
+| `index_project` | Trigger project indexing |
+
+### Differences from Built-in Mode
+
+| Feature | Built-in (Boomerang) | Standalone (MCP) |
+|---------|---------------------|------------------|
+| Memory overhead | Zero (direct calls) | JSON serialization + stdio |
+| Setup complexity | Automatic on plugin load | Manual server configuration |
+| Use case | Boomerang users | External tools, other frameworks |
+
+---
+
 ## 📋 Prerequisites
 
 | Dependency | Status | Installation |

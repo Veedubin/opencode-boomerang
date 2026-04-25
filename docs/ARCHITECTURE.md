@@ -359,3 +359,21 @@ const DEFAULT_INDEX_CONFIG = {
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `LANCEDB_URI` | `memory://` | LanceDB storage location |
+
+---
+
+## Dual Architecture
+
+Boomerang-v2 supports two integration modes:
+
+### Built-in Mode (Default)
+- Direct imports from `src/memory/`
+- Zero serialization overhead
+- Automatic initialization
+- Used by: Boomerang orchestrator, agents
+
+### MCP Mode (Standalone)
+- External process via stdio transport
+- JSON-RPC serialization
+- Manual configuration required
+- Used by: External tools, other AI frameworks

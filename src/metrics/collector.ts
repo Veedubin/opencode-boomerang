@@ -18,6 +18,14 @@ export interface MetricsEvent {
   data: Record<string, unknown>;
 }
 
+export interface AgentMetrics {
+  agentId: string;
+  totalTasks: number;
+  successfulTasks: number;
+  failedTasks: number;
+  avgDuration: number;
+}
+
 export class MetricsCollector {
   private buffer: MetricsEvent[] = [];
   private flushIntervalMs = 5000;
@@ -83,6 +91,41 @@ export class MetricsCollector {
       clearInterval(this.flushTimer);
       this.flushTimer = null;
     }
+  }
+
+  async getAgentMetrics(since?: number): Promise<AgentMetrics[]> {
+    const events = await this.query({ since, limit: 10000 });
+    const agentMap = new Map<string, AgentMetrics>();
+
+    for (const event of events) {
+      if (event.type === 'task.completed' || event.type === 'task.failed') {
+        const agentId = (event.data.agent as string) || 'unknown';
+        const success = event.type === 'task.completed';
+        const duration = (event.data.duration as number) || 0;
+
+        if (!agentMap.has(agentId)) {
+          agentMap.set(agentId, { agentId, totalTasks: 0, successfulTasks: 0, failedTasks: 0, avgDuration: 0 });
+        }
+
+        const metrics = agentMap.get(agentId)!;
+        metrics.totalTasks++;
+        if (success) metrics.successfulTasks++;
+        else metrics.failedTasks++;
+        metrics.avgDuration = (metrics.avgDuration * (metrics.totalTasks - 1) + duration) / metrics.totalTasks;
+      }
+    }
+
+    return Array.from(agentMap.values());
+  }
+
+  async getRoutingDecisions(since?: number, limit = 20): Promise<any[]> {
+    const events = await this.query({ since, type: 'routing.decision', limit });
+    return events.map(e => ({
+      timestamp: e.timestamp,
+      taskType: e.data.taskType,
+      agent: e.data.agent,
+      method: e.data.method,
+    }));
   }
 }
 

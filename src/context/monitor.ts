@@ -24,8 +24,17 @@ export class ContextMonitor {
   }
 
   estimateUsage(text: string): void {
-    this.currentTokens = Math.ceil(text.length / 4);
+    // Rough estimate: 1 token ≈ 4 characters for English text
+    // For mixed content (code, markdown), use 3.5 chars/token
+    const ratio = text.includes('```') || text.includes('function') || text.includes('class') ? 3.5 : 4.0;
+    this.currentTokens += Math.ceil(text.length / ratio);
     this.checkThresholds();
+  }
+
+  estimateUsageBatch(texts: string[]): void {
+    for (const text of texts) {
+      this.estimateUsage(text);
+    }
   }
 
   getUsagePercent(): number {

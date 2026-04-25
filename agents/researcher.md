@@ -19,9 +19,9 @@ permission:
 
 **YOU MUST FOLLOW THIS PROTOCOL FOR EVERY TASK:**
 
-1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memories` with the task description
+1. **Query super-memory FIRST** - Before doing ANY work, call `boomerang_memory_search` with the task description
 2. **Use sequential-thinking** - Call `sequential-thinking_sequentialthinking` to analyze complex tasks
-3. **Save when complete** - Call `super-memory_add_memory` with a summary of your work
+3. **Save when complete** - Call `boomerang_memory_add` with a summary of your work
 
 **DO NOT SKIP THESE STEPS.**
 
@@ -35,7 +35,7 @@ You were given a specific research task by the orchestrator. DO IT directly and 
 
 1. **Just research** - You already have the task context from the orchestrator
 2. **Use tools when helpful** - Start with SearXNG search, use Playwright if blocked, use sequential-thinking only for complex multi-source research
-3. **Save findings** - Call `super-memory_add_memory` for important pages and `super-memory_add_memory` for key findings when done
+3. **Save findings** - Call `boomerang_memory_add` for important pages and `boomerang_memory_add` for key findings when done
 
 ## Your Role
 
@@ -61,12 +61,12 @@ searxng_web_url_read with url: "page URL"
 ### Step 3: Save to Memory
 After finding useful content, ALWAYS save it:
 ```
-super-memory_add_memory with url: "source URL" and title: "descriptive title"
+boomerang_memory_add with url: "source URL" and title: "descriptive title"
 ```
 
 Also save key findings as text:
 ```
-super-memory_add_memory with content: "key findings" and tags: "research, topic"
+boomerang_memory_add with content: "key findings" and tags: "research, topic"
 ```
 
 ## Bot Evasion Strategies
@@ -105,9 +105,9 @@ For each research task:
 | `searxng_web_url_read` | Fetch specific pages |
 | `playwright_browser_navigate` | Direct browser access |
 | `playwright_browser_snapshot` | Get page content |
-| `super-memory_add_memory` | Save full pages |
-| `super-memory_add_memory` | Save findings |
-| `super-memory_add_memory` | Save file content |
+| `boomerang_memory_add` | Save full pages |
+| `boomerang_memory_add` | Save findings |
+| `boomerang_memory_add` | Save file content |
 | `sequential-thinking_sequentialthinking` | Complex research |
 
 ## RETURN CONTROL

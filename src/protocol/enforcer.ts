@@ -50,9 +50,14 @@ export class ProtocolEnforcer {
         message: 'Memory was not queried before starting work', autoFixable: true,
       };
       violations.push(violation);
-      if (this.config.autoFix) {
+      const memoryService = getMemoryService();
+      if (memoryService.isFallbackMode()) {
+        violations.push({
+          rule: 'memory-query', severity: 'warning',
+          message: 'Memory unavailable (fallback mode)', autoFixable: false,
+        });
+      } else if (this.config.autoFix) {
         try {
-          const memoryService = getMemoryService();
           if (memoryService.isInitialized()) {
             await memoryService.queryMemories(taskDescription, { limit: 5 });
             protocolTracker.recordToolCall(sessionId, 'query_memories', { query: taskDescription });
@@ -86,9 +91,14 @@ export class ProtocolEnforcer {
         message: 'Results were not saved to memory', autoFixable: true,
       };
       violations.push(violation);
-      if (this.config.autoFix) {
+      const memoryService = getMemoryService();
+      if (memoryService.isFallbackMode()) {
+        violations.push({
+          rule: 'memory-save', severity: 'warning',
+          message: 'Memory unavailable (fallback mode)', autoFixable: false,
+        });
+      } else if (this.config.autoFix) {
         try {
-          const memoryService = getMemoryService();
           if (memoryService.isInitialized()) {
             await memoryService.addMemory({ content: `Task completed`, sourceType: 'conversation', sessionId });
             protocolTracker.recordToolCall(sessionId, 'add_memory', { sessionId });

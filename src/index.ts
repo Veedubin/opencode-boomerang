@@ -71,7 +71,16 @@ export async function execute(context: PluginContext): Promise<void> {
 
   // Initialize memory system
   memoryService = getMemoryService();
-  await memoryService.initialize();
+  try {
+    await memoryService.initialize();
+    if (memoryService.isFallbackMode()) {
+      console.log('⚠️ Memory system in fallback mode — operating without persistence');
+    } else {
+      console.log('✅ Memory system initialized');
+    }
+  } catch (err) {
+    console.error('❌ Failed to initialize memory:', err);
+  }
 
   try {
     if (context.interactive) {

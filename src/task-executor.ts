@@ -8,6 +8,7 @@ import { ProtocolEnforcer, DEFAULT_ENFORCEMENT_CONFIG } from './protocol/enforce
 import { globalMiddleware, type MiddlewareContext } from './middleware/pipeline.js';
 import { protocolTracker } from './protocol/tracker.js';
 import { metricsCollector } from './metrics/collector.js';
+import { contextMonitor } from './context/monitor.js';
 
 const TASK_COMPLETE_SIGNAL = 'TASK_COMPLETE';
 
@@ -345,9 +346,16 @@ export class TaskExecutor {
         taskDescription: task.description, metadata: {},
       };
 
+      protocolTracker.recordToolCall(sessionId, `agent:${task.agent}`, {
+        taskId: task.id,
+        taskType: task.type,
+        description: task.description.slice(0, 100),
+      });
+
       let result: string = '';
       await globalMiddleware.execute(ctx, async () => {
         result = await this.executeWithTimeout(task);
+        contextMonitor.estimateUsage(result);
       });
 
       // Track code changes

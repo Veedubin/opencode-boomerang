@@ -103,8 +103,8 @@ export class MemoryClient {
 
     try {
       const result = await this.client.callTool({
-        name: "super-memory_query_memory",
-        arguments: { query: question, topK },
+        name: "query_memories",
+        arguments: { query: question, limit: topK, strategy: "tiered" },
       });
 
       const contentArray = result.content as Array<{ type: string; text?: string }>;
@@ -137,9 +137,9 @@ export class MemoryClient {
 
     try {
       const result = await this.client.callTool({
-        name: "super-memory_save_to_memory",
+        name: "add_memory",
         arguments: {
-          content: text,
+          text,
           sourceType,
           metadata: metadata || {},
         },
@@ -171,7 +171,7 @@ export class MemoryClient {
 
     try {
       const result = await this.client.callTool({
-        name: "super-memory_search_project",
+        name: "search_project",
         arguments: { query, topK },
       });
 
@@ -201,7 +201,7 @@ export class MemoryClient {
 
     try {
       const result = await this.client.callTool({
-        name: "super-memory_index_project",
+        name: "index_project",
         arguments: { rootPath },
       });
 

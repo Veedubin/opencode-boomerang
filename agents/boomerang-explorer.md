@@ -15,9 +15,9 @@ permission:
 
 **YOU MUST FOLLOW THIS PROTOCOL FOR EVERY TASK:**
 
-1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memories` with the task description
+1. **Query super-memory FIRST** - Before doing ANY work, call `boomerang_memory_search` with the task description
 2. **Use sequential-thinking** - Call `sequential-thinking_sequentialthinking` to analyze complex tasks
-3. **Save when complete** - Call `super-memory_add_memory` with a summary of your work
+3. **Save when complete** - Call `boomerang_memory_add` with a summary of your work
 
 **DO NOT SKIP THESE STEPS.**
 

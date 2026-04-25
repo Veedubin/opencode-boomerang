@@ -110,13 +110,24 @@ export const BoomerangPlugin = async (ctx: PluginContext): Promise<any> => {
   }
 
   // Start super-memory MCP client
+  let useBuiltIn = false;
   try {
-    const mcpClient = await initializeMemoryClient();
-    boomerangMemory.setMcpClient(mcpClient);
-    setProjectSearchClient(mcpClient);
-    ctx.client.app.log("Super-Memory-TS MCP client initialized");
-  } catch (err) {
-    console.error('❌ Failed to start super-memory MCP:', err);
+    const { getMemoryService } = await import('../../src/memory-service.js');
+    const memoryService = getMemoryService();
+    await memoryService.initialize();
+    boomerangMemory.setMemoryService(memoryService);
+    useBuiltIn = true;
+    ctx.client.app.log("Using built-in Super-Memory");
+  } catch {
+    // Fall back to MCP
+    try {
+      const mcpClient = await initializeMemoryClient();
+      boomerangMemory.setMcpClient(mcpClient);
+      setProjectSearchClient(mcpClient);
+      ctx.client.app.log("Using MCP fallback");
+    } catch (err) {
+      console.error('❌ Failed to start super-memory MCP:', err);
+    }
   }
 
   // Log bundled assets
