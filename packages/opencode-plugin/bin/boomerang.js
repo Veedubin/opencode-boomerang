@@ -17,13 +17,17 @@ if (args[0] === 'migrate') {
   // Run migration script - scripts is sibling to bin
   const scriptPath = resolve(__dirname, '..', 'scripts', 'migrate-from-legacy.js');
   await import(scriptPath);
+} else if (args[0] === 'install-agents') {
+  const scriptPath = resolve(__dirname, '..', 'scripts', 'install-agents.js');
+  await import(scriptPath);
 } else {
   console.log('Boomerang CLI - Multi-agent orchestration plugin for OpenCode');
   console.log('');
   console.log('Usage: boomerang <command>');
   console.log('');
   console.log('Commands:');
-  console.log('  migrate    Migrate from legacy super-memory-mcp to Boomerang');
+  console.log('  migrate         Migrate from legacy super-memory-mcp to Boomerang');
+  console.log('  install-agents  Install Boomerang agents to .opencode/agents/');
   console.log('');
   process.exit(1);
 }
