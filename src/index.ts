@@ -34,6 +34,7 @@ export interface SkillDefinition {
 
 import { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
 import { MemoryClient } from './memory-client.js';
+import { spawn } from 'child_process';
 
 let memoryClient: MemoryClient | null = null;
 
@@ -59,6 +60,7 @@ export function register(registry: PluginRegistry): void {
   registry.registerCommand('boomerang', handleBoomerangCommand);
   registry.registerCommand('chat', handleChatCommand);
   registry.registerCommand('index', handleIndexCommand);
+  registry.registerCommand('install-agents', handleInstallAgentsCommand);
 }
 
 /**
@@ -87,8 +89,11 @@ export async function execute(context: PluginContext): Promise<void> {
         case 'index':
           await handleIndexCommand(context);
           break;
+        case 'install-agents':
+          await handleInstallAgentsCommand(context);
+          break;
         default:
-          console.log('Available commands: boomerang, chat, index');
+          console.log('Available commands: boomerang, chat, index, install-agents');
       }
     }
   } finally {
@@ -154,6 +159,27 @@ async function handleIndexCommand(context: PluginContext): Promise<void> {
 
   await memoryClient.indexProject(path);
   console.log('Project indexed successfully');
+}
+
+/**
+ * Handle install-agents command - run the agent installation script
+ */
+async function handleInstallAgentsCommand(_context: PluginContext): Promise<void> {
+  console.log('Running agent installation...');
+  
+  const scriptPath = new URL('../scripts/install-agents.js', import.meta.url);
+  const child = spawn('node', [scriptPath.pathname], {
+    stdio: 'inherit',
+    shell: false
+  });
+  
+  await new Promise((resolve, reject) => {
+    child.on('close', (code) => {
+      if (code === 0) resolve(undefined);
+      else reject(new Error(`Script exited with code ${code}`));
+    });
+    child.on('error', reject);
+  });
 }
 
 /**
