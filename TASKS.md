@@ -1,53 +1,40 @@
-# Boomerang Tasks
+# Boomerang v2 Tasks
 
-> **Strategic Context**: See [ROADMAP.md](./ROADMAP.md) for long-term vision and phase-based goals. This file is for tactical, immediate work.
+> **Strategic Context**: See [ROADMAP.md](./ROADMAP.md) for long-term vision and phase-based goals. This file is for tactical, immediate work tracking.
 
-## In Progress
+---
 
-### Publishing & Distribution
+## Current Status
 
-- [ ] Push v0.5.0 tag to GitHub
-- [ ] Publish @veedubin/opencode-boomerang@0.5.0 to NPM
-- [ ] Publish opencode-boomerang@0.5.0 to PyPI (if maintaining dual publish)
-- [ ] Resolve NPM token permissions (needs "Bypass 2FA" for automation)
-- [ ] Update embedded assets package.json (src/opencode_boomerang/assets/.opencode/plugins/boomerang/package.json still at 0.3.0)
+### Session Summary (v2.0.0 Migration)
 
-### Testing & Integration
+This session focused on migrating Boomerang to MCP-only memory integration, removing direct Super-Memory-TS dependencies.
 
-- [ ] Expand test coverage beyond scraper
-- [ ] Test per-project DB isolation across multiple repos
-- [ ] Verify tiered memory search (Fast Reply vs Archivist)
+**Key Changes:**
+- Removed built-in memory fallback (dual-path eliminated)
+- Configurable super-memory path via `@super-memory-ts/core` integration
+- Migrated to `@veedubin/super-memory-ts` as MCP server plugin
+- Fixed model naming inconsistencies across agent prompts
 
-## Next Up
+---
 
-### Skill Enhancements
+## Completed Tasks ✓
 
-- [ ] Review deepagents SKILL.md pattern for inspiration
-- [ ] Test architect-first planning workflow end-to-end
-- [ ] Verify all 11 agents load correctly with new K2.6 model assignments
+### Model & Agent Updates
+- [x] Fixed model naming inconsistencies (k2p6, MiniMax M2.7)
+- [x] Added `researcher` to `DEFAULT_AGENTS`
 
-### Documentation
+### Skills & Documentation
+- [x] Created `skills/researcher/SKILL.md` for web research agent
+- [x] Updated configuration examples in documentation
 
-- [ ] Update ROADMAP.md to reflect completed Phase 3 items
-- [ ] Create video/tutorial for setup
-- [ ] Document tiered memory architecture for users
+### Memory Architecture (MCP-Only)
+- [x] Fixed Super-Memory path coupling (configurable path)
+- [x] Converted from dual-path memory to MCP-only dependency
+- [x] Updated plugin to use `@veedubin/super-memory-ts` as MCP server
+- [x] Removed built-in memory fallback
 
-## Backlog
-
-### Performance & Optimization
-
-- [ ] Agent performance metrics
-- [ ] Automatic agent routing optimization
-- [ ] Middleware hooks production implementation
-
-### Scalability & Extensibility
-
-- [ ] Support for additional LLM providers
-- [ ] Multi-project workspace support
-- [ ] Plugin marketplace integration
-
-## Recently Completed ✓
-
+### Previously Completed
 - [x] **v0.5.0 Release** — Version bumped, tagged, ready to push
 - [x] **Read all OpenCode documentation** — 13 docs pages cached in super-memory
 - [x] **Fixed super-memory protocol** — Made MANDATORY for all 11 sub-agents
@@ -79,6 +66,38 @@
 - [x] Rebuilt TypeScript plugin runtime from compiled JS
 - [x] Added test infrastructure with 29 passing tests
 
+---
+
+## Remaining Work
+
+### Testing & Integration
+- [ ] Test MCP-only memory integration end-to-end
+- [ ] Review all agent prompts for MCP tool name consistency
+- [ ] Performance test MCP vs old built-in path
+
+### Documentation
+- [ ] Update HANDOFF.md with this session's work
+
+### CI/CD
+- [ ] Add GitHub Actions for boomerang-v2
+
+### Future Considerations
+- [ ] Consider if any agents need model updates
+- [ ] Version bump and publish
+
+---
+
+## Next Priorities
+
+| Priority | Task | Notes |
+|----------|------|-------|
+| 1 | End-to-end test of MCP memory integration | Verify all memory operations work via MCP |
+| 2 | Update HANDOFF.md | Document this session's architectural changes |
+| 3 | Performance benchmarking | Compare MCP vs built-in memory latency |
+| 4 | Version bump to v1.1.0 | Tag and publish |
+
+---
+
 ## Guidelines
 
 - All agents must query super-memory at start and save at end
@@ -89,3 +108,7 @@
 - Each project gets its own `memory_data/` directory (per-project DB isolation)
 - Use `boomerang_memory_save_long` for high-value work (architectural decisions, session summaries)
 - Use `boomerang_memory_search_tiered` for Fast Reply, `boomerang_memory_search_parallel` for Archivist mode
+
+---
+
+*Last Updated: 2025-04-25*

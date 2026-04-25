@@ -59,6 +59,7 @@ const AGENT_KEYWORDS: Record<TaskType, string[]> = {
 
 /** Default agents */
 const DEFAULT_AGENTS: AgentDefinition[] = [
+  { name: 'researcher', description: 'Web research specialist', keywords: ['research', 'search', 'web', 'fetch'] },
   { name: 'boomerang-explorer', description: 'Codebase exploration specialist', keywords: AGENT_KEYWORDS.explore },
   { name: 'boomerang-coder', description: 'Fast code generation specialist', keywords: AGENT_KEYWORDS.code },
   { name: 'boomerang-tester', description: 'Comprehensive testing specialist', keywords: AGENT_KEYWORDS.test },

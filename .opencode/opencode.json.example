@@ -3,7 +3,8 @@
   "mcp": {
     "super-memory": {
       "type": "local",
-      "command": ["super-memory"],
+      "command": ["npx", "-y", "@veedubin/super-memory-ts"],
+      "environment": { "QDRANT_URL": "http://localhost:6333" },
       "enabled": true
     },
     "searxng": {

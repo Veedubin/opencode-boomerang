@@ -40,29 +40,27 @@
 
 > **⚠️ IMPORTANT**: All sub-agents are required to follow the super-memory protocol. Prompts have been updated to make this MANDATORY, not optional.
 
-### Dual Integration Architecture (v1.0.0)
+### MCP-Only Architecture (v2.0.0)
 
-Boomerang v1.0.0 uses a **dual integration** approach for Super-Memory:
+Boomerang v2.0.0 uses **MCP exclusively** for Super-Memory integration. No direct imports from Super-Memory-TS.
 
-| Mode | Use Case | Overhead |
-|------|----------|----------|
-| **Built-in (Default)** | Boomerang plugin operation | Zero - direct module import |
-| **MCP** | Cross-session persistence for external tools | HTTP + protocol overhead |
+| Integration | Description |
+|-------------|-------------|
+| **MCP Only** | All memory operations go through MCP tool calls |
 
-#### Built-in Memory (Default)
-- Super-Memory-TS core modules imported directly into Boomerang
-- Automatic project indexing on plugin load
-- Background file watching via chokidar
-- No MCP server process required
-- Immediate, synchronous memory operations
+#### How MCP Memory Works
 
-#### MCP Mode (Legacy/Cross-Session)
-- Used only when external tools need memory access
-- Standalone Super-Memory-TS server process
-- Remote procedure calls over HTTP
-- Required for sharing memory across different AI frameworks
+- Boomerang initializes a MemoryClient that connects to Super-Memory-TS MCP server
+- All memory tool calls route through MCP to the external Super-Memory-TS server
+- Boomerang no longer imports Super-Memory-TS core modules directly
+- Memory operations use these MCP tool names:
+  - `super-memory_query_memory` - Search memories
+  - `super-memory_save_to_memory` - Save to transient tier
+  - `super-memory_save_long` - Archive to permanent tier
+  - `super-memory_search_project` - Search project files
+  - `super-memory_index_project` - Index project files
 
-All agents automatically use the built-in memory when operating within Boomerang.
+All agents use MCP tools to interact with Super-Memory-TS.
 
 ### Memory Operations
 

@@ -1,7 +1,6 @@
 import { tool } from "@opencode-ai/plugin";
 import { createBoomerangOrchestrator } from "./orchestrator.js";
-import { boomerangMemory, generateSessionSummary, formatProjectContextForInjection } from "./memory.js";
-import { memoryEngine } from "./memory-engine.js";
+import { boomerangMemory, generateSessionSummary, formatProjectContextForInjection, setProjectSearchClient } from "./memory.js";
 import { listAvailableAgents, listAvailableSkills } from "./asset-loader.js";
 import { initializeProjectIndexManager, getProjectIndexStatus, searchProjectFiles, isProjectIndexManagerInitialized, getWorkspaceManager } from "./project-index-manager.js";
 import { MemoryClient, initializeMemoryClient } from "./memory-client.js";
@@ -28,10 +27,10 @@ import { BoomerangConfig, PluginContext, EmbeddingStrategy } from "./types.js";
 import { globalMiddleware, loggingMiddleware } from "./middleware.js";
 
 const DEFAULT_CONFIG: BoomerangConfig = {
-  orchestratorModel: "kimi-for-coding/k2.5",
-  coderModel: "minimax/MiniMax-M2.7-highspeed",
-  architectModel: "openai/gpt-5.4",
-  testerModel: "google/gemini-3-pro",
+  orchestratorModel: "kimi-for-coding/k2p6",
+  coderModel: "minimax/MiniMax-M2.7",
+  architectModel: "kimi-for-coding/k2p6",
+  testerModel: "minimax/MiniMax-M2.7",
   linterModel: "minimax/MiniMax-M2.7",
   gitCheckBeforeWork: true,
   gitCommitAfterWork: true,
@@ -110,48 +109,19 @@ export const BoomerangPlugin = async (ctx: PluginContext): Promise<any> => {
     // Logging not available
   }
 
-  // Start super-memory engine automatically
+  // Start super-memory MCP client
   try {
-    await memoryEngine.start();
-    console.log('✅ Super-memory engine started');
+    const mcpClient = await initializeMemoryClient();
+    boomerangMemory.setMcpClient(mcpClient);
+    setProjectSearchClient(mcpClient);
+    ctx.client.app.log("Super-Memory-TS MCP client initialized");
   } catch (err) {
-    console.error('❌ Failed to start super-memory:', err);
+    console.error('❌ Failed to start super-memory MCP:', err);
   }
 
   // Log bundled assets
   console.log(`📦 Loaded ${listAvailableAgents().length} agents`);
   console.log(`📦 Loaded ${listAvailableSkills().length} skills`);
-
-  // Initialize MCP client for Super-Memory-TS if memory is enabled
-  if (config.memoryEnabled) {
-    try {
-      const mcpClient = await initializeMemoryClient();
-      boomerangMemory.setMcpClient(mcpClient);
-      ctx.client.app.log("Super-Memory-TS MCP client initialized");
-    } catch (err) {
-      ctx.client.app.log(`Warning: Failed to initialize MCP client: ${err}`);
-    }
-  }
-
-  // Initialize built-in memory indexer with workspace support (auto-start)
-  let builtInMemoryInitError: string | null = null;
-  if (config.memoryEnabled) {
-    try {
-      const projectPath = process.cwd();
-      await initializeProjectIndexManager(projectPath);
-      ctx.client.app.log("Built-in memory indexer started with workspace support");
-      
-      // Set active project's built-in memory on boomerangMemory for direct use
-      const workspace = getWorkspaceManager();
-      const activeMemory = workspace.getActiveMemory();
-      if (activeMemory) {
-        boomerangMemory.setBuiltInMemory(activeMemory);
-      }
-    } catch (err) {
-      builtInMemoryInitError = err instanceof Error ? err.message : String(err);
-      ctx.client.app.log(`Warning: Built-in memory indexer failed: ${builtInMemoryInitError}`);
-    }
-  }
 
   // Register logging middleware if enabled
   if (config.middlewareEnabled) {
@@ -597,7 +567,7 @@ ${status.error ? `- Error: ${status.error}` : ''}`;
     },
 
     cleanup: async () => {
-      await memoryEngine.stop();
+      await boomerangMemory.shutdown();
     },
   };
 };
