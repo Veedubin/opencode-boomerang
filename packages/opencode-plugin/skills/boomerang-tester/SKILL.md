@@ -47,12 +47,12 @@ This project uses a tiered memory architecture with two modes:
 - **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
 
 #### When Saving:
-- **Routine work** (test runs, exploratory testing): Use standard `super-memory_save_to_memory`
-- **High-value work** (verified test patterns, bug verification results, coverage analysis): Use `boomerang_memory_save_long` with a descriptive `project` tag
+- **Routine work** (test runs, exploratory testing): Use standard `super-memory_add_memory`
+- **High-value work** (verified test patterns, bug verification results, coverage analysis): Use `super-memory_add_memory` with a descriptive `project` tag
 
 #### When Searching:
 - Default searches use the configured strategy automatically
-- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
+- For explicit control: `super-memory_query_memories` with `strategy: "tiered"` (Fast Reply) or `strategy: "vector_only"` (Archivist)
 
 ### Required Actions
 

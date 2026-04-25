@@ -1,6 +1,6 @@
 // OpenCode plugin interface
 export const PLUGIN_NAME = '@boomerang/opencode-plugin';
-export const VERSION = '2.0.0';
+export const VERSION = '1.1.0';
 
 // Plugin interface types
 export interface PluginRegistry {

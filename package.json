@@ -1,6 +1,6 @@
 {
   "name": "@veedubin/boomerang-v2",
-  "version": "2.1.4",
+  "version": "1.1.0",
   "type": "module",
   "repository": {
     "type": "git",
@@ -18,6 +18,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "coverage": "vitest --coverage"
   },

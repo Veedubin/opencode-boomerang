@@ -2,6 +2,74 @@
 
 ## Session History
 
+### 2026-04-25 — v1.1.0-pre (MCP-Only Memory Migration)
+
+**Status**: v1.1.0-pre (MCP-only memory migration)
+
+#### What Was Accomplished
+
+1. **Super-Memory-TS Critical Bug Fixes** (separate project)
+   - Fixed TIERED search strategy (was only doing text search, now does vector + text)
+   - Fixed VECTOR_ONLY search strategy (was falling back to text, now does real vector search)
+   - Removed forced TEXT_ONLY fallback in server
+   - Fixed database initialization error handling (was silently swallowing errors)
+   - Added Qdrant connection health check
+
+2. **Super-Memory-TS MCP SDK Modernization** (separate project)
+   - Migrated from legacy Server class to McpServer with Zod validation
+   - Added tool annotations (readOnlyHint, destructiveHint)
+   - Replaced console.log with logger (fixes stdio transport corruption)
+
+3. **Super-Memory-TS Type Safety** (separate project)
+   - Added proper type guards for vector handling (removed any casts)
+   - Fixed race condition in Fuse.js initialization
+   - Added score preservation from Qdrant results
+   - Fixed MemorySystem to respect config
+   - Optimized Qdrant payload settings (with_vector: false for reads)
+
+4. **Super-Memory-TS Tests & Docs** (separate project)
+   - Added integration tests with Qdrant
+   - Added search strategy unit tests
+   - Updated README (replaced all LanceDB references with Qdrant)
+   - Renamed dbPath to qdrantUrl with backward compatibility
+   - Created eslint.config.js for ESLint v9
+
+5. **Boomerang-v2 Model Fixes**
+   - Fixed model naming inconsistencies (orchestrator: k2p6, coder: MiniMax M2.7)
+   - Added researcher to DEFAULT_AGENTS
+   - Created skills/researcher/SKILL.md
+
+6. **Boomerang-v2 MCP-Only Memory Migration**
+   - Converted from dual-path (built-in + MCP) to MCP-only dependency
+   - Removed direct Super-Memory-TS imports
+   - All memory operations now route through MCP tools
+   - Removed Python subprocess (memory-engine.ts)
+   - Updated configuration to use @veedubin/super-memory-ts
+
+7. **Task Tracking**
+   - Created TASKS.md for both Super-Memory-TS and boomerang-v2
+
+#### Key Decisions
+
+- Super-Memory-TS is now a standalone MCP server that boomerang-v2 depends on
+- Built-in memory path removed - cleaner architecture, single source of truth
+- All 12 agents confirmed present and accounted for
+- Agent swarm integrity score: 8.5/10 (fixed config drift issues)
+
+#### Files Modified
+
+- See commits 7dab7f5 (Super-Memory-TS) and cd93abd (boomerang-v2)
+
+#### Next Session Priorities
+
+1. End-to-end test MCP memory integration
+2. Fix remaining ESLint issues in Super-Memory-TS
+3. Add GitHub Actions for both projects
+4. Performance benchmarking
+5. Version bump and publish
+
+---
+
 ### 2026-04-23 — v1.0.0 Documentation Audit
 
 **Status**: v1.0.0 release documentation complete

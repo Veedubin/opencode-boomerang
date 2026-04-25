@@ -106,8 +106,8 @@ This session focused on migrating Boomerang to MCP-only memory integration, remo
 - Context compaction triggers at ~40% context usage
 - Handoff skill should be called before compaction to preserve state
 - Each project gets its own `memory_data/` directory (per-project DB isolation)
-- Use `boomerang_memory_save_long` for high-value work (architectural decisions, session summaries)
-- Use `boomerang_memory_search_tiered` for Fast Reply, `boomerang_memory_search_parallel` for Archivist mode
+- Use `super-memory_add_memory` for all saves (add metadata tags for high-value work)
+- Use `super-memory_query_memories` with `strategy` parameter for searches
 
 ---
 

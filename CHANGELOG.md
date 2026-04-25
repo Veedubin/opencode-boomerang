@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-25
+
+### Changed
+- **MCP-Only Architecture**: Converted from dual-path (built-in + MCP) to MCP-only memory integration
+- **Tool Name Consistency**: Updated all agent prompts and skills to use correct MCP tool names:
+  - `super-memory_query_memories` (was `super-memory_query_memory`)
+  - `super-memory_add_memory` (was `super-memory_save_to_memory` / `boomerang_memory_save_long`)
+  - `super-memory_search_project`
+  - `super-memory_index_project`
+
+### Added
+- **End-to-end MCP integration tests**: `tests/integration/mcp-memory.test.ts` with 17 tests covering all 4 MCP tools
+- **Performance benchmarks**: `tests/performance/mcp-benchmark.test.ts` comparing MCP overhead vs direct calls
+- **CI/CD workflow**: `.github/workflows/ci.yml` for automated testing on PRs and pushes
+
+### Fixed
+- **Version mismatch**: Aligned root package (2.1.4) and plugin package (2.1.5) to unified v1.1.0
+- **Agent prompt consistency**: All 12 agents now reference correct MCP tool names
+- **Skill documentation**: All 12 skills updated with accurate tool references and strategy parameters
+
+### Removed
+- **Built-in memory fallback**: Eliminated dual-path architecture in favor of pure MCP
+- **Old tool name references**: Removed all `boomerang_memory_*` references from active documentation
+
 ## [2.1.5] - 2026-04-25
 
 ### Added

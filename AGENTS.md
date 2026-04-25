@@ -54,10 +54,9 @@ Boomerang v2.0.0 uses **MCP exclusively** for Super-Memory integration. No direc
 - All memory tool calls route through MCP to the external Super-Memory-TS server
 - Boomerang no longer imports Super-Memory-TS core modules directly
 - Memory operations use these MCP tool names:
-  - `super-memory_query_memory` - Search memories
-  - `super-memory_save_to_memory` - Save to transient tier
-  - `super-memory_save_long` - Archive to permanent tier
-  - `super-memory_search_project` - Search project files
+  - `super-memory_query_memories` - Search memories (use `strategy` parameter for tiered/vector_only/text_only)
+  - `super-memory_add_memory` - Save to memory (all saves go through this tool)
+  - `super-memory_search_project` - Search indexed project files
   - `super-memory_index_project` - Index project files
 
 All agents use MCP tools to interact with Super-Memory-TS.
@@ -65,9 +64,9 @@ All agents use MCP tools to interact with Super-Memory-TS.
 ### Memory Operations
 
 All agents MUST:
-1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memory` with the task description
+1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memories` with the task description
 2. **Use sequential-thinking** - Call `sequential-thinking_sequentialthinking` to analyze complex tasks
-3. **Save results to super-memory** - Call `super-memory_save_to_memory` with a summary when complete
+3. **Save results to super-memory** - Call `super-memory_add_memory` with a summary when complete
 
 ### Tiered Memory Architecture
 
@@ -76,12 +75,12 @@ This project uses a tiered memory architecture with two modes:
 - **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
 
 #### When Saving:
-- **Routine work** (logs, quick fixes, explorations): Use standard `super-memory_save_to_memory`
-- **High-value work** (architectural decisions, session summaries, verified successes): Use `super-memory_save_long` with a descriptive `project` tag
+- **Routine work** (logs, quick fixes, explorations): Use standard `super-memory_add_memory`
+- **High-value work** (architectural decisions, session summaries, verified successes): Use `super-memory_add_memory` with a descriptive `project` tag in metadata
 
 #### When Searching:
 - Default searches use the configured strategy automatically
-- For explicit control: `super-memory_query_memory` with `strategy` parameter
+- For explicit control: `super-memory_query_memories` with `strategy` parameter (`tiered`, `vector_only`, or `text_only`)
 
 ## Mandatory Metrics Collection (v1.0.0)
 
@@ -120,4 +119,4 @@ Metrics are stored in `memory_data/metrics/` (per-project isolation).
 
 ## Project-Specific Context
 
-This is the Boomerang v1.0.0 multi-agent orchestration system for OpenCode.
+This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.

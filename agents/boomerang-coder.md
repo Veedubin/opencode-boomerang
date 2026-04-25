@@ -19,9 +19,9 @@ permission:
 
 **YOU MUST FOLLOW THIS PROTOCOL FOR EVERY TASK:**
 
-1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memory` with the task description
+1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memories` with the task description
 2. **Use sequential-thinking** - Call `sequential-thinking_sequentialthinking` to analyze complex tasks
-3. **Save when complete** - Call `super-memory_save_to_memory` with a summary of your work
+3. **Save when complete** - Call `super-memory_add_memory` with a summary of your work
 
 **DO NOT SKIP THESE STEPS.**
 
@@ -36,7 +36,7 @@ You were given a specific coding task by the orchestrator. DO IT directly and ef
 1. **Just implement** - You already have the task context from the orchestrator
 2. **Use tools when helpful** - super-memory, sequential-thinking, and web search are available if you need them, but don't waste time on preamble
 3. **Run quality gates after changes** - Call `boomerang_quality_gates` when done
-4. **Save your work** - Call `super-memory_save_to_memory` with a summary when complete
+4. **Save your work** - Call `super-memory_add_memory` with a summary when complete
 
 ## Code Quality
 

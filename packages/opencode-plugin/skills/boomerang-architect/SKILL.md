@@ -49,13 +49,13 @@ Use **Kimi K2.6** for strategic architecture decisions.
 - **Archivist** (PARALLEL): Dual-tier search with RRF fusion for maximum recall
 
 #### When Saving:
-- **ALWAYS use `boomerang_memory_save_long`** for architectural decisions — these are the highest-value saves
-- **Routine work** (minor adjustments, explorations): Use standard `super-memory_save_to_memory`
+- **ALWAYS use `super-memory_add_memory`** for architectural decisions — these are the highest-value saves
+- **Routine work** (minor adjustments, explorations): Use standard `super-memory_add_memory`
 - Use a descriptive `project` tag when saving decisions
 
 #### When Searching:
 - Default searches use the configured strategy automatically
-- For explicit control: `boomerang_memory_search_tiered` (Fast Reply) or `boomerang_memory_search_parallel` (Archivist)
+- For explicit control: `super-memory_query_memories` with `strategy: "tiered"` (Fast Reply) or `strategy: "vector_only"` (Archivist)
 - **Strongly prefer Archivist mode** when reviewing past architectural decisions to ensure maximum recall
 
 ### Required Actions
