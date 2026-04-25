@@ -2,6 +2,75 @@
 
 ## Session History
 
+### 2026-04-25 — v1.1.0 (MCP-Only Release)
+
+**Status**: v1.1.0 tagged and committed
+
+#### What Was Accomplished
+
+1. **MCP Tool Name Consistency**
+   - Fixed all agent prompts (12 agents) to use correct MCP tool names
+   - Updated all skill files (12 skills) with accurate tool references
+   - Corrected `super-memory_query_memory` → `super-memory_query_memories` (plural)
+   - Corrected `super-memory_save_to_memory` / `boomerang_memory_save_long` → `super-memory_add_memory`
+   - Added strategy parameter documentation for tiered vs vector_only searches
+
+2. **End-to-End MCP Integration Tests**
+   - Created `tests/integration/mcp-memory.test.ts` with 17 tests
+   - Tests all 4 MCP tools: query_memories, add_memory, search_project, index_project
+   - Tests connection handling, error cases, and full workflow scenarios
+   - All tests passing
+
+3. **Performance Benchmarks**
+   - Created `tests/performance/mcp-benchmark.test.ts`
+   - Measures MCP overhead per call (<50ms target)
+   - Tests throughput (100+ ops/sec target)
+   - Simulates typical agent workflow (query + add + search)
+   - All benchmarks passing
+
+4. **CI/CD Pipeline**
+   - Created `.github/workflows/ci.yml` for PR/push validation
+   - Tests both root package and plugin package
+   - Runs typecheck, tests, and build verification
+   - Existing publish workflows remain unchanged
+
+5. **Version Bump & Release**
+   - Aligned root package (was 2.1.4) and plugin package (was 2.1.5) to v1.1.0
+   - Updated `src/index.ts` VERSION constant
+   - Updated CHANGELOG.md with v1.1.0 entry
+   - Created git tag `v1.1.0`
+   - Committed all changes (44 files, 725 insertions, 127 deletions)
+
+#### Key Decisions
+
+- All memory operations use `super-memory_add_memory` (no separate save_long tool)
+- Strategy parameter controls search behavior: `tiered`, `vector_only`, `text_only`
+- Metadata tags distinguish high-value saves (e.g., `project: "name"`, `type: "decision"`)
+- MCP-only architecture is now fully tested and documented
+
+#### Files Modified
+
+- All `agents/*.md` files (12 agents) - tool name fixes
+- All `skills/*/SKILL.md` files (12 skills) - tool name fixes
+- `packages/opencode-plugin/skills/*/SKILL.md` - synced changes
+- `AGENTS.md` - corrected MCP tool documentation
+- `TASKS.md` - updated completed tasks and next priorities
+- `CHANGELOG.md` - added v1.1.0 release notes
+- `package.json` (root and plugin) - version bump to 1.1.0
+- `src/index.ts` - VERSION constant update
+- `.github/workflows/ci.yml` - new CI workflow
+- `tests/integration/mcp-memory.test.ts` - new test file
+- `tests/performance/mcp-benchmark.test.ts` - new benchmark file
+
+#### Next Session Priorities
+
+1. Push v1.1.0 tag to GitHub (`git push origin v1.1.0`)
+2. Verify NPM publish succeeds
+3. Test installation in production environment
+4. Monitor CI/CD workflow on next PR
+
+---
+
 ### 2026-04-25 — v1.1.0-pre (MCP-Only Memory Migration)
 
 **Status**: v1.1.0-pre (MCP-only memory migration)
