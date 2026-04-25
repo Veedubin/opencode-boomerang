@@ -42,7 +42,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Veedubin/boomerang-v2.git"
+    "url": "git+https://github.com/Veedubin/opencode-boomerang.git"
   },
   "license": "MIT",
   "dependencies": {
