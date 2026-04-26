@@ -1,0 +1,12 @@
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":1000},"timestamp":1777238938258}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":2000},"timestamp":1777238938258}
+{"type":"task.failed","sessionId":"test","data":{"agent":"tester","duration":500},"timestamp":1777238938258}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":1000},"timestamp":1777238947488}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":2000},"timestamp":1777238947488}
+{"type":"task.failed","sessionId":"test","data":{"agent":"tester","duration":500},"timestamp":1777238947488}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":1000},"timestamp":1777246277745}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":2000},"timestamp":1777246277745}
+{"type":"task.failed","sessionId":"test","data":{"agent":"tester","duration":500},"timestamp":1777246277745}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":1000},"timestamp":1777246449522}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":2000},"timestamp":1777246449522}
+{"type":"task.failed","sessionId":"test","data":{"agent":"tester","duration":500},"timestamp":1777246449522}
