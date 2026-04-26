@@ -38,9 +38,9 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/uuid": "latest",
-    "@vitest/coverage-v8": "latest",
+    "@vitest/coverage-v8": "^2.1.8",
     "react-devtools-core": "latest",
     "typescript": "latest",
-    "vitest": "latest"
+    "vitest": "^2.1.8"
   }
 }

@@ -1,0 +1,10 @@
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"explore","agent":"boomerang-explorer","method":"keyword"},"timestamp":1777247569018}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"code","agent":"boomerang-coder","method":"keyword"},"timestamp":1777247569018}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"test","agent":"boomerang-tester","method":"keyword"},"timestamp":1777247569018}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"review","agent":"boomerang-architect","method":"keyword"},"timestamp":1777247569018}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"write","agent":"boomerang-writer","method":"keyword"},"timestamp":1777247569018}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"git","agent":"boomerang-git","method":"keyword"},"timestamp":1777247569018}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"explore","agent":"boomerang-explorer","method":"keyword"},"timestamp":1777247569019}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"general","agent":"boomerang","method":"keyword"},"timestamp":1777247569019}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"explore","agent":"boomerang-explorer","method":"keyword"},"timestamp":1777247569019}
+{"type":"routing.decision","sessionId":"orchestrator","data":{"taskType":"code","agent":"boomerang-coder","method":"keyword"},"timestamp":1777247569019}

@@ -10,3 +10,6 @@
 {"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":1000},"timestamp":1777246449522}
 {"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":2000},"timestamp":1777246449522}
 {"type":"task.failed","sessionId":"test","data":{"agent":"tester","duration":500},"timestamp":1777246449522}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":1000},"timestamp":1777247568953}
+{"type":"task.completed","sessionId":"test","data":{"agent":"coder","duration":2000},"timestamp":1777247568953}
+{"type":"task.failed","sessionId":"test","data":{"agent":"tester","duration":500},"timestamp":1777247568953}

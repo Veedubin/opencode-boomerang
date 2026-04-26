@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify vitest is installed
+        run: npm ls vitest
+
       - name: Build
         run: npm run build
 
@@ -52,6 +55,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify vitest is installed
+        run: npm ls vitest
 
       - name: Run typecheck
         run: npm run typecheck
