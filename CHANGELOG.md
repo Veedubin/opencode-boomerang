@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-04-25
+
+### Added (Architectural Recovery Release)
+- **Restored built-in Super-Memory-TS integration**
+- **Added code-level protocol enforcement**
+- **Added automatic context monitoring and compaction**
+- **Added metrics collection and dashboard**
+- **Added intelligent routing based on performance**
+- **Added graceful degradation when memory unavailable**
+- **Added real integration tests with LanceDB**
+- **Fixed all agent prompts for correct tool names**
+
 ## [2.1.5] - 2026-04-25
 
 ### Added
