@@ -1,6 +1,5 @@
 import { MemorySearchResult, MemoryAddResult, MemorySaveLongResult, MemoryEntry, MemoryTierConfig, EmbeddingStrategy, SessionState, ProjectSearchResult, McpMemoryEntry } from "./types.js";
 import { MemoryClient, initializeMemoryClient, shutdownMemoryClient } from "./memory-client.js";
-import { join } from "path";
 
 /*
  * Boomerang Memory - MCP-Only Search System
@@ -101,7 +100,7 @@ export class BoomerangMemory {
   }
 
   // Search with strategy-aware logic via MCP only
-  async searchMemory(query: string, limit = 5, project?: string, overrideStrategy?: EmbeddingStrategy): Promise<MemorySearchResult> {
+  async searchMemory(query: string, limit = 5, _project?: string, overrideStrategy?: EmbeddingStrategy): Promise<MemorySearchResult> {
     if (!this.mcpClient) {
       return { success: false, error: "MCP client not initialized" };
     }
