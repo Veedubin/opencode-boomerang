@@ -1,4 +1,9 @@
 import { test, expect, describe } from 'vitest';
+import { Message } from './components/Message.js';
+import { Header } from './components/Header.js';
+import { StatusBar } from './components/StatusBar.js';
+import { AgentSelector } from './components/AgentSelector.js';
+import { ChatWindow } from './components/ChatWindow.js';
 
 // TUI tests are skipped because they import React/Ink components which conflict
 // with the vmForks pool used in vitest configuration (ERR_VM_MODULE_DIFFERENT_CONTEXT).
