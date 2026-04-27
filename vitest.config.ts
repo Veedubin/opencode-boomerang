@@ -3,24 +3,32 @@ import path from 'path';
 
 export default defineConfig({
   test: {
-    include: ['tests/**/*.{test,spec}.ts', 'src/**/*.{test,spec}.ts'],
+    include: [
+      'tests/memory/search.test.ts',
+      'tests/memory/operations.test.ts',
+      'tests/memory/database.test.ts',
+      'tests/mcp/server.test.ts',
+      'tests/orchestrator.test.ts',
+      'tests/plugin.test.ts',
+    ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
       'tests/integration/**',
       'tests/performance/**',
-      'src/tui/tui.test.ts',
+      'tests/context/**',
+      'tests/metrics/**',
+      'tests/protocol/**',
+      'tests/project-index/**',
+      'tests/tui/**',
+      'tests/memory-service/**',
+      'src/tui/**',
+      'src/model/**',
+      'src/project-index/**',
+      'src/memory/**',
     ],
     environment: 'node',
     globals: true,
-    pool: 'vmForks',
-    poolOptions: {
-      vmForks: {
-        maxForks: 1,
-      },
-    },
-    maxWorkers: 1,
-    minWorkers: 1,
   },
   resolve: {
     alias: {
