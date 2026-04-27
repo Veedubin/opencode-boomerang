@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest",
     "coverage": "vitest --coverage"
   },
   "dependencies": {
@@ -38,9 +38,9 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/uuid": "latest",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "latest",
     "react-devtools-core": "latest",
     "typescript": "latest",
-    "vitest": "^2.1.8"
+    "vitest": "latest"
   }
 }

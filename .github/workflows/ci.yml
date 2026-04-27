@@ -22,16 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Verify vitest installation
-        run: |
-          echo "=== node_modules/vitest ==="
-          ls -la node_modules/vitest/package.json || echo "MISSING: vitest package.json"
-          echo "=== npm ls ==="
-          npm ls vitest
-          echo "=== ESM resolution test ==="
-          node --input-type=module -e "import('vitest/config').then(() => console.log('ESM OK')).catch(e => { console.error('ESM FAIL:', e.message); process.exit(1) })"
+        run: npm install
 
       - name: Build
         run: npm run build
@@ -60,10 +51,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Verify vitest is installed
-        run: npm ls vitest
+        run: npm install
 
       - name: Run typecheck
         run: npm run typecheck
