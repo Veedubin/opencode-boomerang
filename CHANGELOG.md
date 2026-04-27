@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-04-27
+
+### Sync with Super-Memory-TS v2.3.1
+- **MCP timeout fix**: `index_project` now defaults to `background=true` to prevent timeout on large projects
+- **index_project_status tool**: Added new tool for polling indexing progress
+- **Progress tracking**: Added callback support to indexer for progress tracking
+
 ## [2.2.0] - 2026-04-25
 
 ### Added (Architectural Recovery Release)
