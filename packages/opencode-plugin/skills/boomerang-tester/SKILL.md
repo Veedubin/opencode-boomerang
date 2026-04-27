@@ -68,6 +68,8 @@ This project uses a tiered memory architecture with two modes:
    - Patterns established
    - Any lessons learned
 
+3. **Use search_project for code research**: When understanding existing code, use `super-memory_search_project` instead of grep.
+
 ### Sequential Thinking
 
 For complex tasks (multi-file changes, architectural decisions, debugging):

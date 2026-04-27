@@ -92,7 +92,7 @@ This keeps the context window low while preserving important instructions.
 ### Agent Selection Guide
 
 - Code implementation / bug fixes → `boomerang-coder`
-- Planning / design / architecture → `boomerang-architect`
+- Planning / design / architecture → `boomerang-architect` (architect does its own research)
 - Code exploration / finding files → `boomerang-explorer`
 - Web research → `researcher`
 - Writing tests → `boomerang-tester`
@@ -100,6 +100,8 @@ This keeps the context window low while preserving important instructions.
 - Git operations → `boomerang-git`
 - Documentation / markdown writing → `document-writer`
 - Web scraping → `web-scraper`
+
+**Note**: The architect owns research and planning. Do not delegate research tasks to explorer.
 
 ### Sub-Agent Requirements
 

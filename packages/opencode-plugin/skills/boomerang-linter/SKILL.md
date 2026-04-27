@@ -85,6 +85,8 @@ This project uses a tiered memory architecture with two modes:
    - Recurring issues found
    - Configuration details
 
+3. **Use search_project for code research**: When finding linting issues in code, use `super-memory_search_project` instead of grep.
+
 ## Output Format
 
 ```markdown

@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<<<<<<< HEAD
 ## [2.3.1] - 2026-04-27
 
 ### Sync with Super-Memory-TS v2.3.1
@@ -62,6 +63,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Sync with super-memory-ts v2.1.4
 - Updated dependency compatibility
+
+## [1.0.13] - 2026-04-27
+
+### Governance Fix
+
+Updated agent governance to align with boomerang-v2:
+
+- **Architect owns research**: Architect uses `super-memory_search_project` for independent research instead of relying on explorer agents
+- **Explorer narrowed scope**: Explorer is now file-finding only (NOT research summaries)
+- **Orchestrator updated**: Removed explorer→architect delegation flow; architect does own research
+- **Search replaced grep**: All skills updated to use `super-memory_search_project` instead of grep for code search
+
+### Files Changed
+- `packages/opencode-plugin/skills/boomerang-orchestrator/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-architect/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-explorer/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-coder/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-git/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-linter/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-tester/SKILL.md`
+- `packages/opencode-plugin/skills/boomerang-writer/SKILL.md`
+- `packages/opencode-plugin/agents/boomerang-orchestrator.md`
+- `packages/opencode-plugin/agents/boomerang-architect.md`
+- `packages/opencode-plugin/agents/boomerang-explorer.md`
+- `packages/opencode-plugin/agents/boomerang-coder.md`
+- `packages/opencode-plugin/agents/boomerang-git.md`
+- `packages/opencode-plugin/agents/boomerang-linter.md`
+- `packages/opencode-plugin/agents/boomerang-tester.md`
+- `packages/opencode-plugin/agents/boomerang-writer.md`
+- `packages/opencode-plugin/agents/researcher.md`
+- `CHANGELOG.md`
+- `AGENTS.md`
 
 ## [1.0.0] - 2026-04-23
 

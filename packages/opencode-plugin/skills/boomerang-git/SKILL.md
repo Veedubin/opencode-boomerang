@@ -92,6 +92,8 @@ This project uses a tiered memory architecture with two modes:
    - Branches created
    - Any issues encountered
 
+3. **Use search_project for code research**: When searching for code related to git operations, use `super-memory_search_project` instead of grep.
+
 ## Common Commands
 
 ```bash

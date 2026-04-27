@@ -95,4 +95,5 @@ This project uses a tiered memory architecture with two modes:
 3. Draft the document
 4. Review for clarity and completeness
 5. Save to super-memory
-6. Report completion
+6. Use `super-memory_search_project` when researching existing documentation patterns
+7. Report completion

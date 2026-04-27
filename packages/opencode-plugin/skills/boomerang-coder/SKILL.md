@@ -87,9 +87,10 @@ When tool outputs exceed ~500 words or 3000 characters:
 
 ### How to Evict
 
-1. **Write to file** — Use the Write tool to save the full output to a temporary file
-2. **Return summary** — Provide a concise summary in your response
-3. **Reference file** — Include the file path so the orchestrator can read it if needed
+1. **Query super-memory** — Use `super-memory_search_project` for semantic code search (NOT grep)
+2. **Write to file** — Use the Write tool to save the full output to a temporary file
+3. **Return summary** — Provide a concise summary in your response
+4. **Reference file** — Include the file path so the orchestrator can read it if needed
 
 ### Example
 
@@ -117,3 +118,5 @@ Use consistent temporary file names:
 - `temp/explore-[topic]-[timestamp].md`
 - `temp/search-[query]-[timestamp].md`
 - `temp/results-[task]-[timestamp].md`
+
+**IMPORTANT**: For code search, use `super-memory_search_project` instead of grep. It provides semantic search across indexed project files.
