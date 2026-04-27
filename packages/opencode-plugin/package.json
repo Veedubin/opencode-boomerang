@@ -1,6 +1,6 @@
 {
   "name": "@veedubin/boomerang-v2",
-  "version": "2.2.0",
+  "version": "2.3.8",
   "description": "Multi-agent orchestration plugin for OpenCode with Boomerang Protocol",
   "main": "dist/index.js",
   "type": "module",

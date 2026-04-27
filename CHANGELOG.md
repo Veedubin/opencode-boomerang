@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.8] - 2026-04-27
+
+### Agent Governance Fixes
+- **Architect owns research**: boomerang-architect now handles all research tasks (web search, code analysis)
+- **Explorer narrowed scope**: boomerang-explorer is now file-finding only (no pattern analysis)
+- **Delegation rules updated**: Orchestrator now routes research to architect, not explorer
+- **super-memory search**: Added explicit rule to use `super-memory_search_project` for codebase research
+
+### Bug Fixes
+- **Replace grep with super-memory_search_project**: All skills updated to use `super-memory_search_project` instead of grep for code search
+- **Fix npm peer dependency conflict**: Resolved react-devtools-core peer dependency issue
+- **Fix TypeScript build errors**: Fixed tui.test.ts imports
+- **Fix CI test failures**: Resolved OOM issues, agent count issues, and DB dependencies
+- **Fix duplicate --run flag**: Removed duplicate flag in test script
+- **Skip Qdrant integration tests in CI**: CI workflow now skips Qdrant tests
+- **Exclude test files from TypeScript compilation**: tsconfig updated to exclude test files
+
+### CI Improvements
+- **Update CI workflow**: Pull latest code before running tests
+- **Run only critical tests in CI**: Reduced test suite for faster CI
+
+### Updated Files
+- `packages/opencode-plugin/agents/boomerang-architect.md` - Added research responsibilities
+- `packages/opencode-plugin/agents/boomerang-explorer.md` - Narrowed to file finding only
+- `packages/opencode-plugin/agents/boomerang-orchestrator.md` - Removed planning, added architect delegation rules
+- `AGENTS.md` - Documented new governance rules
+- `packages/opencode-plugin/skills/*` - Updated all skills to use super-memory_search_project
+
 ## [2.3.2] - 2026-04-27
 
 ### Governance Fixes
