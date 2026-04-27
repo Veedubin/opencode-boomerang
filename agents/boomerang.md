@@ -61,12 +61,17 @@ Task { subagent_type: "AGENT_NAME", prompt: "DETAILED TASK DESCRIPTION INCLUDING
 
 **Agent selection guide:**
 - Code implementation / bug fixes → `boomerang-coder`
-- Planning / design / architecture → `boomerang-architect`
-- Code exploration / finding files → `boomerang-explorer`
-- Web research → `researcher`
+- Planning / design / architecture / research → `boomerang-architect`
+- File finding only → `boomerang-explorer`
+- Web research → `boomerang-architect` (owns all research)
 - Writing tests → `boomerang-tester`
 - Linting / formatting → `boomerang-linter`
 - Git operations → `boomerang-git`
+
+**Delegation Rules:**
+- **Research tasks** → ALWAYS delegate to `boomerang-architect` (not explorer)
+- **Code exploration** → ONLY for file finding, never for pattern analysis
+- **Architect serves as researcher** - Use super-memory_search_project before any implementation
 
 **Task Tool Safety:**
 - Do NOT queue multiple Tasks for the same work

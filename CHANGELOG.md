@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<<<<<<< HEAD
+## [2.3.2] - 2026-04-27
+
+### Governance Fixes
+- **Architect owns research**: boomerang-architect now handles all research tasks (web search, code analysis)
+- **Explorer narrowed scope**: boomerang-explorer is now file-finding only (no pattern analysis)
+- **Delegation rules updated**: Orchestrator now routes research to architect, not explorer
+- **super-memory search**: Added explicit rule to use `super-memory_search_project` for codebase research
+
+### Updated Files
+- `agents/boomerang-architect.md` - Added research responsibilities
+- `agents/boomerang-explorer.md` - Narrowed to file finding only
+- `agents/boomerang.md` - Removed planning, added architect delegation rules
+- `AGENTS.md` - Documented new governance rules
+
 ## [2.3.1] - 2026-04-27
 
 ### Sync with Super-Memory-TS v2.3.1

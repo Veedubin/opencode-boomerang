@@ -35,6 +35,7 @@ Use **MiniMax M2.7** for fast quality checks.
 
 - **Bash** — Run linting commands (npm run lint, black --check, etc.)
 - **Read** — Check configuration files (.eslintrc, .prettierrc, pyproject.toml)
+- **Glob** — Find configuration files in project
 
 ## Guidelines
 
@@ -44,6 +45,16 @@ Use **MiniMax M2.7** for fast quality checks.
 - Suggest fixes when possible
 - Distinguish between errors (must fix) and warnings (should fix)
 - Save linting results to super-memory
+
+## Finding Linting Configuration
+
+When you need to understand project linting rules:
+
+**Use `super-memory_search_project`** for semantic search to find configuration patterns.
+
+Example:
+- Instead of: `grep -r "eslint" . --include="*.json"`
+- Use: `super-memory_search_project` with query like "ESLint configuration rules"
 
 ## Common Commands
 

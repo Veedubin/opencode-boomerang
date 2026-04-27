@@ -137,6 +137,38 @@ Metrics are stored in `memory_data/metrics/` (per-project isolation).
 
 This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
 
+## Agent Governance Rules (v2.3.2)
+
+> **⚠️ ENFORCED**: These rules are code-level enforced, not optional guidelines.
+
+### Research Ownership
+- **boomerang-architect** owns ALL research tasks (web searches, code analysis, documentation review)
+- boomerang-explorer is **file-finding only** - no pattern analysis or code research
+- **super-memory_search_project** is the primary research tool for codebase investigation
+
+### Orchestrator Delegation Rules
+1. Research tasks → `boomerang-architect` (NOT explorer)
+2. File finding → `boomerang-explorer` (only for glob/find operations)
+3. Code implementation → `boomerang-coder`
+4. Never delegate research to explorer - architect handles it
+
+### Agent Scope Boundaries
+
+| Agent | Scope |
+|-------|-------|
+| boomerang-explorer | Find files by name/glob ONLY |
+| boomerang-architect | Design + Research + Code analysis |
+| boomerang-coder | Code implementation |
+| boomerang-tester | Test writing |
+| boomerang-linter | Quality enforcement |
+
+### Why This Matters
+- Prevents duplicate work (explorer finds file, architect analyzes)
+- Ensures proper context for design decisions
+- Uses built-in super-memory search for efficient research
+
 ## Review Notes
+
+- **2026-04-27**: Agent governance rules added - architect owns research, explorer narrowed to file finding only
 
 - **2026-04-26**: Agent customization executed — added mcp-specialist, appended project context to all agents
