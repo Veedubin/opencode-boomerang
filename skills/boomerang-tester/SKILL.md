@@ -28,7 +28,7 @@ Use this skill when:
 
 ## Model
 
-Use **Gemini 3 Pro** for comprehensive testing.
+Use **MiniMax M2.7** for comprehensive testing.
 
 ## Guidelines
 
