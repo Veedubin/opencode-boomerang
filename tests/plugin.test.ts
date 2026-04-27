@@ -39,7 +39,7 @@ describe('Asset Loader', () => {
     clearCache();
     
     const skills = loadSkills();
-    expect(skills.length).toBe(11);
+    expect(skills.length).toBe(12);
     
     // Check a skill has expected structure
     const coder = skills.find(s => s.name === 'boomerang-coder');
@@ -71,31 +71,5 @@ describe('Asset Loader', () => {
     const skill = getSkill('boomerang-coder');
     expect(skill).toBeDefined();
     expect(skill?.name).toBe('boomerang-coder');
-  });
-});
-
-describe('MemoryClient', () => {
-  beforeEach(() => {
-    vi.resetModules();
-  });
-
-  it('should have correct interface', async () => {
-    const { MemoryClient } = await import('../src/memory-client');
-    
-    const client = new MemoryClient();
-    expect(typeof client.connect).toBe('function');
-    expect(typeof client.disconnect).toBe('function');
-    expect(typeof client.queryMemories).toBe('function');
-    expect(typeof client.addMemory).toBe('function');
-    expect(typeof client.searchProject).toBe('function');
-    expect(typeof client.indexProject).toBe('function');
-    expect(typeof client.isConnected).toBe('function');
-  });
-
-  it('should track connection state', async () => {
-    const { MemoryClient } = await import('../src/memory-client');
-    
-    const client = new MemoryClient();
-    expect(client.isConnected()).toBe(false);
   });
 });

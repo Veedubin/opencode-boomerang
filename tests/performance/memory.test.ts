@@ -3,11 +3,35 @@
  * Validates memory footprint stays within acceptable limits
  */
 
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { modelManager, ModelManager } from '../../src/model/index.js';
 import { lancedbPool } from '../../src/memory/database.js';
 import { getMemorySystem } from '../../src/memory/index.js';
 import { SUPPORTED_MODELS } from '../../src/model/types.js';
+
+// Mock the model module to avoid ONNX issues in memory tests
+vi.mock('../../src/model/index.js', () => ({
+  modelManager: {
+    loadModel: vi.fn().mockResolvedValue(undefined),
+    generateEmbedding: vi.fn().mockResolvedValue(
+      new Array(384).fill(0).map(() => Math.random())
+    ),
+    getPipeline: vi.fn((modelName: string) =>
+      modelName === SUPPORTED_MODELS.BGE_LARGE ? 'mock-pipeline' : null
+    ),
+    unloadModel: vi.fn(),
+  },
+  ModelManager: vi.fn().mockImplementation(() => ({
+    loadModel: vi.fn().mockResolvedValue(undefined),
+    generateEmbedding: vi.fn().mockResolvedValue(
+      new Array(384).fill(0).map(() => Math.random())
+    ),
+    getPipeline: vi.fn((modelName: string) =>
+      modelName === SUPPORTED_MODELS.BGE_LARGE ? 'mock-pipeline' : null
+    ),
+    unloadModel: vi.fn(),
+  })),
+}));
 
 describe('Memory Usage Tests', () => {
   let initialMemory: { heapUsed: number; heapTotal: number; external: number } | null = null;

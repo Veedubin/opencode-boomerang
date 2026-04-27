@@ -6,7 +6,8 @@ describe('ContextMonitor', () => {
     const monitor = new ContextMonitor(1000); // Small max for testing
     let compactTriggered = false;
     
-    monitor.onThreshold(40, 'compact', () => {
+    // Use 41% to avoid conflict with default 40% threshold
+    monitor.onThreshold(41, 'compact', () => {
       compactTriggered = true;
     });
 
@@ -24,7 +25,8 @@ describe('ContextMonitor', () => {
   test('reset clears triggered thresholds', () => {
     const monitor = new ContextMonitor(100);
     let triggered = false;
-    monitor.onThreshold(40, 'compact', () => { triggered = true; });
+    // Use 41% to avoid conflict with default 40% threshold
+    monitor.onThreshold(41, 'compact', () => { triggered = true; });
     
     monitor.estimateUsage('a'.repeat(200));
     expect(triggered).toBe(true);

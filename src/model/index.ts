@@ -96,11 +96,32 @@ class ModelManager {
 
     const pipe = ref.pipeline as FeatureExtractionPipeline;
     const result = await pipe(text);
-    // FeatureExtractionPipeline returns Tensor, convert to number[]
-    if (typeof result === 'object' && 'data' in result) {
-      return Array.from(result.data as Float32Array);
+
+    // Handle different result shapes across transformers.js versions
+    // result can be: Tensor, Tensor[], { data: Float32Array, ... }
+    let data: ArrayLike<number>;
+
+    if (Array.isArray(result)) {
+      // result is an array of Tensors, get data from first
+      const tensor = result[0] as { data: ArrayLike<number> };
+      data = tensor.data;
+    } else if (result && typeof result === 'object' && 'data' in result) {
+      // result is an object with data property
+      data = (result as { data: ArrayLike<number> }).data;
+    } else {
+      throw new Error('Unexpected embedding result shape');
     }
-    return Array.from(result as Float32Array);
+
+    // Handle BigInt64Array by converting to Float64Array first
+    if (data instanceof BigInt64Array) {
+      const float64 = new Float64Array(data.length);
+      for (let i = 0; i < data.length; i++) {
+        float64[i] = Number(data[i]);
+      }
+      return Array.from(float64);
+    }
+
+    return Array.from(data as Float32Array);
   }
 
   /**

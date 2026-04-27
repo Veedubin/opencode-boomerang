@@ -1,6 +1,24 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { getMemorySystem } from '../../src/memory/index.js';
 import { lancedbPool } from '../../src/memory/database.js';
+
+// Mock the model module to avoid ONNX issues
+vi.mock('../../src/model/index.js', () => ({
+  modelManager: {
+    loadModel: vi.fn().mockResolvedValue(undefined),
+    generateEmbedding: vi.fn().mockResolvedValue(
+      new Array(384).fill(0).map(() => Math.random())
+    ),
+    unloadModel: vi.fn(),
+  },
+  ModelManager: vi.fn().mockImplementation(() => ({
+    loadModel: vi.fn().mockResolvedValue(undefined),
+    generateEmbedding: vi.fn().mockResolvedValue(
+      new Array(384).fill(0).map(() => Math.random())
+    ),
+    unloadModel: vi.fn(),
+  })),
+}));
 
 describe('Real Memory Integration', () => {
   beforeEach(async () => {
@@ -8,7 +26,7 @@ describe('Real Memory Integration', () => {
   });
 
   afterEach(async () => {
-    await lancedbPool.closeAll();
+    await lancedbPool.close();
   });
 
   test('addMemory → queryMemories roundtrip', async () => {

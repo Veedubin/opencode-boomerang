@@ -35,8 +35,8 @@ describe('ModelManager', () => {
   });
 
   describe('singleton pattern', () => {
-    test('ModelManager.getInstance returns same instance', () => {
-      const { ModelManager } = require('./index.js');
+    test('ModelManager.getInstance returns same instance', async () => {
+      const { ModelManager } = await import('./index.js');
       const instance1 = ModelManager.getInstance();
       const instance2 = ModelManager.getInstance();
       expect(instance1).toBe(instance2);

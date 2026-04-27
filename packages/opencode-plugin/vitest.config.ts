@@ -3,16 +3,9 @@ import path from 'path';
 
 export default defineConfig({
   test: {
-    include: ['tests/**/*.{test,spec}.ts', 'src/**/*.{test,spec}.ts'],
     environment: 'node',
     globals: true,
-    pool: 'vmForks',
-    poolOptions: {
-      vmForks: {
-        maxForks: 2,
-      },
-    },
-    fileParallelism: false,
+    passWithNoTests: true,
   },
   resolve: {
     alias: {

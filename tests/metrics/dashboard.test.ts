@@ -1,9 +1,18 @@
-import { test, expect, describe } from 'vitest';
+import { test, expect, describe, afterEach } from 'vitest';
 import { MetricsCollector } from '../../src/metrics/collector';
+import { unlink } from 'fs/promises';
 
 describe('Metrics Dashboard', () => {
+  const testFile = '.opencode/test-metrics-' + Date.now() + '.jsonl';
+
+  afterEach(async () => {
+    try {
+      await unlink(testFile);
+    } catch { /* ignore */ }
+  });
+
   test('getAgentMetrics aggregates correctly', async () => {
-    const collector = new MetricsCollector('.opencode/test-metrics.jsonl');
+    const collector = new MetricsCollector(testFile);
 
     collector.emit({ type: 'task.completed', sessionId: 'test', data: { agent: 'coder', duration: 1000 } });
     collector.emit({ type: 'task.completed', sessionId: 'test', data: { agent: 'coder', duration: 2000 } });

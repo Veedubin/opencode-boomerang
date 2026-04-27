@@ -15,49 +15,49 @@ describe('Orchestrator', () => {
   });
 
   describe('planTask', () => {
-    test('assigns boomerang-explorer for explore/find keywords', () => {
-      const graph = orchestrator.planTask('explore the codebase structure');
+    test('assigns boomerang-explorer for explore/find keywords', async () => {
+      const graph = await orchestrator.planTask('explore the codebase structure');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang-explorer');
     });
 
-    test('assigns boomerang-coder for code/implement keywords', () => {
-      const graph = orchestrator.planTask('implement a new feature');
+    test('assigns boomerang-coder for code/implement keywords', async () => {
+      const graph = await orchestrator.planTask('implement a new feature');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang-coder');
     });
 
-    test('assigns boomerang-tester for test keywords', () => {
-      const graph = orchestrator.planTask('test the new feature');
+    test('assigns boomerang-tester for test keywords', async () => {
+      const graph = await orchestrator.planTask('test the new feature');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang-tester');
     });
 
-    test('assigns boomerang-architect for review/design keywords', () => {
-      const graph = orchestrator.planTask('review the architecture');
+    test('assigns boomerang-architect for review/design keywords', async () => {
+      const graph = await orchestrator.planTask('review the architecture');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang-architect');
     });
 
-    test('assigns boomerang-writer for write/doc keywords', () => {
-      const graph = orchestrator.planTask('write documentation for the API');
+    test('assigns boomerang-writer for write/doc keywords', async () => {
+      const graph = await orchestrator.planTask('write documentation for the API');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang-writer');
     });
 
-    test('assigns boomerang-git for git keywords', () => {
-      const graph = orchestrator.planTask('commit the changes');
+    test('assigns boomerang-git for git keywords', async () => {
+      const graph = await orchestrator.planTask('commit the changes');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang-git');
     });
 
-    test('splits compound requests into multiple tasks', () => {
-      const graph = orchestrator.planTask('explore the codebase then implement feature');
+    test('splits compound requests into multiple tasks', async () => {
+      const graph = await orchestrator.planTask('explore the codebase then implement feature');
       expect(graph.tasks.length).toBe(2);
     });
 
-    test('assigns default agent for unrecognized keywords', () => {
-      const graph = orchestrator.planTask('do something generic');
+    test('assigns default agent for unrecognized keywords', async () => {
+      const graph = await orchestrator.planTask('do something generic');
       expect(graph.tasks.length).toBeGreaterThan(0);
       expect(graph.tasks[0].agent).toBe('boomerang');
     });
@@ -136,7 +136,7 @@ describe('TaskExecutor', () => {
 
   describe('execute', () => {
     test('executes valid task graph', async () => {
-      const graph = orchestrator.planTask('explore the codebase');
+      const graph = await orchestrator.planTask('explore the codebase');
       // Create a minimal executor with very short timeout
       const minimalExecutor = new TaskExecutor(orchestrator, 5, 5);
       minimalExecutor.setTaskTimeout(50);

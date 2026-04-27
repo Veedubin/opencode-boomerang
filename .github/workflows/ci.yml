@@ -10,6 +10,8 @@ jobs:
   test-root:
     runs-on: ubuntu-latest
     name: Test Root Package
+    env:
+      NODE_OPTIONS: '--max-old-space-size=8192'
 
     steps:
       - name: Checkout code
@@ -39,6 +41,8 @@ jobs:
     defaults:
       run:
         working-directory: packages/opencode-plugin
+    env:
+      NODE_OPTIONS: '--max-old-space-size=8192'
 
     steps:
       - name: Checkout code
