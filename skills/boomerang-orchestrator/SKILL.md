@@ -56,6 +56,22 @@ Use this skill when:
 
 Use **Kimi K2.6** for orchestration planning.
 
+## Critical Workflow Rule: Architect Owns Research
+
+**DO NOT use explorer to gather info for architect. Architect does its own research.**
+
+The correct workflow is:
+```
+User Request → Orchestrator delegates to architect → Architect researches + plans → Returns plan → Orchestrator dispatches
+```
+
+**NEVER** the old pattern:
+```
+explorer researches → passes summary to orchestrator → orchestrator waits → delegates to architect
+```
+
+The architect has access to `super-memory_search_project` and `super-memory_query_memories` for all research needs. Do not insert an explorer step between user request and architect planning.
+
 ## Protocol Rules
 
 ### Mandatory Steps (NEVER SKIP)
@@ -92,8 +108,8 @@ This keeps the context window low while preserving important instructions.
 ### Agent Selection Guide
 
 - Code implementation / bug fixes → `boomerang-coder`
-- Planning / design / architecture → `boomerang-architect`
-- Code exploration / finding files → `boomerang-explorer`
+- Planning / design / architecture → `boomerang-architect` (researches independently)
+- Quick file finding → `boomerang-explorer` (NOT for research summaries)
 - Web research → `researcher`
 - Writing tests → `boomerang-tester`
 - Linting / formatting → `boomerang-linter`
@@ -194,7 +210,7 @@ Each sub-agent call should aim to return:
 ## Task Flow
 
 ```
-User Request → Memory Query → Sequential Think → Parse → Build DAG → Execute Parallel → Execute Sequential → Quality Gates → Save Memory
+User Request → Memory Query → Sequential Think → Delegate to Architect → Architect Researches + Plans → Orchestrator Dispatches → Quality Gates → Save Memory
 ```
 
 ## Middleware Pattern (Future)
@@ -250,4 +266,4 @@ User Request
 - Each middleware can short-circuit (stop processing)
 - State should be immutable between middleware layers
 
-(End of file - total 224 lines)
+(End of file - total 265 lines)

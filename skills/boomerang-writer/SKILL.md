@@ -74,6 +74,16 @@ Use **Kimi K2.6** for documentation writing. Kimi is slower but smarter, making 
 - Authentication details
 - Error codes
 
+## Finding Documentation Examples
+
+When you need to find existing documentation patterns:
+
+**Use `super-memory_search_project`** for semantic search.
+
+Example:
+- Instead of: `grep -r "AGENTS.md" docs/`
+- Use: `super-memory_search_project` with query like "documentation structure AGENTS.md examples"
+
 ## Protocol
 
 ### Tiered Memory Architecture

@@ -38,6 +38,18 @@ Use **MiniMax M2.7** for comprehensive testing.
 - Keep tests independent
 - Follow testing best practices for the language/framework
 
+## Finding Test Examples in Codebase
+
+When you need to find existing test patterns or examples:
+
+**Use `super-memory_search_project`** for semantic search - NOT grep.
+
+The semantic search is backed by Qdrant and understands code context, making it far superior to grep for finding relevant test patterns.
+
+Example:
+- Instead of: `grep -r "describe\|it(" tests/`
+- Use: `super-memory_search_project` with query like "test examples for authentication module"
+
 ## Super-Memory Protocol
 
 ### Tiered Memory Architecture

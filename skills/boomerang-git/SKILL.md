@@ -52,6 +52,16 @@ Use **MiniMax M2.7** for fast git operations.
 - Never force push to main/master
 - Never skip hooks unless explicitly asked
 
+## Finding Git History Patterns
+
+When you need to find commit patterns or history:
+
+**Use `super-memory_search_project`** for semantic search of commit messages and patterns.
+
+Example:
+- Instead of: `git log --grep="auth" --oneline`
+- Use: `super-memory_search_project` with query like "git commit history authentication feature"
+
 ## Safety Rules
 
 1. **NEVER update git config** (user.name, user.email)

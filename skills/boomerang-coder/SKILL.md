@@ -37,6 +37,24 @@ Use **MiniMax M2.7 high-speed** for code generation.
 - Keep functions small and focused
 - Use meaningful variable and function names
 
+## Finding Code in the Codebase
+
+When you need to find relevant code to understand patterns or locate implementation details:
+
+**Use `super-memory_search_project`** for semantic search - NOT grep.
+
+The semantic search is backed by Qdrant and understands code context, making it far superior to grep for finding relevant code.
+
+Example:
+- Instead of: `grep -r "function auth" src/`
+- Use: `super-memory_search_project` with query like "authentication function implementation"
+
+The search_project tool understands:
+- Function and class names
+- Code semantics and context
+- Import/export relationships
+- Pattern matching in code structure
+
 ## Super-Memory Protocol
 
 ### Tiered Memory Architecture
@@ -80,10 +98,9 @@ For complex tasks (multi-file changes, architectural decisions, debugging):
 
 When tool outputs exceed ~500 words or 3000 characters:
 - **Glob results** with many files
-- **Grep results** with many matches
+- **Search results** with many entries (from search_project)
 - **Read output** of large files
 - **Web fetch** of long pages
-- **Search results** with many entries
 
 ### How to Evict
 
@@ -96,7 +113,7 @@ When tool outputs exceed ~500 words or 3000 characters:
 **Instead of:**
 ```
 I found these matches:
-[50 lines of grep output]
+[50 lines of search output]
 ```
 
 **Do this:**
