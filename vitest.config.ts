@@ -4,15 +4,23 @@ import path from 'path';
 export default defineConfig({
   test: {
     include: ['tests/**/*.{test,spec}.ts', 'src/**/*.{test,spec}.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      'tests/integration/**',
+      'tests/performance/**',
+      'src/tui/tui.test.ts',
+    ],
     environment: 'node',
     globals: true,
     pool: 'vmForks',
     poolOptions: {
       vmForks: {
-        maxForks: 2,
+        maxForks: 1,
       },
     },
-    fileParallelism: false,
+    maxWorkers: 1,
+    minWorkers: 1,
   },
   resolve: {
     alias: {

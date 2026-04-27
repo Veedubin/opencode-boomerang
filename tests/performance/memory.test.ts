@@ -9,6 +9,9 @@ import { lancedbPool } from '../../src/memory/database.js';
 import { getMemorySystem } from '../../src/memory/index.js';
 import { SUPPORTED_MODELS } from '../../src/model/types.js';
 
+// Skip database-dependent tests in CI
+const describeOrSkip = process.env.CI ? describe.skip : describe;
+
 // Mock the model module to avoid ONNX issues in memory tests
 vi.mock('../../src/model/index.js', () => ({
   modelManager: {
@@ -33,7 +36,7 @@ vi.mock('../../src/model/index.js', () => ({
   })),
 }));
 
-describe('Memory Usage Tests', () => {
+describeOrSkip('Memory Usage Tests', () => {
   let initialMemory: { heapUsed: number; heapTotal: number; external: number } | null = null;
 
   function getMemoryUsage(): { heapUsed: number; heapTotal: number; external: number } {

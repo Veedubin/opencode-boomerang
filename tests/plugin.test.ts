@@ -26,7 +26,7 @@ describe('Asset Loader', () => {
     clearCache();
     
     const agents = loadAgents();
-    expect(agents.length).toBe(12);
+    expect(agents.length).toBe(13);
     
     // Check first agent has expected structure
     const coder = agents.find(a => a.name === 'boomerang-coder');

@@ -1,14 +1,13 @@
 import { test, expect, describe } from 'vitest';
-import { Message } from './components/Message.js';
-import { Header } from './components/Header.js';
-import { StatusBar } from './components/StatusBar.js';
-import { AgentSelector } from './components/AgentSelector.js';
-import { ChatWindow } from './components/ChatWindow.js';
 
 // TUI tests are skipped because they import React/Ink components which conflict
 // with the vmForks pool used in vitest configuration (ERR_VM_MODULE_DIFFERENT_CONTEXT).
 // These components require a real TTY environment to test properly.
-describe.skip('TUI Components', () => {
+//
+// In CI, we skip the entire file to avoid module resolution issues.
+const describeOrSkip = process.env.CI ? describe.skip : describe;
+
+describeOrSkip('TUI Components', () => {
   describe('Message Component', () => {
     test('renders user message correctly', () => {
       const message = {
