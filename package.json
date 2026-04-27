@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "NODE_OPTIONS='--max-old-space-size=7168' vitest --run",
+    "test": "NODE_OPTIONS='--max-old-space-size=7168' vitest",
     "coverage": "vitest --coverage"
   },
   "dependencies": {
