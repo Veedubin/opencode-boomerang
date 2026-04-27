@@ -145,3 +145,32 @@ After running, report:
 When complete, summarize what was created/modified and STOP.
 Do not ask follow-up questions.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### MCP-Servers Initialization Steps
+
+When initializing for the MCP-Servers project:
+
+1. **Index both projects**:
+   - `super-memory_index_project` on `boomerang-v2/`
+   - `super-memory_index_project` on `Super-Memory-TS/`
+
+2. **Verify MCP configuration** in `.opencode/opencode.json`:
+   - `super-memory-ts` enabled with `TRANSFORMERS_CACHE`
+   - `sequential-thinking` enabled
+   - `searxng` enabled (optional, for research)
+   - `github-mcp` enabled (optional, for PRs/issues)
+
+3. **Verify Qdrant is running**:
+   ```bash
+   docker run -p 6333:6333 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant
+   ```
+
+4. **Check build health**:
+   ```bash
+   cd boomerang-v2 && bun run typecheck
+   cd Super-Memory-TS && npm run typecheck
+   ```
+
+5. **Create root AGENTS.md** if it doesn't exist

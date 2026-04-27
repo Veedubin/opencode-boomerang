@@ -6,85 +6,50 @@
 
 ## Current Status
 
-### Session Summary (v2.1.6 Architectural Recovery)
+### Session Summary (2026-04-27 — Skill Updates & Super-Memory-TS Fixes)
 
-This session restored the intended built-in architecture and implemented all missing automation.
-
-**Key Changes:**
-- ✅ Restored built-in Super-Memory-TS integration (removed MCP-only)
-- ✅ Added code-level protocol enforcement (not honor-system)
-- ✅ Added automatic context compaction and handoff
-- ✅ Wired up metrics collection
-- ✅ Added intelligent routing based on performance metrics
-- ✅ All TypeScript compilation passing
+- ✅ **Fixed index_project path parameter** — Added getRootPath/setRootPath to indexer, tests added
+- ⚠️ **prebuild-install deprecation** — Added sharp override, blocked by @xenova/transformers
+- ✅ **Updated all 8 agent skill files** — Fixed MCP tool names per new schema
+- ✅ **Added Bug Discovery Protocol** to explorer skill
+- ✅ **Created boomerang-release skill** — 5-step release workflow
+- ✅ **Enhanced boomerang-writer skill** — Documentation maintenance standards
+- ⏳ Next: Verify all fixes in production after OpenCode restart
 
 ---
 
 ## Completed Tasks ✓
 
-### Model & Agent Updates
-- [x] Fixed model naming inconsistencies (k2p6, MiniMax M2.7)
-- [x] Added `researcher` to `DEFAULT_AGENTS`
+### Current Session (2026-04-27)
+- [x] Fix index_project path parameter (Super-Memory-TS)
+- [x] Address prebuild-install deprecation warning (sharp override)
+- [x] Update all 8 agent skill files with correct MCP tool names
+- [x] Add mandatory Super-Memory Protocol to all skills
+- [x] Add Bug Discovery Protocol to explorer skill
+- [x] Create boomerang-release skill (5-step workflow)
+- [x] Enhance boomerang-writer with Documentation Maintenance
 
-### Skills & Documentation
-- [x] Created `skills/researcher/SKILL.md` for web research agent
-- [x] Updated configuration examples in documentation
-
-### Memory Architecture (MCP-Only)
-- [x] Fixed Super-Memory path coupling (configurable path)
-- [x] Converted from dual-path memory to MCP-only dependency
-- [x] Updated plugin to use `@veedubin/super-memory-ts` as MCP server
-- [x] Removed built-in memory fallback
-
-### Previously Completed
-- [x] **v0.5.0 Release** — Version bumped, tagged, ready to push
-- [x] **Read all OpenCode documentation** — 13 docs pages cached in super-memory
-- [x] **Fixed super-memory protocol** — Made MANDATORY for all 11 sub-agents
-- [x] **Model upgrade** — All agents updated from Kimi K2.5 to K2.6
-- [x] **Boomerang restrictions** — Markdown-only reads, git-only bash commands
-- [x] **Architect-first planning** — Mandatory architect review before build tasks
-- [x] **Missing agents** — Copied writer, scraper, init, handoff to src/assets
-- [x] **SKILL.md fixes** — Corrected wrong model names in documentation
-- [x] **Super-memory-mcp updates** — Added tiered search tools, corruption detection
-- [x] **Fixed hanging issue** — steps:50 limit, error handling, anti-loop safety
-- [x] **Per-project DB isolation** — Each repo gets its own memory_data/ directory
-- [x] Publish @veedubin/opencode-boomerang@0.3.0 to NPM
-- [x] Fix GitHub Actions workflows (NPM-only, removed PyPI)
-- [x] Create boomerang-writer skill for documentation
-- [x] Create boomerang-scraper skill for web research
-- [x] Create boomerang-init skill for session initialization
-- [x] Create boomerang-handoff skill for session wrap-up
-- [x] Add comprehensive documentation (ROADMAP.md, docs/, examples/)
-- [x] Update orchestrator skill with mandatory session start protocol
-- [x] Sync framework to 4 projects (sports-bet, proxy-hop, png2svg, resume-workspace)
-- [x] Remove misleading compactor skill
-- [x] Add 29 integration tests for scraper (58 total tests passing)
-- [x] Fix .gitignore to track TypeScript source files
-- [x] Update boomerang-orchestrator skill (markdown reads, sequential thinking, session start protocol, context compaction)
-- [x] Update boomerang-init skill (hard rules, protect core prompting, append-only customizations)
-- [x] Create/update AGENTS.md with full agent roster
-- [x] Create HANDOFF.md template
-- [x] Update README.md with new skills and agents
-- [x] Rebuilt TypeScript plugin runtime from compiled JS
-- [x] Added test infrastructure with 29 passing tests
+### Previous Sessions
+- [x] **Fix MCP 'Not connected'** — Connection issue fix in v2.2.1
+- [x] **Fix projectId loss in MCP tool responses** — Super-Memory-TS
+- [x] **Fix Qdrant filter format** — array → object in with_filter
+- [x] **Release v2.2.1 to NPM**
+- [x] **Boomerang Init** — Customized 12 agents, created mcp-specialist
+- [x] **v2.1.6 Architectural Recovery** — Built-in integration, protocol enforcement, metrics, routing
+- [x] **MCP-Only Memory Migration** — Converted from dual-path to MCP-only dependency
+- [x] **v1.1.0 Release** — Tool name fixes, integration tests, CI/CD
 
 ---
 
 ## Remaining Work
 
 ### Testing & Integration
-- [x] Test built-in memory integration end-to-end
-- [x] Verify protocol enforcement in real workflows
-- [x] Verify context compaction triggers correctly
-
-### Documentation
-- [x] Update HANDOFF.md with this session's work
-
-### CI/CD
-- [x] GitHub Actions already configured
+- [ ] Verify MCP tools work after OpenCode restart
+- [ ] Test project isolation with Super-Memory-TS v2.2.1
+- [ ] Collect metrics samples (need 5+ for intelligent routing)
 
 ### Future Considerations
-- [ ] Collect enough metrics for routing to be meaningful (5+ samples)
+- [ ] Resolve prebuild-install deprecation (blocked by @xenova/transformers)
 - [ ] Push to GitHub and verify CI passes
 
 ---
@@ -93,24 +58,11 @@ This session restored the intended built-in architecture and implemented all mis
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| 1 | Test protocol enforcement | Verify auto-remediation and blocking work correctly |
-| 2 | Verify context compaction | Ensure 40%/80% thresholds trigger correctly |
-| 3 | Collect metrics samples | Need 5+ for intelligent routing to activate |
-| 4 | Push to GitHub | Verify CI passes on v2.1.6 |
+| 1 | Verify MCP tools work after restart | Test query_memories, add_memory, search_project, index_project |
+| 2 | Test project isolation | Verify v2.2.1 works correctly per-project |
+| 3 | Collect routing metrics | 5+ samples needed for intelligent routing |
+| 4 | Push to GitHub | Verify CI passes |
 
 ---
 
-## Guidelines
-
-- All agents must query super-memory at start and save at end
-- Sequential thinking is mandatory for complex tasks
-- boomerang-init must only append to default personas, never replace core prompts
-- Context compaction triggers at ~40% context usage
-- Handoff skill should be called before compaction to preserve state
-- Each project gets its own `memory_data/` directory (per-project DB isolation)
-- Use `super-memory_add_memory` for all saves (add metadata tags for high-value work)
-- Use `super-memory_query_memories` with `strategy` parameter for searches
-
----
-
-*Last Updated: 2025-04-25*
+*Last Updated: 2026-04-27*

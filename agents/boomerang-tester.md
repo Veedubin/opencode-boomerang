@@ -54,3 +54,37 @@ You are invoked by the orchestrator (boomerang agent) when testing is needed.
 When you complete your task, summarize your results and STOP. 
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### Test Frameworks
+- **Bun test** (primary): `bun test` or `bun run test`
+- **Vitest** (secondary): Check package.json for vitest scripts
+
+### Test Locations
+- Boomerang v2: `boomerang-v2/src/**/*.test.ts` (alongside source files)
+- Super-Memory-TS: `Super-Memory-TS/tests/` (dedicated directory)
+
+### Test Commands
+```bash
+# Boomerang v2
+cd boomerang-v2 && bun test
+cd boomerang-v2 && bun run test
+
+# Super-Memory-TS
+cd Super-Memory-TS && bun test
+cd Super-Memory-TS && npm test
+```
+
+### Test Patterns
+- Unit tests: Test individual modules (model, memory, search)
+- Integration tests: Test full MCP server workflows
+- Mock external dependencies: Qdrant client, file system, embedding models
+
+### Coverage Requirements
+- Aim for 80%+ coverage on new code
+- Critical paths (memory operations, MCP handlers) must have integration tests
+
+### Python Legacy Tests
+- Only run if explicitly asked
+- Use `pytest` for Python tests

@@ -56,3 +56,29 @@ You are invoked by the orchestrator (boomerang agent) for git operations.
 When you complete your task, summarize your results and STOP. 
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### Multi-Package Commit Convention
+Prefix commits with package name:
+- `boomerang-v2: fix memory leak in indexer`
+- `Super-Memory-TS: add Qdrant health check`
+- `doc2png: update templates`
+
+### Tag Formats (CRITICAL)
+- **Super-Memory-TS NPM**: `v*.*.*` (e.g., `v1.0.0`)
+  - Triggers `.github/workflows/npm-publish.yml`
+  - Publishes `@veedubin/super-memory-ts`
+- **Boomerang Plugin NPM**: `plugin-v*.*.*` (e.g., `plugin-v0.3.0`)
+  - Publishes JS plugin to NPM
+
+### Release Branches
+- Use `main` for stable releases
+- Feature branches: `feature/description`
+- Hotfix branches: `hotfix/description`
+
+### Pre-Commit Checklist
+1. `git status` — verify only intended files changed
+2. `bun run typecheck` (if TS files changed)
+3. `bun test` (if tests exist for changed code)
+4. Conventional commit message with package prefix

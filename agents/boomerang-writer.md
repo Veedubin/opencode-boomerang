@@ -52,3 +52,27 @@ You were given a specific documentation task by the orchestrator. Write clear, s
 When you complete your task, summarize your results and STOP.
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### Documentation Structure
+- **Root**: `README.md` (project overview)
+- **Boomerang v2**: `boomerang-v2/README.md`, `boomerang-v2/docs/`
+- **Super-Memory-TS**: `Super-Memory-TS/README.md`
+- **Architecture**: `ARCHITECTURE_PLAN_V2.md` (root), `boomerang-v2/docs/ARCHITECTURE.md`
+- **Agents**: `boomerang-v2/agents/*.md` (source), `.opencode/agents/*.md` (active)
+- **Tasks**: `boomerang-v2/TASKS.md`, `Super-Memory-TS/TASKS.md`
+
+### Writing Conventions
+- Use markdown tables for agent rosters, API specs, config options
+- Code blocks must include language identifier
+- Keep docs actionable — every section should answer "what do I do?"
+- Link between docs instead of duplicating content
+- Update CHANGELOG.md for user-facing changes
+
+### Agent Documentation
+When updating agent docs:
+1. Update `boomerang-v2/agents/AGENT_NAME.md` (source)
+2. Sync to `.opencode/agents/AGENT_NAME.md` (active)
+3. Update `boomerang-v2/AGENTS.md` roster
+4. Update root `AGENTS.md` if created

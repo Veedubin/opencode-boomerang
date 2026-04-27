@@ -89,3 +89,39 @@ You are invoked by the orchestrator or coder when quality checks are needed.
 When you complete your task, summarize your results and STOP. 
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### TypeScript Projects
+**Boomerang v2:**
+```bash
+cd boomerang-v2
+bun run lint        # ESLint
+bun run format      # Prettier (if available)
+bun run typecheck   # tsc --noEmit
+```
+
+**Super-Memory-TS:**
+```bash
+cd Super-Memory-TS
+npm run lint        # ESLint
+npm run typecheck   # tsc --noEmit
+```
+
+### Python Legacy Projects
+```bash
+cd boomerang && ruff check .      # or flake8
+cd Super-Memory && ruff check .
+```
+
+### Lint Checklist
+1. Run linter with `--fix` if available
+2. Run typecheck (catches TS errors lint misses)
+3. Verify no `any` types in new code (strict mode)
+4. Check for proper ESM imports (`.js` extensions)
+
+### Auto-fix Priority
+- Fix import/order issues
+- Fix trailing commas, semicolons
+- Fix unused variables/imports
+- Leave complex type errors for coder

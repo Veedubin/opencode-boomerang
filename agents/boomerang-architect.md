@@ -53,3 +53,32 @@ Use when user asks to: plan, design, architect, think about approach
 When you complete your task, summarize your results and STOP. 
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### Architecture Domains
+1. **MCP Protocol Layer** — Tool definitions, handlers, stdio/sse transport
+2. **Orchestration Layer** — Agent routing, task delegation, protocol enforcement
+3. **Memory Layer** — Vector storage (Qdrant), embeddings, project indexing
+4. **Plugin Layer** — OpenCode integration, TUI components, asset loading
+
+### Key Design Constraints
+- **Zero external dependencies for core memory** — Must work offline
+- **Built-in integration preferred** over MCP for Boomerang-internal use
+- **Singleton model manager** — Prevents VRAM duplication
+- **ESM only** — No CommonJS in new code
+- **Bun-first** — Prefer Bun APIs where available
+
+### Technology Decisions (Do NOT change without discussion)
+- Qdrant over LanceDB (v2.0.0 migration completed)
+- BGE-Large for GPU, MiniLM-L6-v2 for CPU
+- fp16 precision default (650MB → ~325MB)
+- chokidar for file watching
+- ONNX Runtime for embeddings
+
+### When to Involve Architect
+- Changes affecting MCP tool schemas
+- Database schema modifications
+- Model/embedding changes
+- Cross-project refactoring
+- Publishing/versioning strategy

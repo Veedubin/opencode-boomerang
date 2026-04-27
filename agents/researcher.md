@@ -114,3 +114,17 @@ For each research task:
 When you complete your task, summarize your results and STOP. 
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### Research Use Cases
+- MCP protocol specification updates
+- Qdrant API changes
+- Embedding model updates (Xenova/transformers)
+- OpenCode plugin API changes
+- NPM publishing best practices
+
+### Save Research To
+- `boomerang-v2/docs/` for architecture decisions
+- `boomerang-v2/RESEARCH_REPORT.md` for comprehensive research
+- super-memory with tags: `research`, `mcp`, `qdrant`, `architecture`

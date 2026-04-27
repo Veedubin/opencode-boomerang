@@ -122,3 +122,25 @@ If any file update fails:
 When complete, report the handoff summary and STOP.
 Do not ask follow-up questions.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### MCP-Servers Handoff Notes
+
+#### Files to Update
+1. `boomerang-v2/HANDOFF.md` — Primary handoff document
+2. `boomerang-v2/TASKS.md` — Task tracking
+3. `boomerang-v2/AGENTS.md` — Agent roster
+4. Root `AGENTS.md` — If exists
+5. Individual `CHANGELOG.md` files in each package
+
+#### Context to Save
+- Which subproject was worked on (boomerang-v2 vs Super-Memory-TS)
+- Database migrations or schema changes
+- Agent/skill modifications
+- Publishing steps completed or pending
+
+#### Multi-Project Awareness
+- Track changes in BOTH boomerang-v2/ and Super-Memory-TS/
+- Note cross-project dependencies
+- Record any sync operations between `.opencode/` and `boomerang-v2/`

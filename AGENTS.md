@@ -14,6 +14,7 @@
 | **boomerang-writer** | boomerang-writer | Kimi K2.6 | 📝 **Documentation** — Markdown writing and documentation |
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | 🌐 **Web scraping** — Research and information gathering |
 | **researcher** | researcher | MiniMax M2.7 | 🌐 **Web research** — Search, fetch, and synthesize online information |
+| **mcp-specialist** | mcp-specialist | MiniMax M2.7 | 🔌 **MCP Protocol** — Tool design, server debug |
 
 | Skill | Purpose | Model |
 |-------|---------|-------|
@@ -35,6 +36,7 @@
 | Linting / formatting | `boomerang-linter` | MiniMax M2.7 |
 | Git operations | `boomerang-git` | MiniMax M2.7 |
 | Web research / scraping | `boomerang-scraper` | MiniMax M2.7 |
+| MCP tool design / server debug | `mcp-specialist` | MiniMax M2.7 |
 
 ## MANDATORY Super-Memory Protocol
 
@@ -134,3 +136,7 @@ Metrics are stored in `memory_data/metrics/` (per-project isolation).
 ## Project-Specific Context
 
 This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
+
+## Review Notes
+
+- **2026-04-26**: Agent customization executed — added mcp-specialist, appended project context to all agents

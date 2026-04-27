@@ -2,6 +2,142 @@
 
 ## Session History
 
+### 2026-04-27 — Skill System Overhaul + index_project Bug Fix
+
+**Status**: Session complete, quality gates passed
+
+#### What Was Accomplished
+
+1. **Skill System Overhaul**
+   - Updated all 8 agent skill files with correct MCP tool names (fixed outdated names)
+   - Made Super-Memory Protocol MANDATORY in all skills (query at start, save at end)
+   - Added agent-type-specific metadata guidance
+   - Added Bug Discovery Protocol to explorer skill (decision tree for fix vs report, structured bug report format)
+   - Created new `boomerang-release` skill for automated version bumping and publishing
+   - Enhanced `boomerang-writer` skill with Documentation Maintenance standards
+
+2. **Critical Bug Fix: index_project Path Parameter**
+   - Fixed `Super-Memory-TS/src/server.ts` where `index_project` MCP tool ignored the `path` parameter
+   - Added `getRootPath()` and `setRootPath()` methods to `src/project-index/indexer.ts`
+   - Updated handler to pass path to indexer and support on-demand indexer creation
+   - Added tests in `tests/project-index.test.ts`
+
+3. **Deprecation Warning Mitigation**
+   - Added `sharp@0.33.0` override to address `prebuild-install@7.1.3` deprecation
+   - Full fix blocked by `@xenova/transformers` peer dependency
+
+#### Key Decisions
+
+- Skill system now enforces Super-Memory Protocol consistently across all agents
+- Bug Discovery Protocol gives explorers clear decision tree: fix vs report
+- `boomerang-release` skill automates version bumping and publishing workflow
+- `index_project` path parameter now properly routed to indexer
+
+#### Files Modified
+
+- `skills/*/SKILL.md` - all 8 skill files updated with correct MCP tool names
+- `skills/boomerang-release/SKILL.md` - new skill for automated publishing
+- `skills/boomerang-writer/SKILL.md` - enhanced with documentation maintenance
+- `skills/boomerang-explorer/SKILL.md` - added Bug Discovery Protocol
+- `Super-Memory-TS/src/server.ts` - index_project path fix
+- `Super-Memory-TS/src/project-index/indexer.ts` - getRootPath/setRootPath
+- `Super-Memory-TS/tests/project-index.test.ts` - new tests
+- `Super-Memory-TS/package.json` - sharp@0.33.0 override
+
+#### Known Issues
+
+| Issue | Status | Notes |
+|-------|--------|-------|
+| `database.ts:189` lint error | **Pre-existing** | Unused `err` variable |
+| 3 integration test failures | **Pre-existing** | Qdrant not running |
+| sharp deprecation | **Partial** | Override added, peer dep blocks full fix |
+
+#### Next Session Priorities
+
+1. **Verify skill system** changes work end-to-end with agents
+2. **Test index_project** with custom path parameter
+3. **Review boomerang-release** skill for publishing workflow
+4. **Fix lint error** in `database.ts:189` (pre-existing)
+
+#### Super-Memory Reference
+
+Query `super-memory_query_memories` with:
+- `"skill system overhaul mandatory protocol boomerang"`
+- `"index_project path parameter fix"`
+- `"Bug Discovery Protocol explorer skill"`
+
+---
+
+### 2026-04-27 — Super-Memory-TS v2.2.1 Bug Fixes
+
+**Status**: v2.2.1 released, MCP connection issue resolved
+
+#### What Was Accomplished
+
+1. **Fixed projectId Loss Bug**
+   - MCP server was not including `projectId` in tool responses
+   - Added `projectId` to all tool result schemas and response handlers
+   - Affects: `search_project`, `index_project`, `query_memories`, `add_memory`
+
+2. **Fixed Qdrant Filter Format**
+   - `with_filter` was receiving an array `[field, value]` instead of an object `{key: value}`
+   - Corrected filter construction in `qdrant-hybrid.ts` search methods
+   - Resolved memory query failures when filtering by projectId
+
+3. **Released v2.2.1**
+   - Fixed `package.json` version in `dist/`
+   - Published to NPM: `@veedubin/super-memory-ts@2.2.1`
+
+#### Key Decisions
+
+- Fixes are in Super-Memory-TS but affect boomerang-v2's MCP memory integration
+- MCP memory tools in boomerang-v2 depend on correct tool schema from Super-Memory-TS
+- Connection issue was actually the `projectId` missing from tool metadata
+
+#### Next Session Priorities
+
+1. Test MCP memory tools work after OpenCode restart
+2. Verify project isolation with new v2.2.1 installation
+3. Collect routing metrics (still need 5+ samples)
+
+---
+
+### 2026-04-26 — Boomerang Init + Agent Customization
+
+**Status**: Session complete
+
+#### What Was Accomplished
+
+1. **Boomerang Init**
+   - Customized 12 existing agent files in both `.opencode/agents/` and `boomerang-v2/agents/`
+   - Created 1 new agent: `mcp-specialist.md` (MCP Protocol specialist for tool design and server debug)
+   - Added project-specific context (MCP-Servers domain, TypeScript conventions, build commands)
+   - Updated `AGENTS.md` with review notes
+
+2. **Project Context Added to Agents**
+   - TypeScript/Bun runtime conventions
+   - Build/test/lint commands for both `boomerang-v2/` and `Super-Memory-TS/`
+   - MCP Protocol integration patterns
+   - Memory system architecture details
+
+#### Files Created
+
+- `.opencode/agents/mcp-specialist.md` (new agent)
+- `agents/mcp-specialist.md` (synced copy)
+
+#### Files Modified
+
+- All `agents/*.md` files (12 agents) - appended project-specific context
+- `AGENTS.md` - added review notes with date
+
+#### Next Session Priorities
+
+1. Test built-in memory integration with new agent customizations
+2. Verify MCP server connection works after Super-Memory-TS v2.2.0 installation
+3. Collect metrics for intelligent routing (need 5+ samples)
+
+---
+
 ### 2026-04-25 — v2.1.6 (Architectural Recovery)
 
 **Status**: v2.1.6 committed, all 5 phases complete

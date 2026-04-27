@@ -53,3 +53,45 @@ You are invoked by the orchestrator (boomerang agent) when code exploration is n
 When you complete your task, summarize your results and STOP. 
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## Project-Specific Context (Appended by boomerang-init)
+
+### Monorepo Structure
+```
+MCP-Servers/
+├── boomerang-v2/          # TypeScript orchestration plugin
+│   ├── src/               # Main source
+│   │   ├── memory/        # Memory system (Super-Memory-TS core)
+│   │   ├── project-index/ # File indexing (chokidar watcher)
+│   │   ├── model/         # Embedding model manager
+│   │   ├── protocol/      # Protocol enforcer & tracker
+│   │   ├── routing/      # Agent routing logic
+│   │   ├── metrics/       # Performance metrics collection
+│   │   ├── tui/           # Terminal UI components
+│   │   └── utils/         # Error handling, logging
+│   ├── agents/            # Agent definitions (source)
+│   ├── skills/            # Skill definitions (source)
+│   ├── docs/              # Documentation
+│   └── package.json       # @veedubin/boomerang-v2
+├── Super-Memory-TS/       # TypeScript MCP server
+│   ├── src/               # Server source
+│   ├── tests/             # Test suite
+│   └── package.json       # @veedubin/super-memory-ts
+├── boomerang/             # Python plugin (LEGACY)
+├── Super-Memory/          # Python server (LEGACY)
+└── doc2png/               # Python documentation tool
+```
+
+### Key Files to Know
+- `boomerang-v2/src/orchestrator.ts` — Main orchestrator logic
+- `boomerang-v2/src/memory-service.ts` — Memory service wrapper
+- `boomerang-v2/src/server.ts` — MCP server entry
+- `Super-Memory-TS/src/server.ts` — Standalone MCP server
+- `Super-Memory-TS/src/memory/index.ts` — Memory system API
+- `.opencode/opencode.json` — Active MCP configuration
+
+### Search Patterns
+- TypeScript source: `boomerang-v2/src/**/*.ts`, `Super-Memory-TS/src/**/*.ts`
+- Tests: `boomerang-v2/src/**/*.test.ts`, `Super-Memory-TS/tests/**/*.ts`
+- Agent files: `.opencode/agents/*.md` (active), `boomerang-v2/agents/*.md` (source)
+- Skill files: `.opencode/skills/**/*.md` (active), `boomerang-v2/skills/**/*.md` (source)
