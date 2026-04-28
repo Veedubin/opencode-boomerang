@@ -25,6 +25,57 @@
 
 ---
 
+## 🤖 Model Configuration
+
+Boomerang uses a two-tier agent system. You can customize which LLM models power each tier during installation.
+
+### Default Configuration
+
+| Tier | Default Model | Agents |
+|------|--------------|--------|
+| **Primary** | Kimi K2.6 (`kimi-for-coding/k2p6`) | orchestrator, architect, writer, handoff, init |
+| **Secondary** | MiniMax M2.7 (`minimax/MiniMax-M2.7`) | coder, explorer, tester, linter, git, scraper, researcher, mcp-specialist |
+
+### Custom Models
+
+Pass model arguments during installation:
+
+```bash
+# Use a single model for all agents
+npx @veedubin/boomerang-v2 --primary=k2k6
+
+# Use different models for primary and secondary tiers
+npx @veedubin/boomerang-v2 --primary=claude-sonnet --secondary=gpt-4o-mini
+
+# Install with defaults
+npx @veedubin/boomerang-v2
+```
+
+### Supported Model Aliases
+
+| Alias | OpenCode Model ID | Provider |
+|-------|-------------------|----------|
+| `k2k6` | `kimi-for-coding/k2p6` | Kimi |
+| `k2k5` | `kimi-for-coding/k2p5` | Kimi |
+| `m2k7` | `minimax/MiniMax-M2.7` | MiniMax |
+| `m2k5` | `minimax/MiniMax-M2.5` | MiniMax |
+| `claude-sonnet` | `anthropic/claude-sonnet-4-20250514` | Anthropic |
+| `claude-opus` | `anthropic/claude-opus-4-20250514` | Anthropic |
+| `gpt-4o` | `openai/gpt-4o` | OpenAI |
+| `gpt-4o-mini` | `openai/gpt-4o-mini` | OpenAI |
+| `gemini-pro` | `google/gemini-2.5-pro` | Google |
+| `gemini-flash` | `google/gemini-2.5-flash` | Google |
+| `deepseek` | `deepseek/deepseek-chat-v3` | DeepSeek |
+| `llama3` | `meta/llama-3.3-70b` | Meta |
+| `qwen` | `alibaba/qwen-2.5-72b` | Alibaba |
+
+You can also pass any valid OpenCode model ID directly:
+```bash
+npx @veedubin/boomerang-v2 --primary=anthropic/claude-sonnet-4-20250514
+```
+
+---
+
 ## 🚚 Quick Start
 
 ### Installation

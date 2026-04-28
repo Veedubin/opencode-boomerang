@@ -1,93 +1,111 @@
 #!/usr/bin/env node
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-import https from 'node:https';
-import fs from 'node:fs';
-import path from 'node:path';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const AGENTS = [
-  'boomerang.md',
-  'boomerang-architect.md',
-  'boomerang-coder.md',
-  'boomerang-explorer.md',
-  'boomerang-git.md',
-  'boomerang-handoff.md',
-  'boomerang-init.md',
-  'boomerang-linter.md',
-  'boomerang-scraper.md',
-  'boomerang-tester.md',
-  'boomerang-writer.md',
-  'researcher.md',
-];
+// Parse CLI args
+const args = process.argv.slice(2);
+const primaryArg = args.find(a => a.startsWith('--primary='))?.split('=')[1];
+const secondaryArg = args.find(a => a.startsWith('--secondary='))?.split('=')[1];
 
-const BASE_URL = 'https://raw.githubusercontent.com/Veedubin/opencode-boomerang/main/agents';
+// Model aliases
+const ALIASES = {
+  'k2k6': 'kimi-for-coding/k2p6',
+  'k2k5': 'kimi-for-coding/k2p5',
+  'k2k7': 'kimi-for-coding/k2p7',
+  'm2k7': 'minimax/MiniMax-M2.7',
+  'm2k5': 'minimax/MiniMax-M2.5',
+  'claude-sonnet': 'anthropic/claude-sonnet-4-20250514',
+  'claude-opus': 'anthropic/claude-opus-4-20250514',
+  'gpt-4o': 'openai/gpt-4o',
+  'gpt-4o-mini': 'openai/gpt-4o-mini',
+  'gemini-pro': 'google/gemini-2.5-pro',
+  'gemini-flash': 'google/gemini-2.5-flash',
+  'deepseek': 'deepseek/deepseek-chat-v3',
+  'llama3': 'meta/llama-3.3-70b',
+  'qwen': 'alibaba/qwen-2.5-72b',
+};
 
-function download(url) {
-  return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) {
-        download(res.headers.location).then(resolve).catch(reject);
-        return;
-      }
-      if (res.statusCode !== 200) {
-        reject(new Error(`HTTP ${res.statusCode}`));
-        return;
-      }
-      let data = '';
-      res.on('data', (chunk) => (data += chunk));
-      res.on('end', () => resolve(data));
-    }).on('error', reject);
-  });
+function resolveModel(modelArg) {
+  if (!modelArg) return null;
+  return ALIASES[modelArg.toLowerCase()] || modelArg;
 }
 
-async function main() {
-  const cwd = process.cwd();
-  const opencodeDir = path.join(cwd, '.opencode');
-  const agentsDir = path.join(opencodeDir, 'agents');
+const primaryModel = resolveModel(primaryArg);
+const secondaryModel = resolveModel(secondaryArg);
 
-  console.log(`📁 Working directory: ${cwd}`);
-  console.log(`📂 Creating ${agentsDir}...`);
+// Default models
+const DEFAULT_PRIMARY = 'kimi-for-coding/k2p6';
+const DEFAULT_SECONDARY = 'minimax/MiniMax-M2.7';
 
-  fs.mkdirSync(agentsDir, { recursive: true });
+// Determine final models
+const finalPrimary = primaryModel || DEFAULT_PRIMARY;
+const finalSecondary = secondaryModel || (primaryModel ? primaryModel : DEFAULT_SECONDARY);
 
-  for (const agent of AGENTS) {
-    const url = `${BASE_URL}/${agent}`;
-    const dest = path.join(agentsDir, agent);
-    process.stdout.write(`⬇️  Downloading ${agent}... `);
-    try {
-      const content = await download(url);
-      fs.writeFileSync(dest, content);
-      console.log('✅');
-    } catch (err) {
-      console.log(`❌ (${err.message})`);
-    }
-  }
+console.log('🚀 Boomerang Agent Installer');
+console.log(`   Primary model:   ${finalPrimary}`);
+console.log(`   Secondary model: ${finalSecondary}`);
 
-  const configPath = path.join(opencodeDir, 'opencode.json');
-  if (!fs.existsSync(configPath)) {
-    console.log('⚙️  Creating opencode.json...');
-    const config = {
-      plugins: ['@veedubin/boomerang-v2'],
-      mcpServers: {
-        'super-memory-ts': {
-          command: 'npx',
-          args: ['-y', '@modelcontextprotocol/server-memory'],
-        },
-        'sequential-thinking': {
-          command: 'npx',
-          args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
-        },
-      },
-    };
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-    console.log('✅ Created opencode.json');
-  } else {
-    console.log('ℹ️  opencode.json already exists, skipping');
-  }
+// Read agent files from local agents/ directory
+const agentsDir = join(__dirname, '..', 'agents');
+const targetDir = join(process.cwd(), '.opencode', 'agents');
 
-  console.log('\n✨ Done! Agents installed to .opencode/agents/');
+if (!existsSync(targetDir)) {
+  mkdirSync(targetDir, { recursive: true });
 }
 
-main().catch((err) => {
-  console.error('Fatal error:', err);
-  process.exit(1);
-});
+// Determine tier by checking the default model in each file
+function getAgentTier(content) {
+  const modelMatch = content.match(/^model:\s*(.+)$/m);
+  if (!modelMatch) return 'secondary';
+  const defaultModel = modelMatch[1].trim();
+  // Primary tier agents use kimi-for-coding/k2p6 by default
+  return defaultModel.includes('kimi') ? 'primary' : 'secondary';
+}
+
+const agentFiles = readdirSync(agentsDir).filter(f => f.endsWith('.md'));
+
+for (const file of agentFiles) {
+  const sourcePath = join(agentsDir, file);
+  let content = readFileSync(sourcePath, 'utf-8');
+
+  const tier = getAgentTier(content);
+  const newModel = tier === 'primary' ? finalPrimary : finalSecondary;
+
+  // Replace model in frontmatter
+  content = content.replace(/^model:\s*.+$/m, `model: ${newModel}`);
+
+  // Also replace model name in description text
+  // Replace "Kimi K2.6" with primary model display name
+  // Replace "MiniMax M2.7" with secondary model display name
+  const primaryDisplay = finalPrimary.split('/').pop();
+  const secondaryDisplay = finalSecondary.split('/').pop();
+
+  content = content.replace(/Kimi K2\.6/g, primaryDisplay);
+  content = content.replace(/MiniMax M2\.7/g, secondaryDisplay);
+
+  const targetPath = join(targetDir, file);
+  writeFileSync(targetPath, content);
+  console.log(`   ✓ ${file} → ${newModel}`);
+}
+
+// Create/update opencode.json
+const opencodePath = join(process.cwd(), '.opencode', 'opencode.json');
+let opencode = {};
+if (existsSync(opencodePath)) {
+  opencode = JSON.parse(readFileSync(opencodePath, 'utf-8'));
+}
+
+if (!opencode.agents) opencode.agents = [];
+// Add agent references if not present
+const agentNames = agentFiles.map(f => f.replace('.md', ''));
+for (const name of agentNames) {
+  if (!opencode.agents.includes(name)) {
+    opencode.agents.push(name);
+  }
+}
+
+writeFileSync(opencodePath, JSON.stringify(opencode, null, 2));
+console.log(`\n✅ Installed ${agentFiles.length} agents to ${targetDir}`);

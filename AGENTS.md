@@ -2,7 +2,9 @@
 
 ## Core Agents
 
-| Agent | Skill | Model | Role |
+> **Note**: Models are configurable. Use `install-agents.js --primary=<model> --secondary=<model>` to customize.
+
+| Agent | Skill | Default Model | Role |
 |-------|-------|-------|------|
 | **boomerang** | boomerang-orchestrator | Kimi K2.6 | 🎯 **Orchestrator** — Plans, coordinates, enforces protocol |
 | **boomerang-coder** | boomerang-coder | MiniMax M2.7 | 💻 **Fast code generation** — Write and modify code efficiently |
