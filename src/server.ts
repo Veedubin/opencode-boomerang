@@ -108,11 +108,6 @@ async function main() {
 
   // Tool handlers
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    // Check transport state
-    if (!transport || !isTransportConnected()) {
-      return createErrorResponse(new MemoryError('Server transport not connected'));
-    }
-
     try {
       const { name, arguments: args } = request.params;
 
@@ -143,15 +138,6 @@ async function main() {
   // Connect and run
   await server.connect(transport);
   console.error(`[super-memory] MCP Server started (${SERVER_VERSION})`);
-}
-
-/**
- * Check if transport is connected
- */
-function isTransportConnected(): boolean {
-  // StdioServerTransport doesn't expose a direct connected state,
-  // but we can track it through our own flag
-  return transport !== null;
 }
 
 // Tool input schemas
