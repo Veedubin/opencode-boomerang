@@ -1,6 +1,6 @@
 {
   "name": "@veedubin/boomerang-v2",
-  "version": "2.3.12",
+  "version": "2.3.13",
   "type": "module",
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "coverage": "vitest --coverage"
+    "coverage": "vitest --coverage",
+    "verify-version": "node scripts/verify-version-sync.js"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.18.0",

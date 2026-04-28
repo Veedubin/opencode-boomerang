@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.3.13
+
+### Fixed
+- CI tag triggers now accept `plugin-v*.*.*` format
+- Version sync verification script added to prevent mismatches
+- Release workflow tag validation regex fixed
+
+### Changed
+- Orchestrator bash permissions expanded (npm, bun, ls, mkdir, cat, grep, find, cd)
+- 2-level agent hierarchy implemented (coder can spawn utilities)
+- All utility agents have `task: deny` + "NO SPAWNING" rule
+- 102 tracked junk files removed from both repos
+
+### Added
+- `scripts/verify-version-sync.js` for pre-release version checks
+- `NPM_README.md` for concise package documentation
+
 ## [2.3.12] - 2026-04-28
 
 ### Added

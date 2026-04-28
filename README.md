@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v2.3.10](https://img.shields.io/badge/v2.3.10-Dual--Mode%20Memory-2ecc71?style=flat-square)]()
+[![v2.3.13](https://img.shields.io/badge/v2.3.13-Dual--Mode%20Memory-2ecc71?style=flat-square)]()
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 

@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
+      - 'plugin-v*.*.*'
 
 jobs:
   publish:
@@ -47,6 +48,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify version sync
+        run: node ../../scripts/verify-version-sync.js
 
       - name: Verify dist exists
         run: |
