@@ -12,6 +12,7 @@ permission:
     "searxng_*": allow
     "super-memory_*": allow
     "sequential-thinking_*": allow
+  task: deny
 ---
 
 ## MANDATORY MEMORY PROTOCOL
@@ -52,6 +53,14 @@ You were given a specific documentation task by the orchestrator. Write clear, s
 When you complete your task, summarize your results and STOP.
 Do not ask follow-up questions or continue the conversation.
 Return control to the orchestrator immediately.
+
+## AGENT SPAWN RESTRICTIONS
+
+**YOU CANNOT SPAWN OTHER AGENTS.**
+
+You are a utility agent. You do NOT have permission to call the Task tool or spawn other agents. If you need help from another agent, return control to the orchestrator and explain what you need.
+
+**Violating this rule causes infinite agent loops (inception). NEVER do it.**
 
 ## Project-Specific Context (Appended by boomerang-init)
 

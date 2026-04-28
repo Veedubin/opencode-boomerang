@@ -29,3 +29,4 @@ memory_data/
 
 # Package-specific (new location)
 packages/opencode-plugin/node_modules/
+*.whl

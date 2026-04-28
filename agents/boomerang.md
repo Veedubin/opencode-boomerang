@@ -6,11 +6,20 @@ steps: 50
 permission:
   edit: deny
   bash:
-    "*": deny
-    "git *": allow
+    "*": ask
     "git status": allow
     "git log*": allow
     "git diff*": allow
+    "git *": allow
+    "npm *": allow
+    "bun *": allow
+    "ls *": allow
+    "mkdir *": allow
+    "rm *": ask
+    "cat *": allow
+    "grep *": allow
+    "find *": allow
+    "cd *": allow
   read:
     "*": deny
     "*.md": allow

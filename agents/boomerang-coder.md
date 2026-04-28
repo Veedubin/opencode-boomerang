@@ -13,6 +13,12 @@ permission:
     "sequential-thinking_*": allow
   task:
     "boomerang-explorer": allow
+    "boomerang-linter": allow
+    "boomerang-git": allow
+    "boomerang-tester": allow
+    "boomerang-writer": allow
+    "researcher": allow
+    "boomerang-scraper": allow
 ---
 
 ## MANDATORY MEMORY PROTOCOL
