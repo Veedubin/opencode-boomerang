@@ -104,3 +104,61 @@ export async function getFileChunks(
     score: 1.0, // All chunks from same file have equal score
   }));
 }
+
+/**
+ * Result of getFileContents
+ */
+export interface FileContentsResult {
+  /** Full file content reconstructed from chunks */
+  content: string;
+  /** Individual chunks used to reconstruct */
+  chunks: SearchResult[];
+}
+
+/**
+ * Get complete file contents from indexed chunks
+ * @param filePath - Path to file
+ * @param dbUri - LanceDB URI (optional)
+ * @returns File contents with chunks, or null if file not indexed
+ */
+export async function getFileContents(
+  filePath: string,
+  dbUri?: string
+): Promise<FileContentsResult | null> {
+  const uri = dbUri || process.env.LANCEDB_URI;
+  if (!uri) {
+    throw new Error('LanceDB URI not provided. Set dbUri parameter or LANCEDB_URI environment variable.');
+  }
+
+  const db = await lancedbPool.connect(uri);
+  const table = await db.openTable(TABLE_NAME);
+
+  // Query all chunks for this file
+  const results = await table.query()
+    .where(`filePath = '${filePath.replace(/'/g, "''")}'`)
+    .toArray();
+
+  if (results.length === 0) {
+    return null;
+  }
+
+  // Sort by chunkIndex to maintain order
+  const sortedChunks = results.sort((a, b) => 
+    (a.chunkIndex as number) - (b.chunkIndex as number)
+  );
+
+  // Concatenate all chunk contents
+  const fullContent = sortedChunks
+    .map((row) => row.content as string)
+    .join('');
+
+  const chunks: SearchResult[] = sortedChunks.map((row: Record<string, unknown>) => ({
+    filePath: row.filePath as string,
+    content: row.content as string,
+    lineStart: row.lineStart as number,
+    lineEnd: row.lineEnd as number,
+    score: 1.0,
+  }));
+
+  return { content: fullContent, chunks };
+}

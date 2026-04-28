@@ -1,7 +1,8 @@
 import { getMemorySystem, MemorySystem } from './memory/index.js';
-import { searchProject } from './project-index/search.js';
+import { searchProject, getFileContents as getIndexedFileContents } from './project-index/search.js';
 import { ProjectIndexer } from './project-index/indexer.js';
 import { protocolTracker } from './protocol/tracker.js';
+import { readFile } from 'fs/promises';
 
 export interface MemoryQueryOptions {
   limit?: number;
@@ -109,6 +110,39 @@ export class MemoryService {
       lineEnd: r.lineEnd,
       score: r.score,
     }));
+  }
+
+  /**
+   * Get complete file contents, trying index first then disk fallback
+   */
+  async getFileContents(filePath: string): Promise<{ content: string; source: 'index' | 'disk'; chunks?: ProjectChunk[] } | null> {
+    protocolTracker.recordToolCall('system', 'memory.getFileContents', { filePath });
+
+    // Try indexed version first
+    if (!this.fallbackMode) {
+      const indexed = await getIndexedFileContents(filePath);
+      if (indexed) {
+        return {
+          content: indexed.content,
+          source: 'index',
+          chunks: indexed.chunks.map(c => ({
+            filePath: c.filePath,
+            content: c.content,
+            lineStart: c.lineStart,
+            lineEnd: c.lineEnd,
+            score: c.score,
+          })),
+        };
+      }
+    }
+
+    // Fallback to disk read
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      return { content, source: 'disk' };
+    } catch {
+      return null;
+    }
   }
 
   async indexProject(rootPath: string, dbUri?: string): Promise<void> {

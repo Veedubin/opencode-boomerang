@@ -58,6 +58,18 @@ export class MemoryClient {
 
     this.transport = new StdioClientTransport(serverParams);
 
+    // Set up disconnect detection
+    this.transport.onclose = () => {
+      console.warn('[MemoryClient] Transport connection closed');
+      this.connected = false;
+      this.transport = null;
+    };
+
+    this.transport.onerror = (error) => {
+      console.error('[MemoryClient] Transport error:', error.message);
+      // Note: onerror doesn't always mean fatal - onclose will be called for fatal errors
+    };
+
     try {
       await this.client.connect(this.transport);
       this.connected = true;
@@ -73,17 +85,17 @@ export class MemoryClient {
    * Disconnect from the MCP server
    */
   async disconnect(): Promise<void> {
-    if (!this.connected || !this.transport) {
-      return;
-    }
-
-    try {
-      await this.transport.close();
-    } catch (error) {
-      // Ignore close errors
+    if (this.transport) {
+      this.transport.onclose = undefined;
+      this.transport.onerror = undefined;
+      try {
+        await this.transport.close();
+      } catch (e) {
+        // Ignore errors during disconnect
+      }
+      this.transport = null;
     }
     this.connected = false;
-    this.transport = null;
   }
 
   /**
