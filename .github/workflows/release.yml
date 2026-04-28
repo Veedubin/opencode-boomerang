@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
+      - 'plugin-v*.*.*'
 
 jobs:
   validate:
@@ -17,8 +18,8 @@ jobs:
           TAG="${{ github.ref_name }}"
           echo "Tag: $TAG"
 
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "ERROR: Invalid tag format. Expected v*.*.* (e.g., v1.2.3)"
+          if [[ ! ("$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ || "$TAG" =~ ^plugin-v[0-9]+\.[0-9]+\.[0-9]+$) ]]; then
+            echo "ERROR: Invalid tag format. Expected v*.*.* or plugin-v*.*.* (e.g., v1.2.3 or plugin-v1.2.3)"
             exit 1
           fi
           echo "Tag format validated"
