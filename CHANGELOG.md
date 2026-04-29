@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.4.0 (2026-04-29)
+
+### Major Changes
+- **8-Step Boomerang Protocol** — Added mandatory planning (Step 3) and documentation maintenance (Step 7)
+- **Context Package System** — Orchestrator now passes comprehensive context to sub-agents (8 mandatory sections)
+- **Thin Response, Thick Memory** — Sub-agents save detailed work to super-memory, return concise summaries
+- **Planning Enforcement** — Mandatory for all build/create/implement tasks unless explicitly waived
+- **Self-Handoff** — Orchestrator handles simple tasks directly instead of delegating
+- **Enhanced Agent Personas** — All 14 agents now have context requirements, output formats, styling conventions, and escalation triggers
+- **OOM Risk Awareness** — Added to coder and tester personas to prevent resource exhaustion
+- **New Agent**: `boomerang-release` — Release automation specialist
+
+### Agent Updates
+- All skill files updated with comprehensive context requirements
+- All agent files updated with scope boundaries and escalation triggers
+- boomerang-orchestrator: Context Assembly, Super-Memory Hub Protocol, Planning Enforcement
+- boomerang-architect: Research ownership, structured plan format
+- boomerang-coder: TypeScript Styling Guide (10 conventions), OOM awareness
+- boomerang-explorer: Strict file-finding-only scope
+- boomerang-tester: Testing conventions (behavior-focused, 80%+ coverage)
+- boomerang-linter: Linting conventions (--fix first, typecheck after)
+- boomerang-git: Conventional commits, atomic commits
+- boomerang-writer: Writing conventions (active voice, examples)
+- boomerang-scraper: Research protocol (verify sources, cite)
+- researcher: Differentiation from scraper, synthesis focus
+- mcp-specialist: MCP conventions (JSON Schema, graceful shutdown)
+- boomerang-init: Protected elements, append-only customizations
+- boomerang-handoff: Mandatory doc updates, todo maintenance
+
+### Documentation
+- AGENTS.md updated with 8-step protocol and context passing requirements
+- README.md updated with Architecture section
+
+### Fixes
+- Test runner: `bun test` → `npx vitest run`
+- Test counts: Updated for 14 agents and 14 skills
+- All 95 tests passing
+
 ## v2.3.13
 
 ### Fixed

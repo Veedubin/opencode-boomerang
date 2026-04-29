@@ -3,25 +3,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v2.3.13](https://img.shields.io/badge/v2.3.13-Dual--Mode%20Memory-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v2.3.13)
+[![v2.4.0](https://img.shields.io/badge/v2.4.0-8--Step%20Protocol-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v2.4.0)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🎉 v2.3.10 Highlights
+## 🎉 v2.4.0 Highlights
 
-> **Connection Fix + Version Sync** — Resolved "Not connected" root cause and sub-package version mismatch.
+> **Orchestration Overhaul** — 8-step protocol, Context Packages, and super-memory hub architecture.
 
 | Feature | Description |
 |---------|-------------|
-| **Connection Fix** | Removed broken `isTransportConnected()` check causing "Not connected" errors |
-| **Version Sync** | Root and sub-package (`packages/opencode-plugin/`) versions now aligned |
-| **Dual-Mode Memory** | Built-in direct import (zero overhead) or MCP external server |
-| **Agent Governance** | Code-level enforced rules — architect owns research, explorer is file-finding only |
-| **Context Management** | Smart eviction at 70%, compaction at 85% — Claude 200k→180k window |
-| **CI Stabilization** | 95 critical tests passing |
-| **Database Migration** | LanceDB → Qdrant for improved vector performance |
+| **8-Step Protocol** | Expanded from 6 steps: Query Memory → Think → Plan → Delegate → Git Check → Quality Gates → Update Docs → Save Memory |
+| **Context Packages** | Complete context passed to sub-agents: original request, background, files, code snippets, decisions, output format, scope boundaries, error handling |
+| **Planning Enforcement** | Planning is MANDATORY for build/create/implement tasks unless user explicitly waives |
+| **Documentation Maintenance** | After EVERY session: update TASKS.md, todo list, AGENTS.md, README.md, HANDOFF.md |
+| **Thin Response / Thick Memory** | Sub-agents return concise summaries + memory references; full details stored in Qdrant |
+| **boomerang-release** | New agent for automated version bumping, changelog, and publishing |
 
 ---
 
@@ -114,71 +113,31 @@ Add to your `.opencode/opencode.json`:
 
 ## 🏗️ Architecture
 
-### Dual-Mode Memory System
+### Context Passing
+Boomerang uses a **Context Package** system where the orchestrator passes comprehensive context to sub-agents:
+- Original user request (verbatim)
+- Task background and constraints
+- Relevant files and code snippets
+- Expected output format
+- Scope boundaries and escalation targets
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                          USER                                    │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│              🎯 ORCHESTRATOR (Kimi K2.6)                         │
-│   • Plans task execution & dependency graph                       │
-│   • Delegates to specialized sub-agents                          │
-│   • Enforces quality gates                                       │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-          ┌───────────────────┼───────────────────┐
-          │                   │                   │
-          ▼                   ▼                   ▼
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│   💻        │      │   🏗️        │      │   🔍        │
-│  CODER      │      │ ARCHITECT  │      │ EXPLORER   │
-│ MiniMax M2.7│      │ Kimi K2.6  │      │ MiniMax M2.7│
-└─────────────┘      └─────────────┘      └─────────────┘
-          │                   │                   │
-          └───────────────────┼───────────────────┘
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  🧠 MEMORY SYSTEM                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────┐    ┌─────────────────────┐             │
-│  │   BUILT-IN MODE     │    │   MCP EXTERNAL      │             │
-│  │   (Direct Import)   │    │   (Standalone)       │             │
-│  │   Zero overhead     │    │   For non-Boomerang  │             │
-│  │   @veedubin/        │    │   users              │             │
-│  │   boomerang-v2      │    │                     │             │
-│  └─────────────────────┘    └─────────────────────┘             │
-│                                                                 │
-│   • Project indexing on startup                                  │
-│   • Background file watching (chokidar)                         │
-│   • Per-project database isolation                               │
-└─────────────────────────────────────────────────────────────────┘
-```
+This ensures sub-agents have everything they need to work effectively.
 
-### The 6-Step Boomerang Protocol
+### Super-Memory Hub
+Super-memory is the central knowledge base:
+- **Query before responding** — Agents check memory for relevant context
+- **Save after completing** — Agents save detailed work to memory
+- **Thin responses** — Sub-agents return concise summaries + memory references
+- **Thick memory** — Full details stored in Qdrant for future retrieval
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    6-STEP BOOMERANG PROTOCOL                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│   1️⃣ MEMORY          → Query super-memory for context           │
-│          ↓                                                      │
-│   2️⃣ THINK & PLAN     → Analyze task, build dependency graph     │
-│          ↓                                                      │
-│   3️⃣ DELEGATE         → Assign work to specialized agents       │
-│          ↓                                                      │
-│   4️⃣ GIT CHECK        → Verify changes, stage, commit           │
-│          ↓                                                      │
-│   5️⃣ QUALITY GATES    → Run lint, typecheck, tests              │
-│          ↓                                                      │
-│   6️⃣ SAVE MEMORY      → Persist decisions back to super-memory   │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Agent Hierarchy
+- **Orchestrator** — Top-level coordinator, handles planning and delegation
+- **Primary Agents** — Architect (design/research), Coder (implementation)
+- **Sub-agents** — Specialized tools (tester, linter, git, writer, etc.)
+- **NO SPAWNING** — Sub-agents do not spawn child agents
+
+### Planning Enforcement
+Planning is mandatory for all build/create/implement tasks unless explicitly waived by the user.
 
 ---
 
@@ -195,6 +154,7 @@ Add to your `.opencode/opencode.json`:
 | **boomerang-git** | boomerang-git | MiniMax M2.7 | 📦 **Version control** — Multi-package commits |
 | **boomerang-writer** | boomerang-writer | Kimi K2.6 | 📝 **Documentation** — Markdown writing |
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | 🌐 **Web scraping** — Research and data gathering |
+| **boomerang-release** | boomerang-release | MiniMax M2.7 | 🚀 **Release automation** — Version bump, changelog, publish |
 | **boomerang-handoff** | boomerang-handoff | Kimi K2.6 | 🔄 **Session wrap-up** — Context saving |
 | **researcher** | researcher | MiniMax M2.7 | 🌐 **Web research** — Search & synthesis |
 | **mcp-specialist** | mcp-specialist | MiniMax M2.7 | 🔌 **MCP Protocol** — Tool design, server debug |
