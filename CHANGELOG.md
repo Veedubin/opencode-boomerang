@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.4.1
+
+**Patch Release — NPM Page Fix**
+
+- Fixed `packages/opencode-plugin/README.md` showing severely outdated v0.6-era content on NPM
+- Corrected package name from `@boomerang/opencode-plugin` to `@veedubin/boomerang-v2`
+- Updated install instructions, agent count (14), and memory architecture (Qdrant, not Python)
+- Removed broken docs/ links and non-existent features (Performance Metrics, Workspaces)
+- Fixed root README: `bun test` → `npx vitest run`, LanceDB → Qdrant, added missing boomerang-init agent
+- Cleaned stale dependencies from root package.json (`@lancedb/lancedb`, `@xenova/transformers`, `ink`, `react`, etc.)
+
 ## v2.4.0 (2026-04-29)
 
 ### Major Changes

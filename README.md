@@ -3,13 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v2.4.0](https://img.shields.io/badge/v2.4.0-8--Step%20Protocol-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v2.4.0)
+[![v2.4.1](https://img.shields.io/badge/v2.4.1-8--Step%20Protocol-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v2.4.1)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🎉 v2.4.0 Highlights
+## 🎉 v2.4.1 Highlights
 
 > **Orchestration Overhaul** — 8-step protocol, Context Packages, and super-memory hub architecture.
 
@@ -107,7 +107,7 @@ Add to your `.opencode/opencode.json`:
 | `bun run build` | Build TypeScript to `dist/` |
 | `bun run typecheck` | Run TypeScript type checking |
 | `bun run lint` | Run ESLint |
-| `bun test` | Run test suite |
+| `npx vitest run` | Run test suite |
 
 ---
 
@@ -131,10 +131,14 @@ Super-memory is the central knowledge base:
 - **Thick memory** — Full details stored in Qdrant for future retrieval
 
 ### Agent Hierarchy
-- **Orchestrator** — Top-level coordinator, handles planning and delegation
-- **Primary Agents** — Architect (design/research), Coder (implementation)
-- **Sub-agents** — Specialized tools (tester, linter, git, writer, etc.)
-- **NO SPAWNING** — Sub-agents do not spawn child agents
+
+| Tier | Description | Agents |
+|------|-------------|--------|
+| **Orchestrator** | Top-level coordinator | boomerang |
+| **Primary Tier Agents** | Design, research, orchestration | architect, writer, handoff, init |
+| **Secondary Tier Agents** | Implementation, tools | coder, explorer, tester, linter, git, scraper, researcher, mcp-specialist, release |
+
+**NO SPAWNING** — Sub-agents do not spawn child agents.
 
 ### Planning Enforcement
 Planning is mandatory for all build/create/implement tasks unless explicitly waived by the user.
@@ -156,6 +160,7 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | 🌐 **Web scraping** — Research and data gathering |
 | **boomerang-release** | boomerang-release | MiniMax M2.7 | 🚀 **Release automation** — Version bump, changelog, publish |
 | **boomerang-handoff** | boomerang-handoff | Kimi K2.6 | 🔄 **Session wrap-up** — Context saving |
+| **boomerang-init** | boomerang-init | Kimi K2.6 | 🎬 **Initialization** — Project setup and agent personalization |
 | **researcher** | researcher | MiniMax M2.7 | 🌐 **Web research** — Search & synthesis |
 | **mcp-specialist** | mcp-specialist | MiniMax M2.7 | 🔌 **MCP Protocol** — Tool design, server debug |
 
@@ -263,7 +268,7 @@ boomerang-v2/
 │   ├── index.ts              # Main entry point
 │   ├── memory/               # Built-in memory system
 │   │   ├── index.ts          # MemorySystem exports
-│   │   └── database.ts       # LanceDB pool
+│   │   └── database.ts       # Qdrant vector DB
 │   ├── project-index/        # Project indexing
 │   │   ├── search.ts         # Vector search
 │   │   ├── indexer.ts        # File watcher
