@@ -143,7 +143,7 @@ export async function getFileContents(
   }
 
   // Sort by chunkIndex to maintain order
-  const sortedChunks = results.sort((a, b) => 
+  const sortedChunks = results.sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
     (a.chunkIndex as number) - (b.chunkIndex as number)
   );
 

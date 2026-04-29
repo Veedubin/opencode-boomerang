@@ -30,3 +30,14 @@ memory_data/
 # Package-specific (new location)
 packages/opencode-plugin/node_modules/
 *.whl
+
+#Junk Docs
+EXECUTION_PLAN.md
+ARCHITECTURAL_RECOVERY_PLAN.md
+CLAUDE.md
+HANDOFF.md
+RESEARCH_REPORT.md
+ROADMAP.md
+TASKS.md
+AGENT_SYSTEM_FIX_PLAN.md
+NPM_MIGRATION_PLAN.md
