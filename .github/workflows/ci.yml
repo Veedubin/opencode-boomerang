@@ -77,7 +77,7 @@ jobs:
           cat package.json | grep '"test"'
 
       - name: Verify version sync
-        run: node scripts/verify-version-sync.js
+        run: node ../../scripts/verify-version-sync.js
 
       - name: Run typecheck
         run: npm run typecheck
