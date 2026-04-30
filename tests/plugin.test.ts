@@ -21,12 +21,12 @@ describe('Asset Loader', () => {
     vi.resetModules();
   });
 
-  it('should return 12 agents from real filesystem', async () => {
+  it('should return 14 agents from real filesystem', async () => {
     const { loadAgents, clearCache } = await import('../src/asset-loader');
     clearCache();
     
     const agents = loadAgents();
-    expect(agents.length).toBe(13);
+    expect(agents.length).toBe(14);
     
     // Check first agent has expected structure
     const coder = agents.find(a => a.name === 'boomerang-coder');
@@ -34,12 +34,12 @@ describe('Asset Loader', () => {
     expect(coder?.description).toContain('Boomerang Coder');
   });
 
-  it('should return 11 skills from real filesystem', async () => {
+  it('should return 14 skills from real filesystem', async () => {
     const { loadSkills, clearCache } = await import('../src/asset-loader');
     clearCache();
     
     const skills = loadSkills();
-    expect(skills.length).toBe(12);
+    expect(skills.length).toBe(14);
     
     // Check a skill has expected structure
     const coder = skills.find(s => s.name === 'boomerang-coder');

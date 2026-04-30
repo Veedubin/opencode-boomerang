@@ -1,6 +1,7 @@
 // Session management hook with memory persistence
 import { v4 as uuidv4 } from 'uuid';
 import type { Message } from '../types.js';
+import { getMemoryService } from '../../memory-service.js';
 
 // Session interface
 export interface Session {
@@ -11,12 +12,11 @@ export interface Session {
   messageCount: number;
 }
 
-// Memory system interface (placeholder for actual implementation)
-interface MemorySystem {
-  addMemory(content: string, metadata?: Record<string, unknown>): Promise<void>;
+// Memory service interface (placeholder for actual implementation)
+interface MemoryServiceClient {
+  addMemory(entry: { content: string; metadata?: Record<string, unknown> }): Promise<{ id: string }>;
   queryMemories(query: string, options?: SearchOptions): Promise<SearchResult[]>;
-  getMemoriesBySource(sourceType: string): Promise<MemoryEntry[]>;
-  deleteMemory(id: string): Promise<boolean>;
+  // getMemoriesBySource and deleteMemory are not in MemoryService but we can mock them
 }
 
 interface SearchOptions {
@@ -48,34 +48,38 @@ export function resetSessions(): void {
 }
 
 // Lazy-loaded memory system reference
-let memorySystem: MemorySystem | null = null;
+let memorySystem: MemoryServiceClient | null = null;
 
-function getMemorySystem(): MemorySystem {
+function getMemorySystem(): MemoryServiceClient {
   if (!memorySystem) {
-    // Placeholder - in real implementation this would connect to actual memory system
+    // Connect to actual memory service
+    const service = getMemoryService();
     memorySystem = {
-      async addMemory(content: string, metadata?: Record<string, unknown>): Promise<void> {
-        // Mock implementation
-        console.debug('[useSession] addMemory called:', content.slice(0, 50));
+      async addMemory(entry: { content: string; metadata?: Record<string, unknown> }): Promise<{ id: string }> {
+        console.debug('[useSession] addMemory called:', entry.content.slice(0, 50));
+        return service.addMemory({
+          content: entry.content,
+          sourceType: 'conversation',
+          metadata: entry.metadata,
+        });
       },
       async queryMemories(query: string, options?: SearchOptions): Promise<SearchResult[]> {
-        // Mock implementation
-        return [];
-      },
-      async getMemoriesBySource(sourceType: string): Promise<MemoryEntry[]> {
-        // Mock implementation
-        return [];
-      },
-      async deleteMemory(id: string): Promise<boolean> {
-        // Mock implementation
-        return true;
+        // Mock implementation - queryMemories returns SearchResult[]
+        return service.queryMemories(query, options).then(results =>
+          results.map(r => ({
+            id: r.id,
+            content: r.content,
+            score: r.score ?? 0,
+            metadata: r.metadata,
+          }))
+        );
       },
     };
   }
   return memorySystem;
 }
 
-function setMemorySystem(system: MemorySystem): void {
+function setMemorySystem(system: MemoryServiceClient): void {
   memorySystem = system;
 }
 
@@ -95,8 +99,7 @@ export function createSession(name?: string): Session {
 
   // Persist to memory system
   getMemorySystem().addMemory(
-    JSON.stringify({ type: 'session', ...session }),
-    { sourceType: 'session', sessionId: session.id }
+    { content: JSON.stringify({ type: 'session', ...session }), metadata: { sourceType: 'session', sessionId: session.id } }
   ).catch(console.error);
 
   return session;
@@ -148,8 +151,9 @@ export function incrementMessageCount(): void {
 // Initialize sessions from memory
 export async function loadSessionsFromMemory(): Promise<void> {
   try {
-    const memoryEntries = await getMemorySystem().getMemoriesBySource('session');
-    sessions = memoryEntries
+    // Query for session entries using the memory service
+    const results = await getMemorySystem().queryMemories('session', { limit: 100 });
+    sessions = results
       .map(entry => {
         try {
           const data = JSON.parse(entry.content);

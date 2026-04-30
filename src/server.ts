@@ -8,10 +8,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-import { getMemorySystem, MemorySystem } from './memory/index.js';
-import { search as memorySearch } from './memory/search.js';
-import { searchProject } from './project-index/search.js';
-import { ProjectIndexer } from './project-index/indexer.js';
+import { getMemorySystem } from './memory/index.js';
+import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
+import { createIndexer, ProjectIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
 import { MemoryError, ValidationError, NotFoundError, createErrorResponse } from './utils/errors.js';
 import { protocolTracker } from './protocol/tracker.js';
 
@@ -24,6 +23,17 @@ let activeIndexer: ProjectIndexer | null = null;
 
 // Connection state
 let transport: StdioServerTransport | null = null;
+
+// Qdrant configuration
+const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
+
+// Warn about deprecated LANCEDB_URI
+if (process.env.LANCEDB_URI) {
+  console.warn('[DEPRECATED] LANCEDB_URI is deprecated. Use QDRANT_URL instead.');
+}
+
+// Deprecation notice
+console.error('[DEPRECATED] boomerang-v2 MCP server is deprecated. Use @veedubin/super-memory-ts for standalone memory MCP server.');
 
 /**
  * Initialize and start the MCP server
@@ -178,10 +188,10 @@ async function handleQueryMemories(args: unknown) {
 
   try {
     const memorySystem = getMemorySystem();
-    await memorySystem.initialize();
+    await memorySystem.initialize(QDRANT_URL);
 
-    // Use the search function from memory/search.ts
-    const results = await memorySearch(query, {
+    // Use the memory system search method
+    const results = await memorySystem.search(query, {
       strategy: strategy as 'TIERED' | 'VECTOR_ONLY' | 'TEXT_ONLY' | undefined,
       topK,
       threshold,
@@ -259,7 +269,10 @@ async function handleSearchProject(args: unknown) {
   const { query, topK = 10 } = parsed.data;
 
   try {
-    const results = await searchProject(query, topK);
+    if (!activeIndexer) {
+      return createErrorResponse(new ValidationError('No active indexer. Call index_project first.'));
+    }
+    const results = await activeIndexer.search(query, { topK });
 
     return {
       content: [
@@ -270,7 +283,7 @@ async function handleSearchProject(args: unknown) {
               filePath: r.filePath,
               lineStart: r.lineStart,
               lineEnd: r.lineEnd,
-              content: r.content,
+              content: r.chunk.content,
               score: r.score,
             })),
           }),
@@ -296,15 +309,29 @@ async function handleIndexProject(args: unknown) {
   const { rootPath } = parsed.data;
 
   try {
-    // Get db URI from environment or use default
-    const dbUri = process.env.LANCEDB_URI || 'memory://';
+    // Get Qdrant URL from environment or use default
+    const dbUri = QDRANT_URL;
 
-    // Create new indexer
-    const indexer = new ProjectIndexer(dbUri, rootPath);
-    
+    // Get database from Super-Memory-TS
+    const db = getDatabase();
+
+    // Create new indexer using createIndexer with proper config
+    const indexer = createIndexer(
+      {
+        rootPath,
+        includePatterns: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.py', '**/*.md'],
+        excludePatterns: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.log', '**/.cache/**'],
+        maxFileSize: 1024 * 1024,
+        chunkSize: 512,
+        chunkOverlap: 50,
+      },
+      db,
+      dbUri
+    );
+
     // Start indexing
     await indexer.start();
-    
+
     // Store reference to keep it alive
     activeIndexer = indexer;
 

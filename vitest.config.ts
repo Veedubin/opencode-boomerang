@@ -10,6 +10,9 @@ export default defineConfig({
       'tests/mcp/server.test.ts',
       'tests/orchestrator.test.ts',
       'tests/plugin.test.ts',
+      'src/memory/adapter.test.ts',
+      'src/memory/index.test.ts',
+      'src/memory/schema.test.ts',
     ],
     exclude: [
       '**/node_modules/**',
@@ -25,7 +28,6 @@ export default defineConfig({
       'src/tui/**',
       'src/model/**',
       'src/project-index/**',
-      'src/memory/**',
     ],
     environment: 'node',
     globals: true,

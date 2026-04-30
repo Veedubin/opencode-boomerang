@@ -11,13 +11,50 @@ Wrap-up function for ending a session cleanly. Updates AGENTS.md, TASKS.md, HAND
 
 **Usage**: `/handoff`
 
-## What It Does
+## Context Requirements (from Orchestrator)
 
-1. **Updates AGENTS.md** — Documents all current agents, their roles, and their models
-2. **Updates TASKS.md** — Captures current task state, what's done, what's pending
-3. **Updates HANDOFF.md** — Summarizes session accomplishments, decisions made, and where to resume
-4. **Updates README.md** — Ensures project documentation stays current (if changes were made)
-5. **Saves to super-memory** — Use `super-memory_add_memory` for the session summary (high-value for next session resume)
+You MUST receive:
+1. **Session Accomplishments** — What was done this session
+2. **Pending Tasks** — What remains unfinished
+3. **Decisions Made** — Key architectural or design decisions
+4. **Files Modified** — List of changed files
+5. **Next Session Priorities** — What to tackle next
+
+## Handoff Protocol (MANDATORY)
+
+### Documentation Updates (ALL of these)
+1. **Update HANDOFF.md**
+   - Add new session entry at top
+   - Include: date, status, accomplishments, key decisions, files modified, known issues, next priorities
+   - Update "Last Updated" timestamp
+
+2. **Update TASKS.md**
+   - Mark completed tasks as done
+   - Add new tasks discovered
+   - Remove outdated tasks
+   - Update priorities
+
+3. **Update AGENTS.md** (if agent changes made)
+   - Update agent roster
+   - Update version numbers
+   - Update review notes
+
+4. **Update README.md** (if user-facing changes)
+   - Update version badges
+   - Update feature lists
+   - Update installation instructions
+
+### Super-Memory Save
+- Save comprehensive session summary to `super-memory_add_memory`
+- Include: all accomplishments, decisions, files, issues
+- Tag with `project` metadata for high-value context
+- Include query hints for easy retrieval
+
+### Todo List Maintenance
+- Mark all completed items as `completed`
+- Remove old completed items (keep only last 5-10)
+- Add any new pending items
+- Ensure list is clean and relevant
 
 ## When to Use
 
@@ -75,28 +112,28 @@ Updates (only if project structure changed):
 - Installation steps modified
 - Configuration changes
 
-## Output Format
+## Output Format (Return to Orchestrator)
 
-After running, report:
+```markdown
+## Handoff Complete
 
-```
-## Handoff Complete ✓
+### Files Updated
+- HANDOFF.md ✅
+- TASKS.md ✅
+- AGENTS.md ✅ (if agent changes)
+- README.md ✅ (if user-facing changes)
 
-### Files Updated:
-- AGENTS.md (X agents documented)
-- TASKS.md (X tasks tracked)
-- HANDOFF.md (session summary written)
-- README.md (updated if needed)
+### Super-Memory
+- Session context saved with project tag
 
-### Super-Memory:
-- Saved session context
-- Key decisions persisted
-- Ready for next session
+### Todo List
+- Updated and cleaned
 
-### Next Session:
-1. Read HANDOFF.md for resume point
-2. Read TASKS.md for current priorities
-3. Query super-memory for full context
+### Resume Instructions
+Next session should:
+1. Read HANDOFF.md
+2. Read TASKS.md
+3. Query super-memory for detailed decisions
 ```
 
 ## Fallback Behavior

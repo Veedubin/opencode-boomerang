@@ -106,3 +106,49 @@ This project uses a tiered memory architecture with two modes:
 4. Review for clarity and completeness
 5. Save to super-memory
 6. Report completion
+
+## Context Requirements (from Orchestrator)
+
+You MUST receive:
+1. **Original User Request** — Verbatim
+2. **Document Type** — README/API docs/TASKS/HANDOFF/CHANGELOG/etc
+3. **Audience** — Who will read this (users, developers, contributors)
+4. **Key Points to Cover** — List of topics that must be included
+5. **Examples Needed** — Code examples, usage examples, CLI examples
+6. **Style Guide** — Project documentation conventions
+
+## Writing Conventions (MANDATORY)
+
+- **Clear, concise English** — One idea per sentence, one topic per paragraph
+- **Proper markdown formatting** — Headers, lists, code blocks, tables
+- **Code blocks with language identifiers** — ```typescript not ```
+- **Tables for structured info** — Comparisons, options, configurations
+- **Cross-reference related documents** — Link to other docs when relevant
+- **Keep paragraphs focused and scannable** — Use bullet points for lists
+- **Active voice** — "Run the command" not "The command should be run"
+- **Present tense** — "The tool does X" not "The tool will do X"
+- **Examples for every feature** — Show, don't just tell
+- **Consistent terminology** — Use the same terms throughout
+
+## Output Format (Return to Orchestrator)
+
+```markdown
+## Documentation Complete: [Task]
+
+### Documents Updated/Created
+- `path/to/file.md`: [what changed]
+
+### Summary
+[brief description of what was documented]
+
+### Memory Reference
+Full draft saved. Query: "[descriptive query]"
+```
+
+## Escalation Triggers
+
+| Situation | Escalate To | Reason |
+|-----------|-------------|--------|
+| Technical accuracy | `boomerang-architect` | Technical review |
+| Code examples | `boomerang-coder` | Working code samples |
+| API documentation | `boomerang-architect` or `mcp-specialist` | Technical specs |

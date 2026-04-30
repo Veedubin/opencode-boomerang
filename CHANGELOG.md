@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.0.0 - BREAKING: Migrated from LanceDB to Qdrant
+
+### Breaking Changes
+- **Memory backend changed from LanceDB to Qdrant**
+  - boomerang-v2 now uses Super-Memory-TS as its native memory backend
+  - Qdrant server is required: `docker run -p 6333:6333 qdrant/qdrant`
+  - LanceDB dependency removed entirely
+
+### Migration
+- Added `scripts/migrate-lancedb-to-qdrant.ts` ingest script
+- Run: `npm run migrate-memory -- --lancedb-uri ./memory_data --qdrant-url http://localhost:6333`
+- Supports `--resume` for interrupted migrations
+- Regenerates embeddings to ensure fp16 precision consistency
+
+### Changes
+- `MemorySystem` is now a thin adapter over Super-Memory-TS's Qdrant-based implementation
+- `ProjectIndexer` uses Super-Memory-TS's Qdrant indexer
+- Project isolation now supported via `BOOMERANG_PROJECT_ID` env var
+- Added `get_status` tool to Super-Memory-TS for health diagnostics
+- Improved connection resilience with exponential backoff retry
+- Deprecated boomerang-v2's standalone MCP server (use `@veedubin/super-memory-ts` directly)
+
+### Removed
+- LanceDB memory layer (`src/memory/database.ts`, `operations.ts`, `search.ts`, `text-search.ts`)
+- LanceDB project index (`src/project-index/indexer.ts`, `search.ts`, `chunker.ts`, `watcher.ts`)
+- boomerang-v2's ModelManager (`src/model/`)
+- All LanceDB-related tests
+
 ## v2.4.1
 
 **Patch Release — NPM Page Fix**

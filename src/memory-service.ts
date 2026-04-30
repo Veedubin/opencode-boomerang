@@ -1,8 +1,11 @@
 import { getMemorySystem, MemorySystem } from './memory/index.js';
-import { searchProject, getFileContents as getIndexedFileContents } from './project-index/search.js';
-import { ProjectIndexer } from './project-index/indexer.js';
+import { ProjectIndexer, createIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
+import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
 import { protocolTracker } from './protocol/tracker.js';
 import { readFile } from 'fs/promises';
+
+// Qdrant default URL
+const DEFAULT_QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 
 export interface MemoryQueryOptions {
   limit?: number;
@@ -30,6 +33,7 @@ export class MemoryService {
   private initialized = false;
   private activeIndexer: ProjectIndexer | null = null;
   private fallbackMode = false;
+  private dbUri: string = DEFAULT_QDRANT_URL;
 
   constructor() {
     this.memorySystem = getMemorySystem();
@@ -38,7 +42,9 @@ export class MemoryService {
   async initialize(dbUri?: string): Promise<void> {
     if (this.initialized || this.fallbackMode) return;
     try {
-      await this.memorySystem.initialize(dbUri);
+      // Use provided dbUri or default to Qdrant URL
+      this.dbUri = dbUri || DEFAULT_QDRANT_URL;
+      await this.memorySystem.initialize(this.dbUri);
       this.initialized = true;
     } catch (error) {
       console.warn('[MemoryService] Initialization failed, entering fallback mode:', error instanceof Error ? error.message : error);
@@ -102,10 +108,14 @@ export class MemoryService {
       return [];
     }
     protocolTracker.recordToolCall('system', 'memory.searchProject', { query, topK });
-    const results = await searchProject(query, topK);
+    if (!this.activeIndexer) {
+      console.warn('[MemoryService] No active indexer - call indexProject first');
+      return [];
+    }
+    const results = await this.activeIndexer.search(query, { topK });
     return results.map(r => ({
       filePath: r.filePath,
-      content: r.content,
+      content: r.chunk.content,
       lineStart: r.lineStart,
       lineEnd: r.lineEnd,
       score: r.score,
@@ -119,8 +129,8 @@ export class MemoryService {
     protocolTracker.recordToolCall('system', 'memory.getFileContents', { filePath });
 
     // Try indexed version first
-    if (!this.fallbackMode) {
-      const indexed = await getIndexedFileContents(filePath);
+    if (!this.fallbackMode && this.activeIndexer) {
+      const indexed = await this.activeIndexer.getFileContents(filePath);
       if (indexed) {
         return {
           content: indexed.content,
@@ -130,7 +140,7 @@ export class MemoryService {
             content: c.content,
             lineStart: c.lineStart,
             lineEnd: c.lineEnd,
-            score: c.score,
+            score: 1.0,
           })),
         };
       }
@@ -151,7 +161,27 @@ export class MemoryService {
       return;
     }
     protocolTracker.recordToolCall('system', 'memory.indexProject', { rootPath });
-    const indexer = new ProjectIndexer(dbUri ?? 'memory://', rootPath);
+
+    // Use provided dbUri or the initialized one
+    const targetUri = dbUri || this.dbUri;
+
+    // Get database from Super-Memory-TS
+    const db = getDatabase();
+
+    // Create indexer with proper config (all required fields)
+    const indexer = createIndexer(
+      {
+        rootPath,
+        includePatterns: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.py', '**/*.md'],
+        excludePatterns: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.log', '**/.cache/**'],
+        maxFileSize: 1024 * 1024,
+        chunkSize: 512,
+        chunkOverlap: 50,
+      },
+      db,
+      targetUri
+    );
+
     await indexer.start();
     this.activeIndexer = indexer;
   }

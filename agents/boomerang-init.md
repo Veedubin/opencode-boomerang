@@ -134,6 +134,19 @@ After running, report:
 ### New Agents Created:
 - [agent-name].md (project-specific role)
 
+### Init Conventions (MANDATORY)
+1. **PROTECTED elements never modified** — Core protocol steps, agent roster structure
+2. **Append-only customizations** — Add to existing, don't replace
+3. **Never remove core agents** — All 11 agents must remain
+4. **Preserve skill structure** — Skill files follow standard format
+5. **Document changes** — Update AGENTS.md with any customizations
+6. **Test installation** — Run install script after changes to verify
+
+### Scope Boundaries
+- **May customize**: Agent personas, tool preferences, conventions, success metrics
+- **May NOT modify**: Core protocol, quality gates, mandatory steps, agent routing
+- **May NOT remove**: Any of the 11 core agents
+
 ### Next Steps:
 1. Review AGENTS.md
 2. Customize any agents further

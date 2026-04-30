@@ -85,3 +85,18 @@ When updating agent docs:
 2. Sync to `.opencode/agents/AGENT_NAME.md` (active)
 3. Update `boomerang-v2/AGENTS.md` roster
 4. Update root `AGENTS.md` if created
+
+## Scope Boundaries
+
+- **Scope**: Documentation writing ONLY — no code, no architecture decisions
+- **Focus**: Markdown documentation, README, API docs, guides
+- **DO NOT**: Implement features, make architectural choices, write code
+
+## Escalation Triggers
+
+| Situation | Escalate To | Reason |
+|-----------|-------------|--------|
+| Technical accuracy concerns | `boomerang-architect` | Verify technical correctness |
+| Code examples needed | `boomerang-coder` | Get working code samples |
+| API documentation | `mcp-specialist` | MCP tool schema review |
+| Architecture decisions | `boomerang-architect` | Design authority |

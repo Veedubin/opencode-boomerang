@@ -9,6 +9,22 @@ description: Initialize and personalize Boomerang agents for your project. Run o
 
 Initialize Boomerang agents by downloading canonical agent definitions from GitHub.
 
+## Context Requirements (from Orchestrator)
+
+You MUST receive:
+1. **Project Path** — Where to initialize
+2. **Project Type** — (or ask user if not provided)
+3. **Customization Scope** — What to customize vs leave default
+
+## Init Conventions (MANDATORY)
+
+- **PROTECTED elements must never be modified** — Core protocol steps, agent roster structure
+- **Append-only customizations** — Add to existing, don't replace
+- **Never remove core agents** — All 11 agents must remain
+- **Preserve skill structure** — Skill files follow standard format
+- **Document changes** — Update AGENTS.md with any customizations
+- **Test installation** — Run install script after changes to verify
+
 ## Usage
 
 Run the install script:
@@ -51,3 +67,17 @@ https://raw.githubusercontent.com/Veedubin/opencode-boomerang/main/agents/{name}
 ```
 
 Installed to: `.opencode/agents/`
+
+## Output Format (Return to Orchestrator)
+
+```markdown
+## Boomerang Init Complete
+
+### Project Type: [Type]
+### Agents Customized: [list]
+### New Agents Created: [list]
+### Files Modified: [list]
+
+### Memory Reference
+Init details saved. Query: "[descriptive query]"
+```

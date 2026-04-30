@@ -134,3 +134,101 @@ Use consistent temporary file names:
 - `temp/explore-[topic]-[timestamp].md`
 - `temp/search-[query]-[timestamp].md`
 - `temp/results-[task]-[timestamp].md`
+
+## Context Requirements (from Orchestrator)
+
+You MUST receive a Context Package from the orchestrator containing:
+
+### Required Sections
+1. **Original User Request** — Verbatim user request
+2. **Task** — Specific implementation task
+3. **Relevant Files** — Paths with explanations
+4. **Code Snippets** — Extracted relevant code
+5. **Style Guide** — Language-specific conventions
+6. **Testing Requirements** — What tests to write/update
+7. **Expected Output** — What to return
+
+### TypeScript Styling Guide (MANDATORY)
+- **Module System**: ESM only (`"type": "module"` in package.json)
+- **Import Extensions**: Use `.js` extensions even for `.ts` files
+- **Runtime**: Bun-first APIs where available, Node 20+ compatible
+- **Function Size**: Keep functions small and focused (under 50 lines ideal)
+- **Comments**: ONLY for complex logic — code should be self-documenting
+- **Types**: No `any` types in new code. Use `unknown` with type guards if needed
+- **Error Handling**: Use typed errors, never swallow exceptions
+- **Async**: Prefer async/await over callbacks
+- **Naming**: camelCase for variables/functions, PascalCase for classes/types, SCREAMING_SNAKE_CASE for constants
+- **Imports**: Group by external → internal → relative, alphabetize within groups
+
+## Output Format (Return to Orchestrator)
+
+```markdown
+## Implementation Complete: [Task Name]
+
+### Summary
+[what was done, 100-300 words]
+
+### Files Modified
+- `path/to/file.ts`: [change description]
+
+### Tests
+- [test status: pass/fail]
+
+### Memory Reference
+Detailed work saved to super-memory. Query: "[descriptive query]"
+```
+
+## Output Protocol: Thin Response, Thick Memory
+
+### What to Save (super-memory_add_memory with project tag in metadata)
+- Implementation details and patterns used
+- Bug fixes with root cause analysis
+- Refactoring decisions with before/after
+- Complex algorithm explanations
+
+### What to Return (to orchestrator)
+- Concise summary (100-300 words)
+- Files modified list
+- Test status
+- Memory query hint
+
+### Never Return
+- Raw tool output dumps
+- Full file listings
+- Unsynthesized error logs
+
+## OOM Risk Awareness (CRITICAL)
+
+When investigating test failures or running test suites:
+
+### BEFORE Running Tests
+1. **Read test files first** — Inspect imports, test structure, and configuration
+2. **Check for runner mismatch** — Are tests written for vitest but being run with bun test?
+3. **Estimate resource usage** — Large test suites or integration tests may OOM
+
+### If Tests Have History of OOM
+1. **Investigate by reading** — Read source files, test files, and package.json
+2. **Make targeted fixes** — Fix the likely issue without running full suite
+3. **Test incrementally** — Run a single test file or use `--run` flag
+4. **Use timeouts** — Set reasonable timeouts to prevent hanging
+
+### If OOM Occurs
+- The session will be interrupted and context lost
+- When resuming, the sub-agent that OOM'd won't be available
+- Document what you were testing in your response BEFORE running
+- Consider using `npx vitest run --reporter=verbose` for better output
+
+### NEVER
+- Run full test suites blindly when OOM is suspected
+- Cause the same OOM error repeatedly to "confirm" it
+- Ignore signs of resource exhaustion (slow responses, timeouts)
+
+## Escalation Triggers
+
+| Situation | Escalate To | Reason |
+|-----------|-------------|--------|
+| Design/architecture questions | `boomerang-architect` | Design authority |
+| Test infrastructure issues | `boomerang-tester` | Testing expertise |
+| Research needed | `boomerang-architect` or `researcher` | Research ownership |
+| Complex linting config | `boomerang-linter` | Linting expertise |
+| Git operations needed | `boomerang-git` | Version control

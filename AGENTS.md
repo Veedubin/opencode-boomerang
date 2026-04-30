@@ -15,6 +15,7 @@
 | **boomerang-git** | boomerang-git | MiniMax M2.7 | 📦 **Version control** — Commits, branches, history discipline |
 | **boomerang-writer** | boomerang-writer | Kimi K2.6 | 📝 **Documentation** — Markdown writing and documentation |
 | **boomerang-scraper** | boomerang-scraper | MiniMax M2.7 | 🌐 **Web scraping** — Research and information gathering |
+| **boomerang-release** | boomerang-release | MiniMax M2.7 | 🚀 **Release automation** — Version bump, changelog, publish |
 | **researcher** | researcher | MiniMax M2.7 | 🌐 **Web research** — Search, fetch, and synthesize online information |
 | **mcp-specialist** | mcp-specialist | MiniMax M2.7 | 🔌 **MCP Protocol** — Tool design, server debug |
 
@@ -39,8 +40,60 @@
 | Git operations | `boomerang-git` | MiniMax M2.7 |
 | Web research / scraping | `boomerang-scraper` | MiniMax M2.7 |
 | MCP tool design / server debug | `mcp-specialist` | MiniMax M2.7 |
+| Release automation | `boomerang-release` | MiniMax M2.7 |
 
-## MANDATORY Super-Memory Protocol
+## Mandatory Protocol
+
+All agents follow the **8-Step Boomerang Protocol**:
+
+1. **Query Memory** — `super-memory_query_memories` FIRST
+2. **Think** — `sequential-thinking_sequentialthinking` for complex tasks
+3. **Plan** — Create/refine implementation plan (MANDATORY unless user explicitly waives)
+4. **Delegate** — Task tool with complete Context Package
+5. **Git Check** — Verify working tree state before code changes
+6. **Quality Gates** — Lint → Typecheck → Test
+7. **Update Docs & Todos** — Update TASKS.md, todo list, AGENTS.md as needed
+8. **Save Memory** — `super-memory_add_memory` with project tag
+
+### Planning Enforcement
+Planning is MANDATORY unless user explicitly waives with phrases like:
+- "skip planning"
+- "just do it"
+- "/boomerang-handoff"
+- "do a handoff"
+- "no plan needed"
+
+Simple tasks (handoff, status checks, single-file docs) may skip planning.
+Build/create/implement tasks ALWAYS require planning.
+
+### Context Passing
+When delegating via Task tool, the orchestrator MUST include a complete Context Package with:
+1. Original User Request (verbatim)
+2. Task Background
+3. Relevant Files
+4. Code Snippets
+5. Previous Decisions & Constraints
+6. Expected Output Format
+7. Scope Boundaries (IN vs OUT of scope)
+8. Error Handling
+
+### Super-Memory Hub
+- Query super-memory BEFORE answering user
+- Save to super-memory AFTER answering user
+- Pass context DIRECTLY to sub-agents (don't tell them to query memory)
+- Sub-agents save detailed work to memory, return thin summaries
+
+## Documentation Maintenance (MANDATORY)
+
+After EVERY session interaction, update:
+
+1. **TASKS.md** — Mark done, add new, remove outdated
+2. **Todo List** — Mark completed, remove old, add new
+3. **AGENTS.md** — Update if agent changes made
+4. **README.md** — Update if user-facing changes
+5. **HANDOFF.md** — Update at session end
+
+These updates are part of the 8-step protocol (Step 7).
 
 > **⚠️ IMPORTANT**: All sub-agents are required to follow the super-memory protocol. Prompts have been updated to make this MANDATORY, not optional.
 
@@ -115,14 +168,14 @@ This project uses a tiered memory architecture with two modes:
 | `tokens_used` | LLM token consumption |
 | `context_used_pct` | Percentage of context window used |
 
-### Metrics Storage
+### Memory Storage
 
-Metrics are stored in `memory_data/metrics/` (per-project isolation).
+Metrics are stored in Qdrant (per-project isolation via `BOOMERANG_PROJECT_ID`).
 
 ### How It Works
 
 1. Orchestrator wraps agent calls with timing/counting hooks
-2. After task completion, metrics are stored in local LanceDB
+2. After task completion, metrics are stored in Qdrant
 3. Routing optimizer uses aggregated metrics for future task assignment
 4. Minimum 5 samples required before metrics affect routing
 
@@ -170,6 +223,8 @@ This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
 - Uses built-in super-memory search for efficient research
 
 ## Review Notes
+
+- **2026-04-29**: Orchestration overhaul — 8-step protocol, Context Packages, Thin Response/Thick Memory, planning enforcement, documentation maintenance
 
 - **2026-04-27**: Agent governance rules added - architect owns research, explorer narrowed to file finding only
 

@@ -23,6 +23,10 @@ export interface MemoryEntry {
   metadataJson: string;
   /** Associated session ID */
   sessionId: string;
+  /** Similarity score from search (populated when returned from search) */
+  score?: number;
+  /** Project ID for multi-tenant isolation */
+  projectId?: string;
 }
 
 export interface ProjectChunk {

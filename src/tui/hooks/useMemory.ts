@@ -1,5 +1,6 @@
 // Memory operations hook with caching and debouncing
 import { useState, useCallback, useRef } from 'react';
+import { getMemoryService } from '../../memory-service.js';
 
 // Types
 export interface SearchOptions {
@@ -30,38 +31,57 @@ interface CacheEntry<T> {
 const CACHE_TTL_MS = 30 * 1000; // 30 seconds
 const DEBOUNCE_MS = 300; // 300ms
 
-// Memory system interface
-interface MemorySystem {
+// Memory service interface
+interface MemoryServiceClient {
   queryMemories(query: string, options?: SearchOptions): Promise<SearchResult[]>;
   searchProject(query: string, topK?: number): Promise<ProjectChunk[]>;
-  addMemory(content: string, metadata?: Record<string, unknown>): Promise<void>;
+  addMemory(entry: { content: string; metadata?: Record<string, unknown> }): Promise<{ id: string }>;
 }
 
 // State
-let memorySystem: MemorySystem | null = null;
+let memoryServiceClient: MemoryServiceClient | null = null;
 
-function getMemorySystem(): MemorySystem {
-  if (!memorySystem) {
-    // Mock implementation - replace with actual memory system
-    memorySystem = {
+function getMemorySystem(): MemoryServiceClient {
+  if (!memoryServiceClient) {
+    const service = getMemoryService();
+    memoryServiceClient = {
       async queryMemories(query: string, options?: SearchOptions): Promise<SearchResult[]> {
         console.debug('[useMemory] queryMemories:', query);
-        return [];
+        const results = await service.queryMemories(query, options);
+        // Adapt MemoryEntry[] to SearchResult[] - ensure score is always defined
+        return results.map(r => ({
+          id: r.id,
+          content: r.content,
+          score: r.score ?? 0,
+          metadata: r.metadata,
+        }));
       },
       async searchProject(query: string, topK?: number): Promise<ProjectChunk[]> {
         console.debug('[useMemory] searchProject:', query, topK);
-        return [];
+        const results = await service.searchProject(query, topK ?? 20);
+        // Adapt ProjectChunk from service to match hook interface (add id if missing)
+        return results.map((r, idx) => ({
+          id: r.filePath + '-' + idx, // Generate id if not present
+          content: r.content,
+          path: r.filePath,
+          score: r.score,
+        }));
       },
-      async addMemory(content: string, metadata?: Record<string, unknown>): Promise<void> {
-        console.debug('[useMemory] addMemory:', content.slice(0, 50));
+      async addMemory(entry: { content: string; metadata?: Record<string, unknown> }): Promise<{ id: string }> {
+        console.debug('[useMemory] addMemory:', entry.content.slice(0, 50));
+        return service.addMemory({
+          content: entry.content,
+          sourceType: 'manual',
+          metadata: entry.metadata,
+        });
       },
     };
   }
-  return memorySystem;
+  return memoryServiceClient;
 }
 
-function setMemorySystem(system: MemorySystem): void {
-  memorySystem = system;
+function setMemorySystem(system: MemoryServiceClient): void {
+  memoryServiceClient = system;
 }
 
 // Cache map
@@ -180,7 +200,7 @@ export function useMemory() {
       setError(null);
 
       try {
-        await getMemorySystem().addMemory(content, metadata);
+        await getMemorySystem().addMemory({ content, metadata });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to add memory';
         setError(errorMsg);

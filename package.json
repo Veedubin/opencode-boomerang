@@ -1,6 +1,6 @@
 {
   "name": "@veedubin/boomerang-v2",
-  "version": "2.4.1",
+  "version": "3.0.0",
   "type": "module",
   "repository": {
     "type": "git",
@@ -21,17 +21,21 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "coverage": "vitest --coverage",
-    "verify-version": "node scripts/verify-version-sync.js"
+    "verify-version": "node scripts/verify-version-sync.js",
+    "migrate-memory": "tsx scripts/migrate-lancedb-to-qdrant.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@veedubin/super-memory-ts": "file:../Super-Memory-TS",
     "uuid": "^14.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@lancedb/lancedb": "^0.27.2",
     "@types/node": "^22.0.0",
     "@types/uuid": "^10.0.0",
     "@vitest/coverage-v8": "^3.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }

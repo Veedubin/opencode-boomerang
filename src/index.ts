@@ -34,7 +34,16 @@ export interface SkillDefinition {
 
 import { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
 import { MemoryService, getMemoryService } from './memory-service.js';
+import { getMemorySystem } from './memory/index.js';
 import { spawn } from 'child_process';
+
+// Qdrant configuration
+const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
+
+// Warn about deprecated LANCEDB_URI
+if (process.env.LANCEDB_URI) {
+  console.warn('[DEPRECATED] LANCEDB_URI is deprecated. Use QDRANT_URL instead.');
+}
 
 let memoryService: MemoryService | null = null;
 
@@ -72,11 +81,12 @@ export async function execute(context: PluginContext): Promise<void> {
   // Initialize memory system
   memoryService = getMemoryService();
   try {
-    await memoryService.initialize();
+    // Pass Qdrant URL for initialization
+    await memoryService.initialize(QDRANT_URL);
     if (memoryService.isFallbackMode()) {
       console.log('⚠️ Memory system in fallback mode — operating without persistence');
     } else {
-      console.log('✅ Memory system initialized');
+      console.log('✅ Memory system initialized with Qdrant');
     }
   } catch (err) {
     console.error('❌ Failed to initialize memory:', err);

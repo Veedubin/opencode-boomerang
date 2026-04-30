@@ -3,24 +3,23 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v2.4.1](https://img.shields.io/badge/v2.4.1-8--Step%20Protocol-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v2.4.1)
+[![v3.0.0](https://img.shields.io/badge/v3.0.0-Qdrant%20Migration-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.0.0)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🎉 v2.4.1 Highlights
+## 🎉 v3.0.0 Highlights
 
-> **Orchestration Overhaul** — 8-step protocol, Context Packages, and super-memory hub architecture.
+> **BREAKING: LanceDB → Qdrant Migration** — boomerang-v2 now uses Super-Memory-TS natively with Qdrant backend.
 
 | Feature | Description |
 |---------|-------------|
-| **8-Step Protocol** | Expanded from 6 steps: Query Memory → Think → Plan → Delegate → Git Check → Quality Gates → Update Docs → Save Memory |
-| **Context Packages** | Complete context passed to sub-agents: original request, background, files, code snippets, decisions, output format, scope boundaries, error handling |
-| **Planning Enforcement** | Planning is MANDATORY for build/create/implement tasks unless user explicitly waives |
-| **Documentation Maintenance** | After EVERY session: update TASKS.md, todo list, AGENTS.md, README.md, HANDOFF.md |
-| **Thin Response / Thick Memory** | Sub-agents return concise summaries + memory references; full details stored in Qdrant |
-| **boomerang-release** | New agent for automated version bumping, changelog, and publishing |
+| **Qdrant Backend** | Vector storage via Super-Memory-TS with Qdrant |
+| **Project Isolation** | `BOOMERANG_PROJECT_ID` env var for multi-project support |
+| **Health Diagnostics** | `get_status` tool for connection health checks |
+| **Migration Script** | `npm run migrate-memory` for LanceDB → Qdrant data migration |
+| **Connection Resilience** | Exponential backoff retry for Qdrant connections |
 
 ---
 
@@ -221,14 +220,24 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 
 ---
 
-## 🧠 Built-in Memory Integration
+## 🧠 Memory System
 
-Boomerang uses **direct module imports** for zero-overhead memory access:
+Boomerang uses **Qdrant** via Super-Memory-TS for vector storage.
 
-```typescript
-import { MemorySystem } from './memory/index.js';
-import { getMemoryService } from './memory-service.js';
+### Setup
+
+Start Qdrant (required):
+
+```bash
+docker run -p 6333:6333 qdrant/qdrant
 ```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
+| `BOOMERANG_PROJECT_ID` | `default` | Project isolation ID |
 
 ### Memory Operations
 
@@ -238,12 +247,17 @@ import { getMemoryService } from './memory-service.js';
 | Save | `memoryService.addMemory()` | Store decisions and learnings |
 | Project Search | `memoryService.searchProject()` | Search indexed project files |
 | Index | `memoryService.indexProject()` | Trigger project re-indexing |
+| Health | `get_status` | Check Qdrant connection health |
 
-### Integration with Super-Memory-TS
+### Migrating from LanceDB
 
-Boomerang uses `@veedubin/super-memory-ts` for vector storage:
-- **Built-in Mode**: Direct import (zero overhead)
-- **MCP Mode**: External stdio server for non-Boomerang users
+If you have existing LanceDB data, migrate with:
+
+```bash
+npm run migrate-memory -- --lancedb-uri ./memory_data --qdrant-url http://localhost:6333
+```
+
+Add `--resume` to continue an interrupted migration.
 
 ---
 
@@ -266,18 +280,14 @@ Boomerang uses `@veedubin/super-memory-ts` for vector storage:
 boomerang-v2/
 ├── src/
 │   ├── index.ts              # Main entry point
-│   ├── memory/               # Built-in memory system
-│   │   ├── index.ts          # MemorySystem exports
-│   │   └── database.ts       # Qdrant vector DB
-│   ├── project-index/        # Project indexing
-│   │   ├── search.ts         # Vector search
-│   │   ├── indexer.ts        # File watcher
-│   │   └── types.ts          # Type definitions
-│   ├── memory-service.ts     # Public API wrapper
+│   ├── memory/               # Memory adapter (Super-Memory-TS wrapper)
+│   ├── memory-service.ts      # Public API wrapper
 │   ├── protocol/             # Protocol tracking
 │   └── agents/               # Agent definitions
+├── scripts/
+│   └── migrate-lancedb-to-qdrant.ts  # Migration script
 ├── dist/                     # Built output
-├── package.json             # @veedubin/boomerang-v2
+├── package.json              # @veedubin/boomerang-v2
 └── README.md
 ```
 
@@ -285,17 +295,21 @@ boomerang-v2/
 
 ## 📦 Integration with Super-Memory-TS
 
-### For Boomerang Users (Built-in)
+### Built-in Integration (Boomerang Users)
 
-Memory is automatically initialized on plugin load. No additional configuration needed.
+Memory is automatically initialized on plugin load. Requires Qdrant:
 
-### For External Users (MCP)
+```bash
+docker run -p 6333:6333 qdrant/qdrant
+```
+
+### External MCP Server (Non-Boomerang Users)
 
 Use the standalone Super-Memory-TS MCP server:
 
 ```bash
 npm install @veedubin/super-memory-ts
-node src/server.ts
+npx super-memory-ts
 ```
 
 ### MCP Tools (External Mode)
@@ -320,6 +334,7 @@ node src/server.ts
 
 ### Version History
 
+- **v3.0.0** — LanceDB → Qdrant migration complete
 - **v2.3.10** — Connection fix, version sync, all 18 items complete
 - **v2.3.8** — Dual-mode memory architecture
 - **v2.3.2** — Agent governance code-level enforced

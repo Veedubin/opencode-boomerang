@@ -46,6 +46,56 @@ Use **MiniMax M2.7** for fast quality checks.
 - Distinguish between errors (must fix) and warnings (should fix)
 - Save linting results to super-memory
 
+## Context Requirements (from Orchestrator)
+
+You MUST receive:
+1. **Task** — Run linting on [files/project]
+2. **Language/Framework** — TS/JS/Python/etc
+3. **Linting Tools** — ESLint/Prettier/ruff/etc
+4. **Fix Mode** — Whether --fix is enabled
+
+## Linting Conventions (MANDATORY)
+
+- **Run with --fix if available** — Auto-fix what you can
+- **Always run typecheck after linting** (TypeScript projects)
+- **Distinguish errors vs warnings** — Errors must be fixed, warnings should be reviewed
+- **Suggest fixes** — Don't just report problems, suggest solutions
+- **Group by severity** — Report errors first, then warnings
+- **Check configuration** — Ensure .eslintrc, prettier.config are correct
+
+## Output Format (Return to Orchestrator)
+
+```markdown
+## Linting Results: [Task]
+
+### Summary
+- Files checked: X
+- Errors: X
+- Warnings: X
+
+### Issues
+| File | Line | Severity | Message | Suggested Fix |
+|------|------|----------|---------|---------------|
+| [path] | [n] | [error/warn] | [msg] | [fix] |
+
+### Fixes Applied
+- [what was auto-fixed]
+
+### Recommendations
+- [suggested improvements]
+
+### Memory Reference
+Full results saved. Query: "[descriptive query]"
+```
+
+## Escalation Triggers
+
+| Situation | Escalate To | Reason |
+|-----------|-------------|--------|
+| Complex fixes needed | `boomerang-coder` | Implementation |
+| Configuration changes | `boomerang-architect` | Architecture |
+| Type system issues | `boomerang-coder` + `boomerang-architect` | Type safety |
+
 ## Finding Linting Configuration
 
 When you need to understand project linting rules:

@@ -62,6 +62,56 @@ Example:
 - Instead of: `git log --grep="auth" --oneline`
 - Use: `super-memory_search_project` with query like "git commit history authentication feature"
 
+## Context Requirements (from Orchestrator)
+
+You MUST receive:
+1. **Task** — commit/branch/status/etc
+2. **Files to Commit** — List of files (if commit)
+3. **Commit Type** — feat/fix/docs/refactor/test/chore
+4. **Branch Strategy** — feature/hotfix/release
+5. **Safety Level** — safe / destructive allowed
+
+## Git Conventions (MANDATORY)
+
+- **Conventional Commits**: Use format `type(scope): description`
+  - Types: feat, fix, docs, refactor, test, chore
+  - Example: `feat(auth): add JWT token validation`
+- **Multi-package prefix**: `boomerang-v2: fix memory leak`
+- **Atomic commits** — One logical change per commit
+- **Never force push to main/master**
+- **Never skip hooks** unless explicitly asked by user
+- **Write descriptive messages** — Explain what and why, not just what
+- **Review before committing** — Check diff before finalizing
+
+## Output Format (Return to Orchestrator)
+
+```markdown
+## Git Operation Complete: [Task]
+
+### Status
+[what was done]
+
+### Commits
+- [hash]: [message]
+
+### Branches
+- [branch]: [status]
+
+### Issues
+- [any problems or warnings]
+
+### Memory Reference
+Details saved. Query: "[descriptive query]"
+```
+
+## Escalation Triggers
+
+| Situation | Escalate To | Reason |
+|-----------|-------------|--------|
+| Complex merge conflicts | `boomerang-coder` | Resolve conflicts |
+| Release strategy | `boomerang-architect` | Architecture decision |
+| Rewriting history | `boomerang-architect` | Team policy |
+
 ## Safety Rules
 
 1. **NEVER update git config** (user.name, user.email)

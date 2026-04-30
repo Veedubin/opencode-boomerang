@@ -1,19 +1,24 @@
 /**
  * MemorySystem - Singleton wrapper for memory CRUD operations
+ * 
+ * Phase 1: Wraps Super-Memory-TS MemorySystem while preserving the original API surface.
  */
 
+import { MemorySystem as SmtMemorySystem, getMemorySystem as getSmtMemorySystem } from '@veedubin/super-memory-ts/dist/memory/index.js';
 import type { MemoryEntry, SourceType, SearchResult, SearchOptions } from './schema.js';
-import * as operations from './operations.js';
-import { lancedbPool } from './database.js';
-import { MemorySearch } from './search.js';
+import { DEFAULT_SEARCH_OPTIONS } from './schema.js';
+import { adaptMemoryEntry, toSmtMemoryEntryInput } from './adapter.js';
+
+const PROJECT_ID = process.env.BOOMERANG_PROJECT_ID || 'boomerang-default';
 
 class MemorySystem {
   private static instance: MemorySystem | null = null;
   private _initialized: boolean = false;
-  private _dbUri: string = 'memory://';
-  private _search: MemorySearch | null = null;
+  private _smt: SmtMemorySystem;
 
-  private constructor() {}
+  private constructor() {
+    this._smt = getSmtMemorySystem({ projectId: PROJECT_ID });
+  }
 
   /**
    * Get the MemorySystem singleton instance
@@ -29,7 +34,7 @@ class MemorySystem {
    * Check if the system has been initialized
    */
   isInitialized(): boolean {
-    return this._initialized;
+    return this._initialized || this._smt.isInitialized();
   }
 
   /**
@@ -40,13 +45,7 @@ class MemorySystem {
     if (this._initialized) {
       throw new Error('MemorySystem already initialized. Use isInitialized() to check state.');
     }
-
-    if (dbUri) {
-      this._dbUri = dbUri;
-    }
-
-    // Pre-connect to establish the connection pool
-    await lancedbPool.connect(this._dbUri);
+    await this._smt.initialize(dbUri);
     this._initialized = true;
   }
 
@@ -57,7 +56,16 @@ class MemorySystem {
     entry: Omit<MemoryEntry, 'id' | 'vector' | 'timestamp' | 'contentHash'>
   ): Promise<MemoryEntry> {
     this.ensureInitialized();
-    return operations.addMemory(entry);
+    
+    const input = toSmtMemoryEntryInput(entry);
+    const id = await this._smt.addMemory(input);
+    
+    // Retrieve the full entry to return the complete MemoryEntry
+    const smtEntry = await this._smt.getMemory(id);
+    if (!smtEntry) {
+      throw new Error(`Memory added but could not be retrieved: ${id}`);
+    }
+    return adaptMemoryEntry(smtEntry);
   }
 
   /**
@@ -65,7 +73,8 @@ class MemorySystem {
    */
   async getMemory(id: string): Promise<MemoryEntry | null> {
     this.ensureInitialized();
-    return operations.getMemory(id);
+    const entry = await this._smt.getMemory(id);
+    return entry ? adaptMemoryEntry(entry) : null;
   }
 
   /**
@@ -73,7 +82,12 @@ class MemorySystem {
    */
   async deleteMemory(id: string): Promise<boolean> {
     this.ensureInitialized();
-    return operations.deleteMemory(id);
+    try {
+      await this._smt.deleteMemory(id);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -81,7 +95,16 @@ class MemorySystem {
    */
   async listSources(sourceType?: SourceType): Promise<string[]> {
     this.ensureInitialized();
-    return operations.listSources(sourceType);
+    const entries = await this._smt.listMemories();
+    const pathSet = new Set<string>();
+    
+    for (const entry of entries) {
+      if (entry.sourcePath && (!sourceType || entry.sourceType === sourceType)) {
+        pathSet.add(entry.sourcePath);
+      }
+    }
+    
+    return Array.from(pathSet);
   }
 
   /**
@@ -89,7 +112,13 @@ class MemorySystem {
    */
   async saveContext(sessionId: string, context: string): Promise<MemoryEntry> {
     this.ensureInitialized();
-    return operations.saveContext(sessionId, context);
+    return this.addMemory({
+      text: context,
+      sourceType: 'conversation',
+      sourcePath: `session://${sessionId}`,
+      metadataJson: JSON.stringify({ type: 'context' }),
+      sessionId,
+    });
   }
 
   /**
@@ -97,7 +126,30 @@ class MemorySystem {
    */
   async getContext(sessionId: string): Promise<MemoryEntry | null> {
     this.ensureInitialized();
-    return operations.getContext(sessionId);
+    const entries = await this._smt.queryMemories(`session:${sessionId}`, {
+      topK: 100,
+      filter: { sessionId },
+    });
+    
+    // Find the most recent context entry
+    let latestContext: MemoryEntry | null = null;
+    for (const entry of entries) {
+      const entryTimestamp = entry.timestamp instanceof Date ? entry.timestamp.getTime() : entry.timestamp;
+      if (entry.metadataJson) {
+        try {
+          const meta = JSON.parse(entry.metadataJson);
+          if (meta.type === 'context') {
+            if (!latestContext || entryTimestamp > latestContext.timestamp) {
+              latestContext = adaptMemoryEntry(entry);
+            }
+          }
+        } catch {
+          // Not a context entry
+        }
+      }
+    }
+    
+    return latestContext;
   }
 
   /**
@@ -108,17 +160,25 @@ class MemorySystem {
     options?: Partial<SearchOptions>
   ): Promise<SearchResult<MemoryEntry>[]> {
     this.ensureInitialized();
-    if (!this._search) {
-      this._search = new MemorySearch(lancedbPool);
-    }
-    return this._search.search(query, options);
+    
+    const opts = {
+      ...DEFAULT_SEARCH_OPTIONS,
+      ...options,
+    };
+    
+    const smtResults = await this._smt.queryMemories(query, opts);
+    
+    return smtResults.map(entry => ({
+      entry: adaptMemoryEntry(entry),
+      score: entry.score ?? 0,
+    }));
   }
 
   /**
    * Ensure the system is initialized before performing operations
    */
   private ensureInitialized(): void {
-    if (!this._initialized) {
+    if (!this.isInitialized()) {
       throw new Error('MemorySystem not initialized. Call initialize() first.');
     }
   }

@@ -59,7 +59,15 @@ Use `webfetch` or `searxng_web_url_read` for:
 - Use sequential-thinking for complex research tasks
 - Respect rate limits and don't overwhelm sources
 
-## Research Protocol
+## Research Protocol (MANDATORY)
+
+- **Verify from multiple sources** — Cross-check important claims
+- **Cite sources** — Include URLs for key findings
+- **Focus on official documentation** — Prefer docs over blog posts
+- **Respect rate limits** — Don't hammer APIs or websites
+- **Check dates** — Prefer recent information for technical topics
+- **Distinguish facts from opinions** — Label speculation clearly
+- **Save raw findings** — Store full research in super-memory
 
 ### Tiered Memory Architecture
 
@@ -83,28 +91,33 @@ This project uses a tiered memory architecture with two modes:
 6. Save results to super-memory
 7. Report findings with sources
 
-## Output Format
-
-Report findings as:
+## Output Format (Return to Orchestrator)
 
 ```markdown
 ## Research Findings: [Topic]
 
 ### Summary
-[Brief summary of findings]
+[brief summary, 100-200 words]
 
 ### Key Sources
-1. [Source name](url) — [Relevance]
-2. [Source name](url) — [Relevance]
+1. [name](url) — [relevance]
 
-### Detailed Findings
-- [Finding 1 with context]
-- [Finding 2 with context]
+### Key Findings
+- [finding with source citation]
 
 ### Recommendations
-- [Actionable recommendation 1]
-- [Actionable recommendation 2]
+- [actionable recommendation]
+
+### Memory Reference
+Full research saved. Query: "[descriptive query]"
 ```
+
+## Escalation Triggers
+
+| Situation | Escalate To | Reason |
+|-----------|-------------|--------|
+| Technical implementation | `boomerang-architect` or `boomerang-coder` | Implementation |
+| Architecture decisions | `boomerang-architect` | Design authority |
 
 ## Fallback Behavior
 
