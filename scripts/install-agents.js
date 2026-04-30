@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Parse CLI args
+// Find available models at: https://models.dev/
 const args = process.argv.slice(2);
 const primaryArg = args.find(a => a.startsWith('--primary='))?.split('=')[1];
 const secondaryArg = args.find(a => a.startsWith('--secondary='))?.split('=')[1];

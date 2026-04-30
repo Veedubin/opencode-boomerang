@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v3.0.0](https://img.shields.io/badge/v3.0.0-Qdrant%20Migration-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.0.0)
+[![v3.0.1](https://img.shields.io/badge/v3.0.1-Qdrant%20Migration-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.0.1)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
@@ -71,6 +71,8 @@ You can also pass any valid OpenCode model ID directly:
 ```bash
 npx @veedubin/boomerang-v2 --primary=anthropic/claude-sonnet-4-20250514
 ```
+
+**Find available models**: Visit [models.dev](https://models.dev/) to discover model names and IDs
 
 ---
 
@@ -373,6 +375,7 @@ npx super-memory-ts
 
 ### Version History
 
+- **v3.0.1** — Build fixes, TUI cleanup, version sync
 - **v3.0.0** — LanceDB → Qdrant migration complete
 - **v2.3.10** — Connection fix, version sync, all 18 items complete
 - **v2.3.8** — Dual-mode memory architecture
