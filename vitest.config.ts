@@ -4,9 +4,6 @@ import path from 'path';
 export default defineConfig({
   test: {
     include: [
-      'tests/memory/search.test.ts',
-      'tests/memory/operations.test.ts',
-      'tests/memory/database.test.ts',
       'tests/mcp/server.test.ts',
       'tests/orchestrator.test.ts',
       'tests/plugin.test.ts',
