@@ -224,6 +224,45 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 
 Boomerang uses **Qdrant** via Super-Memory-TS for vector storage.
 
+### Quick Start with Docker Compose
+
+The easiest way to run Qdrant with persistent storage and auto-restart:
+
+```bash
+# Start Qdrant (persistent, auto-restart)
+docker-compose up -d qdrant
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f qdrant
+
+# Stop (keeps data)
+docker-compose stop
+
+# Stop and remove container (data persists in ./qdrant_storage)
+docker-compose down
+
+# Full reset (removes data)
+docker-compose down -v && docker-compose up -d qdrant
+```
+
+Or use the npm scripts:
+```bash
+npm run qdrant:start   # Start Qdrant
+npm run qdrant:stop    # Stop Qdrant
+npm run qdrant:logs    # View logs
+npm run qdrant:status  # Check status
+```
+
+**Benefits over `docker run`:**
+- Named container prevents duplicates
+- Auto-restart on boot (`unless-stopped`)
+- Health check for dependent services
+- Persistent `./qdrant_storage` volume
+- gRPC port 6334 exposed for future use
+
 ### Setup
 
 Start Qdrant (required):

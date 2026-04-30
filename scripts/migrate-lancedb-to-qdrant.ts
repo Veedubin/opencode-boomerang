@@ -4,12 +4,13 @@
  * 
  * Migrates existing memories from LanceDB to Qdrant using Super-Memory-TS.
  * Supports resume via state file and dry-run validation.
+ * Auto-discovers LanceDB tables if the exact name is unknown.
  */
 
 import { connect, type Table, type Connection } from '@lancedb/lancedb';
 import { MemorySystem } from '@veedubin/super-memory-ts/src/memory/index.js';
 import { generateEmbeddings } from '@veedubin/super-memory-ts/src/model/embeddings.js';
-import { randomUUID, createHash } from 'crypto';
+import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -111,7 +112,7 @@ OPTIONS:
   --help                 Show this help
 
 EXAMPLES:
-  # Migrate with defaults
+  # Migrate with defaults (discovers tables automatically)
   npx tsx scripts/migrate-lancedb-to-qdrant.ts
 
   # Dry run validation
@@ -185,15 +186,110 @@ async function withRetry<T>(
   throw new Error('Unreachable');
 }
 
+// --- Table Discovery ---
+
+interface DiscoveredTable {
+  name: string;
+  type: 'memory' | 'project' | 'unknown';
+}
+
+/**
+ * Discover available LanceDB tables and guess their type based on schema
+ */
+async function discoverTables(db: Connection): Promise<DiscoveredTable[]> {
+  const tables: DiscoveredTable[] = [];
+  
+  try {
+    // Try to open and inspect tables with common names
+    const possibleNames = [
+      'memories',        // Super-Memory-TS / Boomerang v2
+      'memory_entries',  // Old name
+      'memory',         // Generic
+      'project_chunks', // Project indexing
+    ];
+    
+    for (const name of possibleNames) {
+      try {
+        const table = await db.openTable(name);
+        // Try to query a small sample to verify table is valid
+        try {
+          await table.query().select(['*']).limit(1).toArray();
+          // Guess type based on name and schema
+          if (name.includes('memory') || name.includes('memories')) {
+            tables.push({ name, type: 'memory' });
+          } else if (name.includes('chunk') || name.includes('project')) {
+            tables.push({ name, type: 'project' });
+          } else {
+            tables.push({ name, type: 'unknown' });
+          }
+        } catch {
+          // Table exists but can't query - skip
+        }
+      } catch {
+        // Table doesn't exist
+      }
+    }
+  } catch (err) {
+    console.log(`  Note: Could not list all tables: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  
+  return tables;
+}
+
+/**
+ * Find the best table for memory entries migration
+ */
+async function findMemoryTable(db: Connection): Promise<{ name: string; table: Table } | null> {
+  // Known table names to try in order of preference
+  const memoryTableNames = ['memories', 'memory_entries', 'memory'];
+  
+  for (const name of memoryTableNames) {
+    try {
+      const table = await db.openTable(name);
+      // Verify by trying a query
+      try {
+        await table.query().select(['*']).limit(1).toArray();
+        console.log(`  Found memory table: "${name}"`);
+        return { name, table };
+      } catch {
+        // Can open but can't query - might be corrupted
+        console.log(`  Warning: Table "${name}" exists but appears empty or corrupted`);
+      }
+    } catch {
+      // Table doesn't exist, try next
+    }
+  }
+  
+  // Fallback: discover tables automatically
+  console.log('  Auto-discovering tables...');
+  const discovered = await discoverTables(db);
+  
+  for (const t of discovered) {
+    if (t.type === 'memory' || t.type === 'unknown') {
+      try {
+        const table = await db.openTable(t.name);
+        await table.query().select(['*']).limit(1).toArray();
+        console.log(`  Auto-selected memory table: "${t.name}"`);
+        return { name: t.name, table };
+      } catch {
+        // Skip invalid tables
+      }
+    }
+  }
+  
+  return null;
+}
+
 // --- Main Migration Logic ---
 
 async function migrateMemoryEntries(
   table: Table,
+  tableName: string,
   memorySystem: MemorySystem,
   state: MigrationState,
   args: CliArgs
 ): Promise<void> {
-  console.log('\n📦 Migrating memory_entries table...');
+  console.log(`\n📦 Migrating "${tableName}" table...`);
 
   // Read all rows as array
   const allRows: LanceDBMemoryEntry[] = [];
@@ -288,7 +384,7 @@ async function migrateMemoryEntries(
   }
 
   const pct = total > 0 ? ((state.memoryEntries.migrated / total) * 100).toFixed(1) : '0.0';
-  console.log(`  ✅ memory_entries: ${state.memoryEntries.migrated}/${total} (${pct}%) migrated, ${state.errors.filter(e => e.item.startsWith('entry-')).length} errors`);
+  console.log(`  ✅ ${tableName}: ${state.memoryEntries.migrated}/${total} (${pct}%) migrated, ${state.errors.filter(e => e.item.startsWith('entry-')).length} errors`);
 }
 
 async function migrateProjectChunks(
@@ -512,18 +608,22 @@ async function main(): Promise<void> {
     console.log('  ✅ Connected to Qdrant');
   } catch (err) {
     console.error(`❌ Failed to connect to Qdrant: ${err instanceof Error ? err.message : String(err)}`);
-    console.error('   Ensure Qdrant is running: docker run -p 6333:6333 qdrant/qdrant');
+    console.error('   Ensure Qdrant is running: docker run -p 6333:6333 -v $(pwd)/qdrant_storage:/qdrant/storage qdrant/qdrant');
     process.exit(1);
   }
 
-  // Migrate memory_entries
-  try {
-    const entriesTable = await db.openTable('memory_entries');
-    await migrateMemoryEntries(entriesTable, memorySystem, state, args);
-  } catch (err) {
-    console.error(`❌ Failed to migrate memory_entries: ${err instanceof Error ? err.message : String(err)}`);
-    await saveState(state);
-    process.exit(1);
+  // Auto-discover and migrate memory table
+  const memoryTable = await findMemoryTable(db);
+  if (memoryTable) {
+    try {
+      await migrateMemoryEntries(memoryTable.table, memoryTable.name, memorySystem, state, args);
+    } catch (err) {
+      console.error(`❌ Failed to migrate memory table: ${err instanceof Error ? err.message : String(err)}`);
+      await saveState(state);
+      process.exit(1);
+    }
+  } else {
+    console.log('\n⚠️  No memory table found - skipping memory migration');
   }
 
   // Migrate project_chunks

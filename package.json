@@ -22,7 +22,11 @@
     "test": "vitest",
     "coverage": "vitest --coverage",
     "verify-version": "node scripts/verify-version-sync.js",
-    "migrate-memory": "tsx scripts/migrate-lancedb-to-qdrant.ts"
+    "migrate-memory": "tsx scripts/migrate-lancedb-to-qdrant.ts",
+    "qdrant:start": "docker-compose up -d qdrant",
+    "qdrant:stop": "docker-compose stop qdrant",
+    "qdrant:logs": "docker-compose logs -f qdrant",
+    "qdrant:status": "docker-compose ps qdrant"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

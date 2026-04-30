@@ -1,0 +1,16 @@
+{
+  "startedAt": "2026-04-30T03:19:52.165Z",
+  "lancedbUri": "/home/jcharles/Projects/MCP-Servers/memory_data",
+  "qdrantUrl": "http://localhost:6333",
+  "memoryEntries": {
+    "total": 3322,
+    "migrated": 168,
+    "lastIndex": 167
+  },
+  "projectChunks": {
+    "total": 0,
+    "migrated": 0,
+    "lastIndex": -1
+  },
+  "errors": []
+}
