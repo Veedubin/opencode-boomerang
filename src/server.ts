@@ -9,8 +9,8 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { z } from 'zod';
 
 import { getMemorySystem } from './memory/index.js';
-import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
-import { createIndexer, ProjectIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
+import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database';
+import { createIndexer, ProjectIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer';
 import { MemoryError, ValidationError, NotFoundError, createErrorResponse } from './utils/errors.js';
 import { protocolTracker } from './protocol/tracker.js';
 
@@ -279,7 +279,7 @@ async function handleSearchProject(args: unknown) {
         {
           type: 'text',
           text: JSON.stringify({
-            results: results.map((r) => ({
+            results: results.map((r: { filePath: string; lineStart?: number; lineEnd?: number; chunk: { content: string }; score?: number }) => ({
               filePath: r.filePath,
               lineStart: r.lineStart,
               lineEnd: r.lineEnd,

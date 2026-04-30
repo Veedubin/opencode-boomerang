@@ -4,7 +4,7 @@
  * Phase 1: Wraps Super-Memory-TS MemorySystem while preserving the original API surface.
  */
 
-import { MemorySystem as SmtMemorySystem, getMemorySystem as getSmtMemorySystem } from '@veedubin/super-memory-ts/dist/memory/index.js';
+import { MemorySystem as SmtMemorySystem, getMemorySystem as getSmtMemorySystem } from '@veedubin/super-memory-ts/dist/memory/index';
 import type { MemoryEntry, SourceType, SearchResult, SearchOptions } from './schema.js';
 import { DEFAULT_SEARCH_OPTIONS } from './schema.js';
 import { adaptMemoryEntry, toSmtMemoryEntryInput } from './adapter.js';
@@ -168,9 +168,10 @@ class MemorySystem {
     
     const smtResults = await this._smt.queryMemories(query, opts);
     
-    return smtResults.map(entry => ({
-      entry: adaptMemoryEntry(entry),
-      score: entry.score ?? 0,
+    // Cast through unknown to handle partial fields returned from search
+    return ((smtResults as unknown) as Array<{ id: string; text: string; vector: Float32Array; sourceType: string; sourcePath?: string; timestamp?: Date; contentHash?: string; metadataJson?: string; score?: number }>).map((result) => ({
+      entry: adaptMemoryEntry(result as Parameters<typeof adaptMemoryEntry>[0]),
+      score: result.score ?? 0,
     }));
   }
 

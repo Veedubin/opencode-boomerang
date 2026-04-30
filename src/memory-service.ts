@@ -1,6 +1,6 @@
 import { getMemorySystem, MemorySystem } from './memory/index.js';
-import { ProjectIndexer, createIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
-import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
+import { ProjectIndexer, createIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer';
+import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database';
 import { protocolTracker } from './protocol/tracker.js';
 import { readFile } from 'fs/promises';
 
@@ -113,7 +113,7 @@ export class MemoryService {
       return [];
     }
     const results = await this.activeIndexer.search(query, { topK });
-    return results.map(r => ({
+    return results.map((r: { filePath: string; chunk: { content: string }; lineStart?: number; lineEnd?: number; score?: number }) => ({
       filePath: r.filePath,
       content: r.chunk.content,
       lineStart: r.lineStart,
@@ -135,7 +135,7 @@ export class MemoryService {
         return {
           content: indexed.content,
           source: 'index',
-          chunks: indexed.chunks.map(c => ({
+          chunks: indexed.chunks.map((c: { filePath: string; content: string; lineStart?: number; lineEnd?: number }) => ({
             filePath: c.filePath,
             content: c.content,
             lineStart: c.lineStart,
