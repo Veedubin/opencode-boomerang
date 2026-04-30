@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@veedubin/super-memory-ts": "file:../Super-Memory-TS",
+    "@veedubin/super-memory-ts": "^2.3.7",
     "uuid": "^14.0.0",
     "zod": "^3.23.8"
   },
