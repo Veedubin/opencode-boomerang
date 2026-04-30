@@ -1,16 +1,42 @@
 {
-  "startedAt": "2026-04-30T03:19:52.165Z",
+  "startedAt": "2026-04-30T03:29:59.408Z",
   "lancedbUri": "/home/jcharles/Projects/MCP-Servers/memory_data",
   "qdrantUrl": "http://localhost:6333",
   "memoryEntries": {
     "total": 3322,
-    "migrated": 168,
-    "lastIndex": 167
+    "migrated": 3288,
+    "lastIndex": 3320
   },
   "projectChunks": {
     "total": 0,
     "migrated": 0,
     "lastIndex": -1
   },
-  "errors": []
+  "errors": [
+    {
+      "item": "batch-346",
+      "error": "Embedding generation failed: Failed to generate batch embeddings: Maximum call stack size exceeded",
+      "timestamp": "2026-04-30T03:32:47.250Z"
+    },
+    {
+      "item": "batch-348",
+      "error": "Embedding generation failed: Failed to generate batch embeddings: Maximum call stack size exceeded",
+      "timestamp": "2026-04-30T03:32:51.687Z"
+    },
+    {
+      "item": "batch-358",
+      "error": "Embedding generation failed: Failed to generate batch embeddings: Maximum call stack size exceeded",
+      "timestamp": "2026-04-30T03:32:59.871Z"
+    },
+    {
+      "item": "batch-412",
+      "error": "Embedding generation failed: Failed to generate batch embeddings: Maximum call stack size exceeded",
+      "timestamp": "2026-04-30T03:33:15.191Z"
+    },
+    {
+      "item": "batch-416",
+      "error": "Embedding generation failed: Failed to generate batch embeddings: Maximum call stack size exceeded",
+      "timestamp": "2026-04-30T03:33:20.308Z"
+    }
+  ]
 }

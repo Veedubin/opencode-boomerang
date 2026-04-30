@@ -1,0 +1,19 @@
+
+========================================
+Migration Complete
+========================================
+
+Started: 2026-04-30T03:29:59.408Z
+Completed: 2026-04-30T03:33:20.337Z
+
+Memory Entries:
+  Total: 3322
+  Migrated: 3288
+  Errors: 0
+
+Project Chunks:
+  Total: 0
+  Migrated: 0
+  Errors: 0
+
+Total Errors: 5

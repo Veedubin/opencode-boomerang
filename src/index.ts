@@ -93,12 +93,8 @@ export async function execute(context: PluginContext): Promise<void> {
   }
 
   try {
-    if (context.interactive) {
-      // Start TUI for interactive mode
-      await startTUI(context);
-    } else {
-      // Handle CLI commands
-      switch (command) {
+    // Handle CLI commands
+    switch (command) {
         case 'boomerang':
           await handleBoomerangCommand(context);
           break;
@@ -114,7 +110,6 @@ export async function execute(context: PluginContext): Promise<void> {
         default:
           console.log('Available commands: boomerang, chat, index, install-agents');
       }
-    }
   } finally {
     memoryService = null;
   }
@@ -199,17 +194,6 @@ async function handleInstallAgentsCommand(_context: PluginContext): Promise<void
     });
     child.on('error', reject);
   });
-}
-
-/**
- * Start the TUI for interactive mode
- */
-async function startTUI(context: PluginContext): Promise<void> {
-  // Import TUI app dynamically - it's a React Ink component
-  const { App } = await import('./tui/index.jsx');
-  console.log('Starting TUI...', { context, hasApp: !!App });
-  // Note: Full TUI integration would render the App component here
-  // For now, just indicate TUI mode
 }
 
 // Re-export for external use

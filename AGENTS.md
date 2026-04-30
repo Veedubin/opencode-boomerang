@@ -224,6 +224,7 @@ This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
 
 ## Review Notes
 
+- **2026-04-29**: v3.0.0 BREAKING — LanceDB → Qdrant migration complete. Memory adapter layer, 58 new tests, migration scripts, docker-compose. Super-Memory-TS v2.3.7 connection resilience.
 - **2026-04-29**: Orchestration overhaul — 8-step protocol, Context Packages, Thin Response/Thick Memory, planning enforcement, documentation maintenance
 
 - **2026-04-27**: Agent governance rules added - architect owns research, explorer narrowed to file finding only
