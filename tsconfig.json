@@ -9,13 +9,9 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist/",
     "rootDir": "./src",
-    "baseUrl": ".",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "jsx": "react",
-    "paths": {
-      "@veedubin/super-memory-ts/*": ["../../Super-Memory-TS/src/*"]
-    }
+    "jsx": "react"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "tests/**/*"]
