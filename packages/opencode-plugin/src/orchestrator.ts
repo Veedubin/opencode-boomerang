@@ -6,14 +6,11 @@ import { runAllQualityGates, DEFAULT_QUALITY_GATES } from "./quality-gates.js";
 import { OrchestratorContext, BoomerangConfig, ExecutionPlan, PhaseResult, AggregatedResults, GitStatus, DEFAULT_EXECUTION_CONFIG } from "./types.js";
 import { isolateResult } from "./context-isolation.js";
 import { globalMiddleware } from "./middleware.js";
-import { ProtocolStateMachine } from "../../../protocol/state-machine.js";
-import type { ProtocolContext } from "../../../protocol/types.js";
 
 export class BoomerangOrchestrator {
   private ctx: OrchestratorContext;
   private config: BoomerangConfig;
   private $: (strings: TemplateStringsArray, ...values: any[]) => Promise<any>;
-  private stateMachine: ProtocolStateMachine;
 
   constructor(
     ctx: OrchestratorContext,
@@ -23,7 +20,6 @@ export class BoomerangOrchestrator {
     this.ctx = ctx;
     this.config = config;
     this.$ = shellRunner;
-    this.stateMachine = new ProtocolStateMachine();
   }
 
   async run(prompt: string): Promise<{
@@ -37,34 +33,15 @@ export class BoomerangOrchestrator {
     memorySaved: boolean;
     summary: string;
   }> {
-    const sessionId = crypto.randomUUID();
-    
     try {
       this.ctx.client.app.log("Starting Boomerang execution");
     } catch {
       // Client logging not available
     }
 
-    // Initialize session in state machine
-    this.stateMachine.initializeSession(sessionId, {
-      sessionId,
-      taskDescription: prompt,
-      taskType: 'simple_query',
-      waiverPhrasesDetected: [],
-    });
-
     // Git check
     const gitStatus: GitStatus = { isDirty: false, files: [], branch: "", ahead: 0, behind: 0 };
     if (this.config.gitCheckBeforeWork) {
-      // Step 1: MEMORY_QUERY (state machine transition)
-      await this.stateMachine.transition(sessionId, 'MEMORY_QUERY', {
-        sessionId,
-        taskDescription: prompt,
-        taskType: 'simple_query',
-        waiverPhrasesDetected: [],
-      });
-      this.stateMachine.setCheckpoint(sessionId, 'memoryQueryCompleted', true);
-      
       const status = await checkGitStatus(this.$);
       Object.assign(gitStatus, status);
       if (status.isDirty) {
@@ -72,7 +49,7 @@ export class BoomerangOrchestrator {
       }
     }
 
-    // Memory context (via state machine checkpoint)
+    // Memory context
     const memoryContext = await this.fetchMemoryContext(prompt);
     if (memoryContext) {
       try {
@@ -88,28 +65,15 @@ export class BoomerangOrchestrator {
     const executionPlan = createExecutionPlan(dag);
 
     // Execute with optional middleware
-    // Step 2: SEQUENTIAL_THINK (if needed)
-    // Step 3: PLAN (if needed)
-    // Step 4: DELEGATE
-    const executionResults = await this.executePlan(executionPlan, sessionId);
+    const executionResults = await this.executePlan(executionPlan);
     const aggregated = aggregateResults(executionResults);
-    
-    // Mark delegation completed checkpoint
-    this.stateMachine.setCheckpoint(sessionId, 'delegationCompleted', true);
-
-    // Step 5: GIT_CHECK
-    await this.stateMachine.transition(sessionId, 'GIT_CHECK');
-    this.stateMachine.setCheckpoint(sessionId, 'gitCheckPassed', true);
 
     // Quality gates
-    // Step 6: QUALITY_GATES
-    await this.stateMachine.transition(sessionId, 'QUALITY_GATES');
     let qualityPassed = true;
     let qualitySummary = "Skipped";
     const qualityResult = await runAllQualityGates(DEFAULT_QUALITY_GATES);
     qualityPassed = qualityResult.allPassed;
     qualitySummary = qualityResult.summary;
-    this.stateMachine.setCheckpoint(sessionId, 'qualityGatesPassed', true);
 
     // Git commit
     let commitResult: { hash: string; message: string } | undefined;
@@ -121,23 +85,13 @@ export class BoomerangOrchestrator {
       }
     }
 
-    // Step 7: DOC_UPDATE
-    await this.stateMachine.transition(sessionId, 'DOC_UPDATE');
-    this.stateMachine.setCheckpoint(sessionId, 'docsUpdated', true);
-
     // Save memory
-    // Step 8: MEMORY_SAVE
-    await this.stateMachine.transition(sessionId, 'MEMORY_SAVE');
     if (this.config.memoryEnabled) {
       await boomerangMemory.addMemory(
         `Completed: ${prompt.substring(0, 200)}... Tasks: ${tasks.length}, Passed: ${aggregated.successfulTasks}`,
         ["boomerang", "session"]
       );
     }
-    this.stateMachine.setCheckpoint(sessionId, 'memorySaveCompleted', true);
-
-    // Complete
-    await this.stateMachine.transition(sessionId, 'COMPLETE');
 
     return {
       success: aggregated.allPassed && qualityPassed,
@@ -161,7 +115,7 @@ export class BoomerangOrchestrator {
     return "";
   }
 
-  private async executePlan(plan: ExecutionPlan, sessionId: string): Promise<PhaseResult[]> {
+  private async executePlan(plan: ExecutionPlan): Promise<PhaseResult[]> {
     const executionConfig = this.config.executionConfig || DEFAULT_EXECUTION_CONFIG;
     const results: PhaseResult[] = [];
     for (const phase of plan.executionOrder) {

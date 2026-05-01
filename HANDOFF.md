@@ -863,3 +863,44 @@ Query `super-memory_query_memories` with:
 4. Query super-memory for detailed context about specific areas
 5. Check git log for recent commits
 6. If starting fresh, run `/boomerang-init` skill to initialize agents
+
+---
+
+## 2026-05-01 — v3.1.0 Build Fix + Orchestrator Permission Model
+
+### Status
+Build errors fixed. Tag recreated with fix. Orchestrator permission model updated.
+
+### What Was Fixed
+1. **Build errors**: Removed broken tsconfig.json path mapping for `@veedubin/super-memory-ts`
+   - Path mapping `"@veedubin/super-memory-ts/*": ["../../Super-Memory-TS/src/*"]` was causing TypeScript to fail resolving imports
+   - The node_modules symlink already resolves correctly to the package root
+   - Restored `/dist/` imports in source files (memory-service.ts, adapter.ts, index.ts, server.ts)
+   
+2. **Version sync**: Corrected from 4.0.0 → 3.1.0 across all files
+   - package.json (root + plugin): 3.0.1 → 3.1.0
+   - src/index.ts VERSION constant: 4.0.0 → 3.1.0
+   - CHANGELOG.md, README.md, AGENTS.md, HANDOFF.md, TASKS.md
+   
+3. **NPM README**: Fixed stale `packages/opencode-plugin/README.md` from v2.4.0 → v3.1.0
+
+4. **Proper tagging**: Deleted old tag, recreated `plugin-v3.1.0` with build fix included
+
+### New Orchestrator Permission Model
+- Orchestrator can read any file directly
+- Orchestrator can run build/test/lint commands directly
+- Orchestrator can make simple edits (<20 lines, single file, deterministic)
+- Multi-file/complex work still delegates to sub-agents
+- Architect uses highest reasoning level for Kimi K2.6 planning
+- All 8 protocol steps still apply for direct execution
+
+### Quality Gates
+- Build: ✅ PASS (0 errors)
+- Typecheck: ✅ PASS (0 errors)
+- Tests: ✅ PASS (205 tests, 13 files)
+
+### Files Changed
+- tsconfig.json (removed path mapping)
+- packages/opencode-plugin/README.md (v2.4.0 → v3.1.0)
+- AGENTS.md (added permissions section)
+- agents/boomerang.md (added permissions section)
