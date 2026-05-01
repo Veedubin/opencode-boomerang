@@ -222,6 +222,39 @@ This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
 - Ensures proper context for design decisions
 - Uses built-in super-memory search for efficient research
 
+## Protocol Enforcement v4.0 (In Development)
+
+### Current State (v3.0.1)
+The Boomerang Protocol is documented but NOT code-enforced:
+- Steps 1-4, 7-8 are suggestions only (prompt-based)
+- Only Steps 5-6 (git check, quality gates) actually run
+- Agent execution is simulated, not real
+
+### Target State (v4.0)
+Code-enforced protocol with state machine:
+- Each step is a mandatory checkpoint
+- Orchestrator blocks until checkpoint is satisfied
+- Agent execution is real (subprocess spawn)
+- Documentation updates are tracked
+
+### Enforcement Rules (v4.0)
+
+| Step | Enforcement | Escape Hatch |
+|------|-------------|--------------|
+| 1. Memory Query | Auto-invoke if skipped | None (always runs) |
+| 2. Sequential Thinking | Mandatory for complex tasks | None for complex |
+| 3. Planning | Mandatory for build tasks | "skip planning", "just do it" |
+| 4. Delegate | Mandatory - cannot write code | None |
+| 5. Git Check | Blocks if dirty | "--force" or "git is fine" |
+| 6. Quality Gates | Blocks if failing | "skip tests", "skip gates" |
+| 7. Doc Update | Tracked, enforced at handoff | "no docs needed" |
+| 8. Memory Save | Auto-save if skipped | None (always saves) |
+
+### Implementation Phases
+See TASKS.md for detailed breakdown.
+
+---
+
 ## Review Notes
 
 - **2026-04-29**: v3.0.0 BREAKING — LanceDB → Qdrant migration complete. Memory adapter layer, 58 new tests, migration scripts, docker-compose. Super-Memory-TS v2.3.7 connection resilience.
