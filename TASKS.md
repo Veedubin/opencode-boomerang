@@ -397,3 +397,32 @@ All 8 phases of protocol enforcement implemented:
 ---
 
 *Last Updated: 2026-04-30 (v4.0.0)*
+
+---
+
+## Post-v3.1.0 Fixes
+
+### 2026-05-01 — Plugin Build Fix
+
+**Problem**: CI build failed because plugin package couldn't resolve `@veedubin/super-memory-ts/dist/*` imports.
+
+**Root Causes**:
+1. Missing dependency: `@veedubin/super-memory-ts` not in plugin's package.json
+2. Cross-package imports: Plugin reaching into root `src/protocol/` via relative paths
+
+**Fixes Applied**:
+- [x] Added `@veedubin/super-memory-ts` to `packages/opencode-plugin/package.json` dependencies
+- [x] Reverted plugin `src/orchestrator.ts` cross-package imports (../../../protocol/)
+- [x] Plugin now builds standalone: `cd packages/opencode-plugin && npm install && npm run build`
+
+**Verification**:
+- [x] Root build passes
+- [x] Plugin build passes  
+- [x] All 205 tests pass
+- [x] Tag `plugin-v3.1.0` recreated with fix
+
+### CI/CD Best Practices (New)
+
+- [ ] **Test plugin standalone before tagging** — `rm -rf node_modules && npm install && npm run build`
+- [ ] **Verify all package.json files have complete deps** — Don't assume root deps cover plugin
+- [ ] **No cross-package imports in plugin** — Plugin must be self-contained

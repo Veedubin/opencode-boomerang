@@ -904,3 +904,45 @@ Build errors fixed. Tag recreated with fix. Orchestrator permission model update
 - packages/opencode-plugin/README.md (v2.4.0 → v3.1.0)
 - AGENTS.md (added permissions section)
 - agents/boomerang.md (added permissions section)
+
+---
+
+## 2026-05-01 — Plugin Build Fix + CI/CD Lessons
+
+### Status
+**FIXED**. Plugin package now builds standalone. Tag recreated with fix.
+
+### What Was Fixed
+
+**1. Missing Dependency**
+- `packages/opencode-plugin/package.json` was missing `@veedubin/super-memory-ts`
+- Root package.json had it, but plugin did not
+- CI installs plugin deps independently → `super-memory-ts` was never installed in CI
+- **Fix**: Added `"@veedubin/super-memory-ts": "^2.3.7"` to plugin dependencies
+
+**2. Cross-Package Imports**
+- Plugin's `src/orchestrator.ts` was importing from `../../../protocol/state-machine.js`
+- This reaches into root `src/protocol/` which doesn't exist when plugin is built standalone
+- Works locally with monorepo symlink, breaks in CI
+- **Fix**: Reverted plugin orchestrator to its original self-contained execution flow
+- Root `src/orchestrator.ts` keeps state machine integration
+- Plugin remains independent for NPM publish
+
+### CI/CD Lessons
+
+| Issue | Lesson |
+|-------|--------|
+| Missing dep in plugin | Root deps ≠ plugin deps. Each package.json must be complete. |
+| Cross-package imports | Plugin must be self-contained. No reaching into root src/. |
+| Local build passes | Local symlinks hide CI failures. Always test `npm install` in plugin dir. |
+
+### Key Rule
+**Plugin packages must build standalone.** Test with:
+```bash
+cd packages/opencode-plugin
+rm -rf node_modules && npm install && npm run build
+```
+
+### Files Changed
+- `packages/opencode-plugin/package.json` — Added super-memory-ts dependency
+- `packages/opencode-plugin/src/orchestrator.ts` — Reverted cross-package imports
