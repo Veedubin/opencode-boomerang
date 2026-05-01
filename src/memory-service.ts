@@ -1,6 +1,6 @@
 import { getMemorySystem, MemorySystem } from './memory/index.js';
-import { ProjectIndexer, createIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer';
-import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database';
+import { ProjectIndexer, createIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
+import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
 import { protocolTracker } from './protocol/tracker.js';
 import { readFile } from 'fs/promises';
 

@@ -3,23 +3,23 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v3.0.1](https://img.shields.io/badge/v3.0.1-Qdrant%20Migration-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.0.1)
+[![v3.1.0](https://img.shields.io/badge/v3.1.0-Protocol%20Enforcement-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.1.0)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🎉 v3.0.0 Highlights
+## 🎉 v3.1.0 Highlights
 
-> **BREAKING: LanceDB → Qdrant Migration** — boomerang-v2 now uses Super-Memory-TS natively with Qdrant backend.
+> **BREAKING: Code-Enforced Protocol** — The Boomerang Protocol is now enforced via state machine, not prompt-based suggestions.
 
 | Feature | Description |
 |---------|-------------|
-| **Qdrant Backend** | Vector storage via Super-Memory-TS with Qdrant |
-| **Project Isolation** | `BOOMERANG_PROJECT_ID` env var for multi-project support |
-| **Health Diagnostics** | `get_status` tool for connection health checks |
-| **Migration Script** | `npm run migrate-memory` for LanceDB → Qdrant data migration |
-| **Connection Resilience** | Exponential backoff retry for Qdrant connections |
+| **State Machine Architecture** | Each protocol step is a mandatory checkpoint |
+| **Real Agent Execution** | TaskRunner spawns actual subprocess (no simulation) |
+| **Strictness Levels** | lenient/standard/strict configuration |
+| **Documentation Tracking** | DocTracker with SHA-256 hash comparison |
+| **Mandatory Checkpoints** | All 8 steps block until satisfied |
 
 ---
 
@@ -210,15 +210,49 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 
 ---
 
-## 🔒 Security
+## 🔒 Protocol Enforcement v4.0
 
-### Vulnerability Register
+The Boomerang Protocol is **code-enforced** via state machine with mandatory checkpoints.
 
-| Package | Status | Notes |
-|---------|--------|-------|
-| **uuid** | ✅ Fixed | Updated to patched version |
-| **@modelcontextprotocol/sdk** | ⚠️ Accepted | Monitoring, no alternative |
-| **protobufjs** | ⚠️ Accepted | Monitoring, no alternative |
+### State Machine Flow
+
+```
+IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
+```
+
+### Strictness Levels
+
+| Level | Behavior |
+|-------|----------|
+| **lenient** | Auto-fix skipped steps, warn but proceed |
+| **standard** | Block on mandatory steps, require waiver for bypass (default) |
+| **strict** | Block on all violations, no waivers except emergencies |
+
+### Waiver Phrases (Escape Hatches)
+
+| Phrase | Effect |
+|--------|--------|
+| `skip planning`, `just do it` | Bypass mandatory planning |
+| `skip tests`, `skip gates` | Bypass quality gates |
+| `git is fine` | Bypass git check |
+| `--force` | Bypass all blocking checks (emergency) |
+| `no docs needed` | Skip documentation update |
+
+### How It Works
+
+1. **ProtocolStateMachine** manages state transitions, blocks until checkpoint satisfied
+2. **CheckpointRegistry** validates each step, stores completion status
+3. **TaskRunner** executes agents as real subprocesses (not simulation)
+4. **DocTracker** tracks documentation changes via SHA-256 hash comparison
+
+### Configuration
+
+```typescript
+// lenient: Auto-fix skipped steps
+// standard: Block on mandatory steps (default)
+// strict: Block on all violations
+const config = { strictness: 'standard' };
+```
 
 ---
 
@@ -375,6 +409,7 @@ npx super-memory-ts
 
 ### Version History
 
+- **v3.1.0** — Code-enforced protocol via state machine. Real agent execution. Mandatory checkpoints.
 - **v3.0.1** — Build fixes, TUI cleanup, version sync
 - **v3.0.0** — LanceDB → Qdrant migration complete
 - **v2.3.10** — Connection fix, version sync, all 18 items complete

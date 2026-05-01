@@ -9,8 +9,8 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { z } from 'zod';
 
 import { getMemorySystem } from './memory/index.js';
-import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database';
-import { createIndexer, ProjectIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer';
+import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
+import { createIndexer, ProjectIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
 import { MemoryError, ValidationError, NotFoundError, createErrorResponse } from './utils/errors.js';
 import { protocolTracker } from './protocol/tracker.js';
 

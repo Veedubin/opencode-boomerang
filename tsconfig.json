@@ -8,10 +8,14 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist/",
-    "rootDir": "src/",
+    "rootDir": "./src",
+    "baseUrl": ".",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "jsx": "react"
+    "jsx": "react",
+    "paths": {
+      "@veedubin/super-memory-ts/*": ["../../Super-Memory-TS/src/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "tests/**/*"]

@@ -1,5 +1,8 @@
 /**
  * TaskExecutor - Executes task graphs with loop prevention and timeout handling
+ * 
+ * Protocol Enforcement v4.0: Uses real TaskRunner for agent execution
+ * instead of simulated execution.
  */
 
 import type { Task, TaskGraph, TaskResult, TaskStatus } from './orchestrator.js';
@@ -9,11 +12,22 @@ import { globalMiddleware, type MiddlewareContext } from './middleware/pipeline.
 import { protocolTracker } from './protocol/tracker.js';
 import { metricsCollector } from './metrics/collector.js';
 import { contextMonitor } from './context/monitor.js';
+import { TaskRunner, AgentSpawner, AgentPromptLoader } from './execution/index.js';
+import { ProtocolStateMachine } from './protocol/state-machine.js';
 
 const TASK_COMPLETE_SIGNAL = 'TASK_COMPLETE';
 
 /** Default timeout for task execution (2 minutes) */
 const DEFAULT_TASK_TIMEOUT = 2 * 60 * 1000;
+
+/**
+ * Create default TaskRunner instance
+ */
+function createDefaultTaskRunner(): TaskRunner {
+  const spawner = new AgentSpawner();
+  const loader = new AgentPromptLoader();
+  return new TaskRunner(spawner, loader);
+}
 
 /**
  * Calculate text similarity between two strings
@@ -95,28 +109,48 @@ function calculateSimilarity(text1: string, text2: string): number {
 
 /**
  * TaskExecutor class - executes tasks with loop prevention
+ * 
+ * Protocol Enforcement v4.0: Uses real TaskRunner for agent execution
  */
+export interface TaskExecutorOptions {
+  orchestrator?: Orchestrator;
+  maxDepth?: number;
+  maxIterations?: number;
+  taskRunner?: TaskRunner;
+  stateMachine?: ProtocolStateMachine;
+}
+
 export class TaskExecutor {
   private orchestrator: Orchestrator;
   private maxDepth: number;
   private maxIterations: number;
   private taskTimeout: number;
+  private taskRunner: TaskRunner;
+  private stateMachine?: ProtocolStateMachine;
 
   /**
    * Create a TaskExecutor
-   * @param orchestrator - The orchestrator for planning
-   * @param maxDepth - Maximum dependency depth to prevent deep nesting (default 5)
-   * @param maxIterations - Maximum iterations to prevent infinite loops (default 15)
+   * Supports both old signature (orchestrator, maxDepth, maxIterations)
+   * and new options object signature
    */
-  constructor(
-    orchestrator: Orchestrator,
-    maxDepth: number = 5,
-    maxIterations: number = 15
-  ) {
-    this.orchestrator = orchestrator;
-    this.maxDepth = maxDepth;
-    this.maxIterations = maxIterations;
-    this.taskTimeout = DEFAULT_TASK_TIMEOUT;
+  constructor(optionsOrOrchestrator: TaskExecutorOptions | Orchestrator = {}, maxDepth?: number, maxIterations?: number) {
+    // Handle backward compatibility: old signature (orchestrator, maxDepth, maxIterations)
+    if (typeof optionsOrOrchestrator === 'object' && 'planTask' in optionsOrOrchestrator) {
+      this.orchestrator = optionsOrOrchestrator;
+      this.maxDepth = maxDepth ?? 5;
+      this.maxIterations = maxIterations ?? 15;
+      this.taskTimeout = DEFAULT_TASK_TIMEOUT;
+      this.taskRunner = createDefaultTaskRunner();
+    } else {
+      // New options object signature
+      const options = optionsOrOrchestrator as TaskExecutorOptions;
+      this.orchestrator = options.orchestrator!;
+      this.maxDepth = options.maxDepth ?? 5;
+      this.maxIterations = options.maxIterations ?? 15;
+      this.taskTimeout = DEFAULT_TASK_TIMEOUT;
+      this.taskRunner = options.taskRunner ?? createDefaultTaskRunner();
+      this.stateMachine = options.stateMachine;
+    }
   }
 
   /**
@@ -294,7 +328,7 @@ export class TaskExecutor {
   }
 
   /**
-   * Execute a single task
+   * Execute a single task using real TaskRunner
    * @param task - The task to execute
    * @returns Promise resolving to task result
    */
@@ -340,23 +374,52 @@ export class TaskExecutor {
         }
       }
 
-      // Execute via middleware pipeline
-      const ctx: MiddlewareContext = {
-        sessionId, taskId: task.id, agent: task.agent,
-        taskDescription: task.description, metadata: {},
-      };
-
+      // Track for protocol tracker
       protocolTracker.recordToolCall(sessionId, `agent:${task.agent}`, {
         taskId: task.id,
         taskType: task.type,
         description: task.description.slice(0, 100),
       });
 
-      let result: string = '';
-      await globalMiddleware.execute(ctx, async () => {
-        result = await this.executeWithTimeout(task);
-        contextMonitor.estimateUsage(result);
+      // Execute using real TaskRunner (Protocol Enforcement v4.0)
+      let result = '';
+      const executionContext = {
+        sessionId,
+        taskGraph: [],
+        parentTask: undefined,
+        metadata: { taskType: task.type },
+      };
+
+      // Execute with timeout
+      const execPromise = this.taskRunner.execute(
+        {
+          id: task.id,
+          agent: task.agent,
+          description: task.description,
+          context: { originalMessage: task.description },
+          priority: 'medium',
+        },
+        executionContext
+      );
+
+      const timeoutPromise = new Promise<'timeout'>((resolve) => {
+        setTimeout(() => resolve('timeout'), this.taskTimeout);
       });
+
+      const execResult = await Promise.race([execPromise, timeoutPromise]);
+      
+      if (execResult === 'timeout') {
+        return {
+          taskId: task.id,
+          success: false,
+          output: '',
+          error: `Task execution timed out after ${this.taskTimeout}ms`,
+          duration: Date.now() - startTime,
+        };
+      }
+
+      result = execResult.output;
+      contextMonitor.estimateUsage(result);
 
       // Track code changes
       if (task.type === 'code') {
@@ -406,42 +469,6 @@ export class TaskExecutor {
         duration: Date.now() - startTime,
       };
     }
-  }
-
-  /**
-   * Execute task with timeout protection
-   */
-  private executeWithTimeout(task: Task): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error(`Task timeout after ${this.taskTimeout}ms`));
-      }, this.taskTimeout);
-
-      // Execute synchronously since simulateAgentExecution is fast
-      try {
-        const output = this.simulateAgentExecution(task);
-        clearTimeout(timeoutId);
-        resolve(output);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        reject(error);
-      }
-    });
-  }
-
-  /**
-   * Simulate agent execution (placeholder for real agent invocation)
-   * In production, this would load and execute the actual agent
-   */
-  private simulateAgentExecution(task: Task): string {
-    // This is a placeholder - in a real implementation,
-    // the agent would be loaded and executed here
-    const agentName = task.agent;
-    const taskType = task.type;
-    const description = task.description;
-    
-    // Return simulated output
-    return `[${agentName}] executed ${taskType} task: ${description}`;
   }
 
   /**

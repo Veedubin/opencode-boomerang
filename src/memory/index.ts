@@ -4,7 +4,7 @@
  * Phase 1: Wraps Super-Memory-TS MemorySystem while preserving the original API surface.
  */
 
-import { MemorySystem as SmtMemorySystem, getMemorySystem as getSmtMemorySystem } from '@veedubin/super-memory-ts/dist/memory/index';
+import { MemorySystem as SmtMemorySystem, getMemorySystem as getSmtMemorySystem } from '@veedubin/super-memory-ts/dist/memory/index.js';
 import type { MemoryEntry, SourceType, SearchResult, SearchOptions } from './schema.js';
 import { DEFAULT_SEARCH_OPTIONS } from './schema.js';
 import { adaptMemoryEntry, toSmtMemoryEntryInput } from './adapter.js';

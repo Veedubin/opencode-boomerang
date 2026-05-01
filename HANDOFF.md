@@ -2,63 +2,103 @@
 
 ---
 
-## 2026-04-30 — Protocol Enforcement Rewrite (In Progress)
+## 2026-04-30 — Protocol Enforcement v3.1.0 Complete
 
 ### Status
-AUDIT COMPLETE. Discovered boomerang-v2 protocol is largely simulated, not enforced.
-Plan created for Option B: Code-Enforced Protocol.
+**COMPLETE**. All 8 phases implemented. 205 tests passing. Code-enforced protocol operational.
 
-### Audit Findings
-- Sequential thinking: NEVER actually called (only warns)
-- Planning: NO code enforcement whatsoever
-- Agent execution: FAKE (simulateAgentExecution is a placeholder)
-- Memory save: Auto-fixes with thin "Task completed" message
-- Git check & Quality Gates: ACTUALLY work (only real enforcement)
-- Documentation updates: NOT tracked
+### What Was Accomplished
 
-### Implementation Plan
-See TASKS.md for detailed phase breakdown.
+**Phase 1: Protocol State Machine**
+- Created `src/protocol/state-machine.ts` — ProtocolStateMachine class
+- Created `src/protocol/checkpoint.ts` — CheckpointRegistry with validation
+- Created `src/protocol/types.ts` — State, event, config types
+- Created `src/protocol/events.ts` — Event emitter for state transitions
+- Created `src/protocol/config.ts` — Strictness levels, waiver phrases
 
-### Next Session Priority
-Start Phase 1: Create Protocol State Machine
-- Create `src/protocol/state-machine.ts`
-- Create `src/protocol/checkpoint.ts`
-- Rewrite `src/orchestrator.ts` to use state machine
+**Phase 2: Mandatory Memory Operations**
+- Memory query auto-invoked if skipped (no waiver)
+- Memory save auto-completed with comprehensive summary if skipped
+
+**Phase 3: Mandatory Sequential Thinking**
+- Complex tasks auto-invoke `sequential-thinking_sequentialthinking`
+- Complexity analysis determines when thinking is required
+
+**Phase 4: Mandatory Planning**
+- Build tasks require architect review before proceeding
+- Waiver phrases bypass: "skip planning", "just do it", "no plan needed"
+
+**Phase 5: Real Agent Execution**
+- Created `src/execution/task-runner.ts` — Real subprocess spawn
+- Created `src/execution/agent-spawner.ts` — Agent lifecycle management
+- Deleted `simulateAgentExecution` placeholder
+
+**Phase 6: Mandatory Git Check & Quality Gates**
+- Git check blocks if working tree dirty
+- Quality gates block if lint/typecheck/test fails
+- Configurable strictness levels (lenient/standard/strict)
+
+**Phase 7: Documentation Tracking**
+- Created DocTracker with SHA-256 hash comparison
+- Tracks changes to AGENTS.md, TASKS.md, README.md, CHANGELOG.md, HANDOFF.md
+- Enforced at handoff
+
+**Phase 8: Integration Testing**
+- 205 tests passing (state-machine, task-runner, enforcement)
 
 ### Key Decisions
-- Option B chosen: Code-enforced protocol (not prompt-based)
-- Each protocol step becomes a state machine checkpoint
-- Orchestrator blocks until checkpoint is satisfied
-- Agent execution will be REAL (subprocess spawn, not simulation)
-- Waiver phrases ("skip planning", "just do it") will bypass mandatory steps
 
-### Files to Modify (from current state)
-- `src/protocol/enforcer.ts` (rewrite)
-- `src/orchestrator.ts` (rewrite)
-- `src/task-executor.ts` (delete simulateAgentExecution)
-- `src/index.ts` (update entry point)
-- `AGENTS.md` (update enforcement rules)
-- `README.md` (update documentation)
+1. **State machine architecture**: Each protocol step is a checkpoint that blocks until satisfied
+2. **Real execution over simulation**: TaskRunner spawns actual subprocess, not mock responses
+3. **Strictness levels**: lenient (auto-fix), standard (block), strict (no waivers)
+4. **Waiver phrases preserved**: Escape hatches for emergency overrides
 
-### New Files to Create
+### Files Modified/Created
+
+**Created:**
 - `src/protocol/state-machine.ts`
 - `src/protocol/checkpoint.ts`
+- `src/protocol/types.ts`
+- `src/protocol/events.ts`
+- `src/protocol/config.ts`
 - `src/execution/task-runner.ts`
 - `src/execution/agent-spawner.ts`
 - `tests/protocol/state-machine.test.ts`
 - `tests/execution/task-runner.test.ts`
+- `tests/protocol/enforcement.test.ts`
+
+**Modified:**
+- `src/orchestrator.ts` — Use state machine
+- `src/task-executor.ts` — Remove simulateAgentExecution
+- `AGENTS.md` — v4.0 protocol enforcement docs
+- `README.md` — Updated protocol section
+- `CHANGELOG.md` — v4.0.0 entry
+- `TASKS.md` — All phases marked complete
 
 ### Breaking Changes
-- Orchestrator will be more strict (slower for simple tasks)
-- Tasks without planning will be blocked
-- Tasks without sequential thinking will be blocked
-- Escape hatches available via waiver phrases
 
-### Resume Here
-1. Read TASKS.md for detailed implementation plan
-2. Start with Phase 1: Protocol State Machine
-3. The current codebase compiles (npm run build passes)
-4. All tests pass (98 tests)
+| Change | Impact |
+|--------|--------|
+| Protocol is code-enforced | Slower for simple tasks (blocks on each step) |
+| Planning mandatory | Build tasks blocked without architect review |
+| Real agent execution | Actual resource usage, potential for crashes |
+| Git check blocks | Cannot proceed with dirty tree |
+| Quality gates block | Cannot skip tests |
+| Documentation tracked | Handoff blocked if docs need update |
+
+### Next Session Priorities
+
+1. Monitor v4.0.0 on NPM after publish
+2. Test waiver phrase bypass in real workflows
+3. Verify strictness level configuration works
+4. End-to-end test with complex multi-agent task
+
+### Super-Memory Reference
+
+Query `super-memory_query_memories` with:
+- `"boomerang-v2 v4.0.0 protocol enforcement state machine"`
+- `"real agent execution task runner subprocess spawn"`
+- `"strictness levels lenient standard strict"`
 
 ---
 

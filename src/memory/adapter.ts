@@ -5,7 +5,7 @@
  * Super-Memory-TS types: Date timestamp, Float32Array vector
  */
 
-import type { MemoryEntry as SmtMemoryEntry, MemoryEntryInput } from '@veedubin/super-memory-ts/dist/memory/schema';
+import type { MemoryEntry as SmtMemoryEntry, MemoryEntryInput } from '@veedubin/super-memory-ts/dist/memory/schema.js';
 import type { MemoryEntry, SourceType } from './schema.js';
 
 /**

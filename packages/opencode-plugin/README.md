@@ -5,24 +5,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v2.4.0](https://img.shields.io/badge/v2.4.0-8--Step%20Protocol-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v2.4.0)
+[![v3.1.0](https://img.shields.io/badge/v3.1.0-Protocol%20Enforcement-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.1.0)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🎉 v2.4.0 Highlights
+## 🎉 v3.1.0 Highlights
 
-> **Orchestration Overhaul** — 8-step protocol, Context Packages, and super-memory hub architecture.
+> **Code-Enforced Protocol** — The Boomerang Protocol is now enforced via state machine with mandatory checkpoints.
 
 | Feature | Description |
 |---------|-------------|
-| **8-Step Protocol** | Expanded from 6 steps: Query Memory → Think → Plan → Delegate → Git Check → Quality Gates → Update Docs → Save Memory |
-| **Context Packages** | Complete context passed to sub-agents: original request, background, files, code snippets, decisions, output format, scope boundaries, error handling |
-| **Planning Enforcement** | Planning is MANDATORY for build/create/implement tasks unless user explicitly waives |
-| **Documentation Maintenance** | After EVERY session: update TASKS.md, todo list, AGENTS.md, README.md, HANDOFF.md |
-| **Thin Response / Thick Memory** | Sub-agents return concise summaries + memory references; full details stored in Qdrant |
-| **boomerang-release** | New agent for automated version bumping, changelog, and publishing |
+| **State Machine Architecture** | Each protocol step is a mandatory checkpoint |
+| **Real Agent Execution** | TaskRunner spawns actual subprocess (no simulation) |
+| **Strictness Levels** | lenient/standard/strict configuration |
+| **Documentation Tracking** | DocTracker with SHA-256 hash comparison |
+| **Qdrant Memory** | Vector storage via Super-Memory-TS with built-in integration |
+| **8-Step Protocol** | Memory → Think → Plan → Delegate → Git Check → Quality Gates → Docs → Memory Save |
 
 ---
 
@@ -102,6 +102,19 @@ Add to your `.opencode/opencode.json`:
 }
 ```
 
+### Memory Setup (Required)
+
+Boomerang uses Qdrant for vector storage. Start with Docker:
+
+```bash
+docker run -p 6333:6333 qdrant/qdrant
+```
+
+Or use Docker Compose for persistent storage:
+```bash
+docker-compose up -d qdrant
+```
+
 ### Commands
 
 | Command | Description |
@@ -165,6 +178,36 @@ Super-memory is the central knowledge base:
 
 ### Planning Enforcement
 Planning is mandatory for all build/create/implement tasks unless explicitly waived by the user.
+
+---
+
+## 🔒 Protocol Enforcement
+
+The Boomerang Protocol is **code-enforced** via state machine with mandatory checkpoints.
+
+### State Machine Flow
+
+```
+IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
+```
+
+### Strictness Levels
+
+| Level | Behavior |
+|-------|----------|
+| **lenient** | Auto-fix skipped steps, warn but proceed |
+| **standard** | Block on mandatory steps, require waiver for bypass (default) |
+| **strict** | Block on all violations, no waivers except emergencies |
+
+### Waiver Phrases
+
+| Phrase | Effect |
+|--------|--------|
+| `skip planning`, `just do it` | Bypass mandatory planning |
+| `skip tests`, `skip gates` | Bypass quality gates |
+| `git is fine` | Bypass git check |
+| `--force` | Bypass all blocking checks (emergency) |
+| `no docs needed` | Skip documentation update |
 
 ---
 

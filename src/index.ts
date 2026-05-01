@@ -1,6 +1,6 @@
 // OpenCode plugin interface
-export const PLUGIN_NAME = '@boomerang/opencode-plugin';
-export const VERSION = '2.2.0';
+export const PLUGIN_NAME = '@veedubin/boomerang-v2';
+export const VERSION = '3.1.0';
 
 // Plugin interface types
 export interface PluginRegistry {
@@ -199,3 +199,37 @@ async function handleInstallAgentsCommand(_context: PluginContext): Promise<void
 // Re-export for external use
 export { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
 export { MemoryService, getMemoryService } from './memory-service.js';
+
+// ========== Protocol Enforcement v4.0 Exports ==========
+
+// Export protocol state machine and enforcement components
+export { ProtocolStateMachine } from './protocol/state-machine.js';
+export { CheckpointRegistry } from './protocol/checkpoint.js';
+export { ProtocolEnforcer } from './protocol/enforcer.js';
+export { ProtocolEventBus, createProtocolEvent } from './protocol/events.js';
+
+// Export types
+export type {
+  ProtocolState,
+  ProtocolContext,
+  ProtocolConfig,
+  TaskType,
+  CheckpointResult,
+  TransitionResult,
+  SessionState,
+} from './protocol/types.js';
+
+// Export default protocol config
+export { DEFAULT_PROTOCOL_CONFIG, createProtocolConfig } from './protocol/config.js';
+
+// ========== Execution Engine v4.0 Exports ==========
+
+// Export execution engine components
+export { TaskRunner, AgentSpawner, AgentPromptLoader } from './execution/index.js';
+export { SequentialThinker, getSequentialThinker } from './execution/sequential-thinker.js';
+export { DocTracker, getDocTracker } from './execution/doc-tracker.js';
+
+// Export types from execution
+export type { Task, ExecutionContext, TaskExecutionResult } from './execution/task-runner.js';
+export type { SpawnOptions, AgentProcess, SpawnerConfig } from './execution/agent-spawner.js';
+export type { AgentPrompt } from './execution/agent-prompts.js';

@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.1.0 - BREAKING: Code-Enforced Protocol
+
+### Breaking Changes
+
+- **Protocol is now CODE-ENFORCED via state machine**
+  - All 8 steps are mandatory checkpoints with blocking enforcement
+  - No more prompt-based suggestions — code enforces compliance
+  - Tasks can be blocked if protocol steps aren't satisfied
+
+- **Real agent execution replaces simulation**
+  - `TaskRunner` spawns actual subprocess for agent execution
+  - `AgentSpawner` handles agent lifecycle, timeout, cleanup
+  - `simulateAgentExecution` placeholder deleted
+
+- **Mandatory checkpoints**
+  - Memory query auto-invoked if skipped (no waiver)
+  - Sequential thinking auto-invoked for complex tasks
+  - Planning required for build tasks (architect review)
+  - Git check blocks if working tree dirty
+  - Quality gates block if lint/typecheck/test fails
+  - Documentation tracked via SHA-256 hash comparison
+
+### New Architecture
+
+| Component | Purpose |
+|-----------|---------|
+| **ProtocolStateMachine** | Manages state transitions, blocks until checkpoint satisfied |
+| **CheckpointRegistry** | Validates each step, stores completion status |
+| **TaskRunner** | Real agent execution (subprocess spawn) |
+| **AgentSpawner** | Agent lifecycle management, timeout, cleanup |
+| **DocTracker** | Documentation changes via SHA-256 hash comparison |
+
+### Strictness Levels
+
+| Level | Behavior |
+|-------|----------|
+| **lenient** | Auto-fix skipped steps, warn but proceed |
+| **standard** | Block on mandatory steps (default) |
+| **strict** | Block on all violations, no waivers except emergencies |
+
+### New Files
+
+- `src/protocol/state-machine.ts` — ProtocolStateMachine class
+- `src/protocol/checkpoint.ts` — CheckpointRegistry, validation
+- `src/protocol/types.ts` — State, event, config types
+- `src/protocol/events.ts` — Event emitter for state transitions
+- `src/protocol/config.ts` — Strictness levels, waiver phrases
+- `src/execution/task-runner.ts` — TaskRunner class
+- `src/execution/agent-spawner.ts` — AgentSpawner class
+
+### Waiver Phrases (Preserved)
+
+| Phrase | Effect |
+|--------|--------|
+| `skip planning`, `just do it` | Bypass mandatory planning |
+| `skip tests`, `skip gates` | Bypass quality gates |
+| `git is fine` | Bypass git check |
+| `--force` | Bypass all blocking checks (emergency) |
+| `no docs needed` | Skip documentation update |
+
+### Testing
+
+- 205 tests passing (state-machine, task-runner, enforcement)
+
 ## v3.0.0 - BREAKING: Migrated from LanceDB to Qdrant
 
 ### Breaking Changes

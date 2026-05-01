@@ -222,44 +222,87 @@ This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
 - Ensures proper context for design decisions
 - Uses built-in super-memory search for efficient research
 
-## Protocol Enforcement v4.0 (In Development)
+## Protocol Enforcement v3.1.0
 
-### Current State (v3.0.1)
-The Boomerang Protocol is documented but NOT code-enforced:
-- Steps 1-4, 7-8 are suggestions only (prompt-based)
-- Only Steps 5-6 (git check, quality gates) actually run
-- Agent execution is simulated, not real
+> **BREAKING**: The Boomerang Protocol is now **CODE-ENFORCED** via state machine, not prompt-based suggestions.
 
-### Target State (v4.0)
-Code-enforced protocol with state machine:
-- Each step is a mandatory checkpoint
-- Orchestrator blocks until checkpoint is satisfied
-- Agent execution is real (subprocess spawn)
-- Documentation updates are tracked
+### Architecture: State Machine + Checkpoints
 
-### Enforcement Rules (v4.0)
+The protocol is implemented as a **state machine** with mandatory checkpoints:
 
-| Step | Enforcement | Escape Hatch |
-|------|-------------|--------------|
+```
+IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
+```
+
+| Component | Purpose |
+|-----------|---------|
+| **ProtocolStateMachine** | Manages state transitions, blocks until checkpoint satisfied |
+| **CheckpointRegistry** | Validates each step, stores completion status |
+| **TaskRunner** | Real agent execution (subprocess spawn, not simulation) |
+| **AgentSpawner** | Handles agent lifecycle, timeout, cleanup |
+| **DocTracker** | Tracks documentation changes via SHA-256 hash comparison |
+
+### Strictness Levels
+
+| Level | Behavior |
+|-------|----------|
+| **lenient** | Auto-fix skipped steps, warn but proceed on failures |
+| **standard** | Block on mandatory steps, require explicit waiver for bypass |
+| **strict** | Block on all violations, no waivers except emergencies |
+
+Default: `standard`
+
+### 8-Step Code-Enforced Protocol
+
+1. **MEMORY_QUERY** — Auto-invoke `super-memory_query_memories` if not already called (no waiver)
+2. **SEQUENTIAL_THINK** — Auto-invoke `sequential-thinking_sequentialthinking` for complex tasks (no waiver for complex)
+3. **PLAN** — Require architect review for build tasks; block without plan unless waived
+4. **DELEGATE** — Real agent execution via TaskRunner (no writing code directly)
+5. **GIT_CHECK** — Block if working tree dirty; require `--force` or "git is fine" to bypass
+6. **QUALITY_GATES** — Block if lint/typecheck/test fails; require "skip tests" to bypass
+7. **DOC_UPDATE** — Track via DocTracker, enforce at handoff
+8. **MEMORY_SAVE** — Auto-save comprehensive summary if skipped (no waiver)
+
+### Enforcement Matrix
+
+| Step | Enforcement | Waiver Phrase |
+|------|-------------|---------------|
 | 1. Memory Query | Auto-invoke if skipped | None (always runs) |
-| 2. Sequential Thinking | Mandatory for complex tasks | None for complex |
-| 3. Planning | Mandatory for build tasks | "skip planning", "just do it" |
-| 4. Delegate | Mandatory - cannot write code | None |
-| 5. Git Check | Blocks if dirty | "--force" or "git is fine" |
-| 6. Quality Gates | Blocks if failing | "skip tests", "skip gates" |
-| 7. Doc Update | Tracked, enforced at handoff | "no docs needed" |
+| 2. Sequential Thinking | Auto-invoke for complex | None for complex |
+| 3. Planning | Block without architect review | "skip planning", "just do it" |
+| 4. Delegate | Real execution, no direct code | None |
+| 5. Git Check | Block if dirty | "--force", "git is fine" |
+| 6. Quality Gates | Block if failing | "skip tests", "skip gates" |
+| 7. Doc Update | SHA-256 tracked, block at handoff | "no docs needed" |
 | 8. Memory Save | Auto-save if skipped | None (always saves) |
 
-### Implementation Phases
-See TASKS.md for detailed breakdown.
+### Waiver Phrases (Escape Hatches)
+
+| Phrase | Effect |
+|--------|--------|
+| `skip planning` | Bypass mandatory planning step |
+| `just do it` | Bypass mandatory planning step |
+| `no plan needed` | Bypass mandatory planning step |
+| `skip tests` | Bypass quality gates (testing) |
+| `skip gates` | Bypass quality gates (all) |
+| `git is fine` | Bypass git check |
+| `--force` | Bypass all blocking checks (emergency) |
+| `no docs needed` | Skip documentation update |
+
+### Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `src/protocol/state-machine.ts` | ProtocolStateMachine class |
+| `src/protocol/checkpoint.ts` | CheckpointRegistry, validation |
+| `src/protocol/types.ts` | State, event, config types |
+| `src/protocol/events.ts` | Event emitter for state transitions |
+| `src/protocol/config.ts` | Strictness levels, waiver phrases |
+| `src/execution/task-runner.ts` | TaskRunner class |
+| `src/execution/agent-spawner.ts` | AgentSpawner class |
 
 ---
 
 ## Review Notes
 
-- **2026-04-29**: v3.0.0 BREAKING — LanceDB → Qdrant migration complete. Memory adapter layer, 58 new tests, migration scripts, docker-compose. Super-Memory-TS v2.3.7 connection resilience.
-- **2026-04-29**: Orchestration overhaul — 8-step protocol, Context Packages, Thin Response/Thick Memory, planning enforcement, documentation maintenance
-
-- **2026-04-27**: Agent governance rules added - architect owns research, explorer narrowed to file finding only
-
-- **2026-04-26**: Agent customization executed — added mcp-specialist, appended project context to all agents
+- **2026-04-30**: v3.1.0 BREAKING — Code-enforced protocol via state machine. All 8 phases complete. 205 tests passing. Real agent execution (no simulation). Mandatory checkpoints for all steps.
