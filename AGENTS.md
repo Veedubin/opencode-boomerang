@@ -42,6 +42,39 @@
 | MCP tool design / server debug | `mcp-specialist` | MiniMax M2.7 |
 | Release automation | `boomerang-release` | MiniMax M2.7 |
 
+### Orchestrator Permissions (v3.1.0)
+
+Document the threshold model for what the orchestrator can do directly vs must delegate:
+
+**Orchestrator Can Do Directly:**
+- Read any project file
+- Run build/test/lint commands
+- Make simple edits (<20 lines, single file, deterministic)
+
+**Must Delegate to Sub-Agents:**
+- Multi-file changes (>2 files or >20 lines)
+- New feature implementation
+- Complex refactors
+- Documentation writing
+- Git commits/tags
+- Test writing
+- Architecture planning
+
+**Decision Threshold:**
+```
+Task Size ≤ 1 file AND ≤ 20 lines AND deterministic
+    → Orchestrator does it directly
+
+Task Size > 1 file OR > 20 lines OR needs analysis
+    → Delegate to appropriate sub-agent
+```
+
+> **Important:** Even when orchestrator does the work directly, ALL 8 protocol steps still apply. The orchestrator is just filling all roles for that request.
+
+### Architect Reasoning Level
+
+The `boomerang-architect` agent uses **highest reasoning level** for Kimi K2.6 when creating implementation plans. The plan is handed back to the orchestrator as a "ready-to-run game plan" for dispatching coders, testers, etc.
+
 ## Mandatory Protocol
 
 All agents follow the **8-Step Boomerang Protocol**:
