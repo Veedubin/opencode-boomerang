@@ -118,13 +118,13 @@ export class MetricsCollector {
     return Array.from(agentMap.values());
   }
 
-  async getRoutingDecisions(since?: number, limit = 20): Promise<any[]> {
+  async getRoutingDecisions(since?: number, limit = 20): Promise<{ timestamp: number; taskType: string; agent: string; method: string }[]> {
     const events = await this.query({ since, type: 'routing.decision', limit });
     return events.map(e => ({
       timestamp: e.timestamp,
-      taskType: e.data.taskType,
-      agent: e.data.agent,
-      method: e.data.method,
+      taskType: e.data.taskType as string,
+      agent: e.data.agent as string,
+      method: e.data.method as string,
     }));
   }
 }

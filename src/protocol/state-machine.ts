@@ -472,7 +472,6 @@ export function getProtocolStateMachine(config?: Partial<ProtocolConfig>): Proto
   }
   return defaultInstance;
 }
-
 export function resetProtocolStateMachine(): void {
   if (defaultInstance) {
     defaultInstance.destroy();

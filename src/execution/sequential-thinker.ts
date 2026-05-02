@@ -328,7 +328,3 @@ export function getSequentialThinker(config?: Partial<ThinkerConfig>): Sequentia
   }
   return defaultInstance;
 }
-
-export function resetSequentialThinker(): void {
-  defaultInstance = null;
-}

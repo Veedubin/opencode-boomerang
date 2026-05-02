@@ -272,7 +272,3 @@ export function getDocTracker(config?: Partial<DocTrackerConfig>): DocTracker {
   }
   return defaultInstance;
 }
-
-export function resetDocTracker(): void {
-  defaultInstance = null;
-}

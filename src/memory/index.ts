@@ -168,9 +168,17 @@ class MemorySystem {
     
     const smtResults = await this._smt.queryMemories(query, opts);
     
-    // Cast through unknown to handle partial fields returned from search
-    return ((smtResults as unknown) as Array<{ id: string; text: string; vector: Float32Array; sourceType: string; sourcePath?: string; timestamp?: Date; contentHash?: string; metadataJson?: string; score?: number }>).map((result) => ({
-      entry: adaptMemoryEntry(result as Parameters<typeof adaptMemoryEntry>[0]),
+    return smtResults.map((result) => ({
+      entry: adaptMemoryEntry({
+        id: result.id,
+        text: result.text,
+        vector: result.vector,
+        sourceType: result.sourceType,
+        sourcePath: result.sourcePath,
+        timestamp: result.timestamp ?? new Date(),
+        contentHash: result.contentHash,
+        metadataJson: result.metadataJson,
+      }),
       score: result.score ?? 0,
     }));
   }

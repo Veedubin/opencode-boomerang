@@ -338,4 +338,6 @@ Default: `standard`
 
 ## Review Notes
 
+- **2026-05-01**: v3.2.0 RELEASED — buildPrompt() fix: sub-agents now receive full layered prompts (systemPrompt + agent rules + skill instructions + Context Package + task + instructions). Skill auto-loading from `.opencode/skills/`. 14 new tests.
+- **2026-05-01**: v3.2.0 (pending release) — Code audit & cleanup session. Removed uuid dependency (replaced with crypto.randomUUID()). Extracted shared utilities to src/utils/frontmatter.ts and src/utils/similarity.ts. Consolidated AgentDefinition into protocol/types.ts. Migrated protocolTracker → ProtocolStateMachine. Deprecated server.ts. Fixed unsafe casts and type issues. Quality gates: 212/212 tests passing.
 - **2026-04-30**: v3.1.0 BREAKING — Code-enforced protocol via state machine. All 8 phases complete. 205 tests passing. Real agent execution (no simulation). Mandatory checkpoints for all steps.

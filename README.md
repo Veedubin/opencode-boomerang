@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v3.1.0](https://img.shields.io/badge/v3.1.0-Protocol%20Enforcement-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.1.0)
+[![v3.2.0](https://img.shields.io/badge/v3.2.0-Prompt%20Composition%20Fix-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.2.0)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 

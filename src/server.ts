@@ -12,7 +12,7 @@ import { getMemorySystem } from './memory/index.js';
 import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
 import { createIndexer, ProjectIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
 import { MemoryError, ValidationError, NotFoundError, createErrorResponse } from './utils/errors.js';
-import { protocolTracker } from './protocol/tracker.js';
+import { ProtocolStateMachine } from './protocol/state-machine.js';
 
 // Server configuration
 const SERVER_NAME = 'super-memory';
@@ -20,6 +20,9 @@ const SERVER_VERSION = '2.0.0';
 
 // Track active indexer instance
 let activeIndexer: ProjectIndexer | null = null;
+
+// Protocol state machine for tracking (replaces deprecated protocolTracker)
+const stateMachine = new ProtocolStateMachine();
 
 // Connection state
 let transport: StdioServerTransport | null = null;
@@ -33,10 +36,11 @@ if (process.env.LANCEDB_URI) {
 }
 
 // Deprecation notice
-console.error('[DEPRECATED] boomerang-v2 MCP server is deprecated. Use @veedubin/super-memory-ts for standalone memory MCP server.');
+console.warn('[@deprecated] boomerang-v2 MCP server is deprecated. Use built-in integration instead.');
 
 /**
  * Initialize and start the MCP server
+ * @deprecated boomerang-v2 MCP server is deprecated. Use built-in integration instead.
  */
 async function main() {
   const server = new Server(
@@ -176,9 +180,11 @@ const indexProjectSchema = z.object({
 
 /**
  * Tool: query_memories - Search memories
+ * @deprecated Use built-in MemorySystem integration instead
  */
 async function handleQueryMemories(args: unknown) {
-  protocolTracker.recordToolCall('mcp-session', 'query_memories', args as Record<string, unknown>);
+  stateMachine.initializeSession('mcp-session');
+  stateMachine.setCheckpoint('mcp-session', 'memoryQueried', true);
   const parsed = queryMemoriesSchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));
@@ -220,9 +226,11 @@ async function handleQueryMemories(args: unknown) {
 
 /**
  * Tool: add_memory - Add a memory entry
+ * @deprecated Use built-in MemorySystem integration instead
  */
 async function handleAddMemory(args: unknown) {
-  protocolTracker.recordToolCall('mcp-session', 'add_memory', args as Record<string, unknown>);
+  stateMachine.initializeSession('mcp-session');
+  stateMachine.setCheckpoint('mcp-session', 'memorySaved', true);
   const parsed = addMemorySchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));
@@ -258,9 +266,11 @@ async function handleAddMemory(args: unknown) {
 
 /**
  * Tool: search_project - Search project chunks
+ * @deprecated Use built-in MemorySystem integration instead
  */
 async function handleSearchProject(args: unknown) {
-  protocolTracker.recordToolCall('mcp-session', 'search_project', args as Record<string, unknown>);
+  stateMachine.initializeSession('mcp-session');
+  stateMachine.setCheckpoint('mcp-session', 'memoryQueried', true);
   const parsed = searchProjectSchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));
@@ -298,9 +308,11 @@ async function handleSearchProject(args: unknown) {
 
 /**
  * Tool: index_project - Start project indexing
+ * @deprecated Use built-in MemorySystem integration instead
  */
 async function handleIndexProject(args: unknown) {
-  protocolTracker.recordToolCall('mcp-session', 'index_project', args as Record<string, unknown>);
+  stateMachine.initializeSession('mcp-session');
+  stateMachine.setCheckpoint('mcp-session', 'indexProjectStarted', true);
   const parsed = indexProjectSchema.safeParse(args);
   if (!parsed.success) {
     return createErrorResponse(new ValidationError(parsed.error.message));

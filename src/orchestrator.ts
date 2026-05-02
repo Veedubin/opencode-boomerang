@@ -8,7 +8,6 @@
 import { getMemoryService, MemoryService } from './memory-service.js';
 import { ProtocolStateMachine } from './protocol/state-machine.js';
 import { ProtocolEnforcer } from './protocol/enforcer.js';
-import { protocolTracker } from './protocol/tracker.js';
 import { contextMonitor } from './context/monitor.js';
 import { contextCompactor } from './context/compactor.js';
 import { metricsCollector } from './metrics/collector.js';
@@ -17,7 +16,7 @@ import { TaskRunner, AgentSpawner, AgentPromptLoader } from './execution/index.j
 import { getSequentialThinker, SequentialThinker } from './execution/sequential-thinker.js';
 import { getDocTracker, DocTracker } from './execution/doc-tracker.js';
 import { DEFAULT_PROTOCOL_CONFIG, createProtocolConfig } from './protocol/config.js';
-import type { ProtocolConfig, TaskType as ProtocolTaskType } from './protocol/types.js';
+import type { ProtocolConfig, TaskType as ProtocolTaskType, AgentDefinition } from './protocol/types.js';
 
 // Task types for agent assignment
 export type TaskType = 'explore' | 'code' | 'test' | 'review' | 'write' | 'git' | 'general';
@@ -65,8 +64,8 @@ export interface OrchestrationResult {
   error?: string;
 }
 
-/** Agent definition loaded from asset loader */
-export interface AgentDefinition {
+/** Internal agent definition for routing (distinct from asset-loader AgentDefinition) */
+export interface RoutingAgentDefinition {
   name: string;
   description: string;
   keywords: string[];
@@ -85,7 +84,7 @@ const AGENT_KEYWORDS: Record<TaskType, string[]> = {
 };
 
 /** Default agents */
-const DEFAULT_AGENTS: AgentDefinition[] = [
+const DEFAULT_AGENTS: RoutingAgentDefinition[] = [
   { name: 'researcher', description: 'Web research specialist', keywords: ['research', 'search', 'web', 'fetch'] },
   { name: 'boomerang-explorer', description: 'Codebase exploration specialist', keywords: AGENT_KEYWORDS.explore },
   { name: 'boomerang-coder', description: 'Fast code generation specialist', keywords: AGENT_KEYWORDS.code },
@@ -171,7 +170,7 @@ function toProtocolTaskType(type: TaskType): ProtocolTaskType {
 /**
  * Assign agent based on task type
  */
-function assignAgent(taskType: TaskType, agents: AgentDefinition[]): string {
+function assignAgent(taskType: TaskType, agents: RoutingAgentDefinition[]): string {
   const agent = agents.find(a => a.keywords.includes(taskType));
   return agent?.name ?? 'boomerang';
 }
@@ -195,7 +194,7 @@ function requiresPlanning(taskType: TaskType, message: string): boolean {
  * Orchestrator class - plans and validates task graphs with Protocol Enforcement v4.0
  */
 export class Orchestrator {
-  private agents: AgentDefinition[];
+  private agents: RoutingAgentDefinition[];
   private memoryService: MemoryService;
   private autoMemory: boolean = true;
   public sessionId: string = 'orchestrator';
@@ -214,7 +213,7 @@ export class Orchestrator {
    * @param protocolConfig - Optional protocol configuration
    */
   constructor(
-    agents: AgentDefinition[] = DEFAULT_AGENTS,
+    agents: RoutingAgentDefinition[] = DEFAULT_AGENTS,
     memoryService?: MemoryService,
     protocolConfig?: Partial<ProtocolConfig>
   ) {

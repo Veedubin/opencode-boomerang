@@ -4,21 +4,16 @@
 
 import { readFile, readdir, access } from 'node:fs/promises';
 import { join, basename } from 'node:path';
+import type { AgentDefinition } from '../protocol/types.js';
+
+export { type AgentDefinition } from '../protocol/types.js';
 
 export interface AgentPrompt {
   name: string;
   model: string;
   prompt: string;
   systemPrompt: string;
-}
-
-export interface AgentDefinition {
-  description: string;
-  mode: string;
-  model: string;
-  steps: number;
-  permission?: Record<string, unknown>;
-  skills?: string[];
+  skillContent?: string;
 }
 
 const AGENT_FILE_PATTERN = '*.md';
@@ -26,9 +21,28 @@ const AGENT_FILE_PATTERN = '*.md';
 export class AgentPromptLoader {
   private prompts: Map<string, AgentPrompt> = new Map();
   private agentDirs: string[];
+  private skillDirs: string[];
 
-  constructor(agentDirs: string[] = DEFAULT_AGENT_DIRS) {
+  constructor(agentDirs: string[] = DEFAULT_AGENT_DIRS, skillDirs: string[] = DEFAULT_SKILL_DIRS) {
     this.agentDirs = agentDirs;
+    this.skillDirs = skillDirs;
+  }
+
+  /**
+   * Load skills for an agent from skill directories
+   */
+  async loadSkills(agentName: string): Promise<string | undefined> {
+    for (const dir of this.skillDirs) {
+      const skillPath = join(dir, agentName, 'SKILL.md');
+      try {
+        const content = await readFile(skillPath, 'utf-8');
+        const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+        return frontmatterMatch ? frontmatterMatch[2].trim() : content.trim();
+      } catch {
+        // Skill not found in this dir, continue
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -101,6 +115,8 @@ export class AgentPromptLoader {
         const prompt = this.parseAgentFile(content, file);
 
         if (prompt) {
+          // Load skills for this agent
+          prompt.skillContent = await this.loadSkills(basename(file, '.md'));
           this.prompts.set(agentName, prompt);
           
           if (specificName === agentName) {
@@ -191,4 +207,9 @@ export class AgentPromptLoader {
 export const DEFAULT_AGENT_DIRS = [
   'agents/',
   '.opencode/agents/',
+];
+
+export const DEFAULT_SKILL_DIRS = [
+  'skills/',
+  '.opencode/skills/',
 ];

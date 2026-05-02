@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v3.2.0 - Prompt Composition Fix + Code Cleanup
+
+### Added
+- **Full prompt composition for sub-agents**: `buildPrompt()` now includes all 6 layers:
+  1. Agent systemPrompt (identity)
+  2. Agent prompt (rules, style guides, escalation triggers, project context)
+  3. Skill instructions (auto-loaded from `.opencode/skills/{agent}/SKILL.md`)
+  4. Rich Context Package (structured with ### headings for known sections)
+  5. Task description
+  6. Execution instructions
+- **Skill auto-loading**: `AgentPromptLoader.loadSkills()` searches `skills/` and `.opencode/skills/` directories
+- **Context Package formatting**: Known sections (originalUserRequest, taskBackground, relevantFiles, codeSnippets, previousDecisions, expectedOutput, scopeBoundaries, errorHandling) formatted as ### headings
+- **14 new tests** for prompt composition covering all layers and edge cases
+
+### Changed
+- **Node 22+ is now required** — Added engines.node ">=22.0.0" to package.json
+- **Removed `uuid` dependency** — Now uses native `crypto.randomUUID()`
+- **Extracted shared utilities** — New `src/utils/frontmatter.ts` and `src/utils/similarity.ts`
+- **Consolidated types** — `AgentDefinition` moved to `protocol/types.ts`
+- **Migrated deprecated protocolTracker** → `ProtocolStateMachine` checkpoints
+
+### Deprecated
+- `src/server.ts` — MCP server is deprecated, use built-in integration instead
+
+### Removed
+- `uuid`, `@types/uuid`, `@vitest/coverage-v8` dependencies
+- Various unused `reset*` exports
+
 ## v3.1.0 - BREAKING: Code-Enforced Protocol
 
 ### Breaking Changes

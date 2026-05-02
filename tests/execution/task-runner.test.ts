@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TaskRunner, type Task, type ExecutionContext, type TaskExecutionResult } from '../../src/execution/task-runner.js';
 import { AgentSpawner, type AgentProcess } from '../../src/execution/agent-spawner.js';
-import { AgentPromptLoader } from '../../src/execution/agent-prompts.js';
+import { AgentPromptLoader, type AgentPrompt } from '../../src/execution/agent-prompts.js';
 
 // Mock AgentSpawner for testing without real subprocesses
 class MockAgentSpawner {
@@ -74,8 +74,9 @@ class MockPromptLoader {
     return {
       name,
       model: 'mock-model',
-      prompt: `Mock prompt for ${name}`,
-      systemPrompt: `Mock system prompt for ${name}`,
+      prompt: `Mock prompt for ${name} - style guide and rules`,
+      systemPrompt: `Mock system prompt for ${name} - identity section`,
+      skillContent: `Mock skill content for ${name}`,
     };
   }
 
@@ -85,6 +86,17 @@ class MockPromptLoader {
 
   hasAgent(name: string): boolean {
     return this.listAgents().includes(name);
+  }
+}
+
+// TestableTaskRunner exposes buildPrompt for testing
+class TestableTaskRunner extends TaskRunner {
+  constructor(spawner: AgentSpawner, promptLoader: AgentPromptLoader) {
+    super(spawner, promptLoader);
+  }
+
+  testBuildPrompt(task: Task, agentPrompt: AgentPrompt): string {
+    return this.buildPrompt(task, agentPrompt);
   }
 }
 
@@ -220,6 +232,203 @@ describe('TaskRunner', () => {
       // Output may contain extra text, just check it's non-empty
       expect(result.output.length).toBeGreaterThan(0);
     }, 10000);
+  });
+
+  describe('buildPrompt composition', () => {
+    let testableRunner: TestableTaskRunner;
+
+    beforeEach(() => {
+      testableRunner = new TestableTaskRunner(spawner as unknown as AgentSpawner, promptLoader as unknown as AgentPromptLoader);
+    });
+
+    it('should compose all 6 layers when all are present', () => {
+      const task: Task = {
+        id: 'test-task',
+        agent: 'boomerang-coder',
+        description: 'Implement a feature',
+        context: {
+          originalUserRequest: 'User wants a new feature',
+          taskBackground: 'Background info',
+          relevantFiles: ['file1.ts', 'file2.ts'],
+          codeSnippets: ['snippet1', 'snippet2'],
+          previousDecisions: ['decision1'],
+          expectedOutput: 'output description',
+          scopeBoundaries: { in: ['a'], out: ['b'] },
+          errorHandling: 'handle errors gracefully',
+        },
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'You are a coder agent',
+        prompt: 'Style guide: use clean code',
+        skillContent: 'Skill instructions here',
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).toContain('You are a coder agent');
+      expect(result).toContain('Style guide: use clean code');
+      expect(result).toContain('## Skills');
+      expect(result).toContain('Skill instructions here');
+      expect(result).toContain('## Context');
+      expect(result).toContain('### Original User Request');
+      expect(result).toContain('User wants a new feature');
+      expect(result).toContain('## Task');
+      expect(result).toContain('Implement a feature');
+      expect(result).toContain('## Instructions');
+    });
+
+    it('should skip layers when not present', () => {
+      const task: Task = {
+        id: 'minimal-task',
+        agent: 'boomerang-coder',
+        description: 'Minimal task',
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'Minimal system prompt',
+        prompt: '',
+        skillContent: undefined,
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).toContain('Minimal system prompt');
+      expect(result).not.toContain('## Skills');
+      expect(result).not.toContain('## Context');
+      expect(result).toContain('## Task');
+      expect(result).toContain('Minimal task');
+      expect(result).toContain('## Instructions');
+    });
+
+    it('should handle empty context object', () => {
+      const task: Task = {
+        id: 'empty-context-task',
+        agent: 'boomerang-coder',
+        description: 'Task with empty context',
+        context: {},
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'System',
+        prompt: 'Prompt',
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).not.toContain('## Context');
+      expect(result).toContain('## Task');
+    });
+
+    it('should handle unknown context keys', () => {
+      const task: Task = {
+        id: 'unknown-context-task',
+        agent: 'boomerang-coder',
+        description: 'Task with unknown context',
+        context: {
+          customField: 'custom value',
+          anotherField: 123,
+        },
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'System',
+        prompt: 'Prompt',
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).toContain('## Context');
+      expect(result).toContain('### Additional Context');
+      expect(result).toContain('customField: custom value');
+      expect(result).toContain('anotherField: 123');
+    });
+
+    it('should format array context values', () => {
+      const task: Task = {
+        id: 'array-context-task',
+        agent: 'boomerang-coder',
+        description: 'Task with array context',
+        context: {
+          relevantFiles: ['file1.ts', 'file2.ts', 'file3.ts'],
+        },
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'System',
+        prompt: 'Prompt',
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).toContain('### Relevant Files');
+      expect(result).toContain('file1.ts');
+      expect(result).toContain('file2.ts');
+      expect(result).toContain('file3.ts');
+    });
+
+    it('should format object context values', () => {
+      const task: Task = {
+        id: 'object-context-task',
+        agent: 'boomerang-coder',
+        description: 'Task with object context',
+        context: {
+          scopeBoundaries: {
+            inScope: ['feature1', 'feature2'],
+            outOfScope: ['legacy'],
+          },
+        },
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'System',
+        prompt: 'Prompt',
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).toContain('### Scope Boundaries');
+      expect(result).toContain('- inScope:');
+      expect(result).toContain('- outOfScope:');
+    });
+
+    it('should skip null/undefined context values', () => {
+      const task: Task = {
+        id: 'null-context-task',
+        agent: 'boomerang-coder',
+        description: 'Task with null values',
+        context: {
+          existingField: 'value',
+          nullField: null,
+          undefinedField: undefined,
+        } as Record<string, unknown>,
+      };
+
+      const agentPrompt = {
+        name: 'boomerang-coder',
+        model: 'test-model',
+        systemPrompt: 'System',
+        prompt: 'Prompt',
+      };
+
+      const result = testableRunner.testBuildPrompt(task, agentPrompt);
+
+      expect(result).toContain('existingField: value');
+      expect(result).not.toContain('nullField');
+      expect(result).not.toContain('undefinedField');
+    });
   });
 });
 

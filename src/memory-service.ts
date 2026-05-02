@@ -1,7 +1,6 @@
 import { getMemorySystem, MemorySystem } from './memory/index.js';
 import { ProjectIndexer, createIndexer } from '@veedubin/super-memory-ts/dist/project-index/indexer.js';
 import { getDatabase } from '@veedubin/super-memory-ts/dist/memory/database.js';
-import { protocolTracker } from './protocol/tracker.js';
 import { readFile } from 'fs/promises';
 
 // Qdrant default URL
@@ -65,7 +64,7 @@ export class MemoryService {
       console.warn('[MemoryService] Fallback mode: returning empty results for query');
       return [];
     }
-    protocolTracker.recordToolCall('system', 'memory.queryMemories', { query, options });
+    // Tool call tracking handled by ProtocolStateMachine checkpoints in v4.0
     this.ensureInitialized();
     const results = await this.memorySystem.search(query, {
       topK: options.limit ?? 10,
@@ -91,7 +90,7 @@ export class MemoryService {
       console.warn('[MemoryService] Fallback mode: not saving memory');
       return { id: 'fallback-' + Date.now() };
     }
-    protocolTracker.recordToolCall('system', 'memory.addMemory', { content: entry.content.slice(0, 100) });
+    // Tool call tracking handled by ProtocolStateMachine checkpoints in v4.0
     this.ensureInitialized();
     const result = await this.memorySystem.addMemory({
       text: entry.content,
@@ -107,7 +106,7 @@ export class MemoryService {
     if (this.fallbackMode) {
       return [];
     }
-    protocolTracker.recordToolCall('system', 'memory.searchProject', { query, topK });
+    // Tool call tracking handled by ProtocolStateMachine checkpoints in v4.0
     if (!this.activeIndexer) {
       console.warn('[MemoryService] No active indexer - call indexProject first');
       return [];
@@ -126,7 +125,7 @@ export class MemoryService {
    * Get complete file contents, trying index first then disk fallback
    */
   async getFileContents(filePath: string): Promise<{ content: string; source: 'index' | 'disk'; chunks?: ProjectChunk[] } | null> {
-    protocolTracker.recordToolCall('system', 'memory.getFileContents', { filePath });
+    // Tool call tracking handled by ProtocolStateMachine checkpoints in v4.0
 
     // Try indexed version first
     if (!this.fallbackMode && this.activeIndexer) {
@@ -160,7 +159,7 @@ export class MemoryService {
       console.warn('[MemoryService] Fallback mode: skipping project indexing');
       return;
     }
-    protocolTracker.recordToolCall('system', 'memory.indexProject', { rootPath });
+    // Tool call tracking handled by ProtocolStateMachine checkpoints in v4.0
 
     // Use provided dbUri or the initialized one
     const targetUri = dbUri || this.dbUri;

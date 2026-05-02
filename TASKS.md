@@ -426,3 +426,117 @@ All 8 phases of protocol enforcement implemented:
 - [ ] **Test plugin standalone before tagging** — `rm -rf node_modules && npm install && npm run build`
 - [ ] **Verify all package.json files have complete deps** — Don't assume root deps cover plugin
 - [ ] **No cross-package imports in plugin** — Plugin must be self-contained
+
+---
+
+## 2026-05-01 — buildPrompt() Fix + Code Audit & Cleanup Session
+
+### Status
+**COMPLETE**. buildPrompt() fixed with 6-layer composition. Code audit cleanup done. Version bumped to v3.2.0.
+
+### boomerang-v2 buildPrompt() Fix (v3.2.0)
+
+- [x] **Fixed buildPrompt() in task-runner.ts**
+  - [x] Changed from 4 thin layers to 6 full layers
+  - [x] Layer 1: Agent systemPrompt (identity)
+  - [x] Layer 2: Agent prompt (rules, style guides, escalation triggers, project context)
+  - [x] Layer 3: Skill instructions (auto-loaded from `.opencode/skills/{agent}/SKILL.md`)
+  - [x] Layer 4: Rich Context Package (structured ### headings for known sections)
+  - [x] Layer 5: Task description
+  - [x] Layer 6: Execution instructions
+  - [x] Added `formatContext()` and `formatValue()` helpers
+  - [x] Extended `AgentPromptLoader` with `loadSkills()` method
+
+- [x] **Added 14 comprehensive tests** for prompt composition
+  - [x] Tests cover all 6 layers, edge cases (empty context, missing skills, null values)
+  - [x] All tests passing (212/212 total)
+
+### boomerang-v2 Cleanup (v3.2.0)
+
+- [x] **Removed unused deps**: `uuid` (use `crypto.randomUUID()`), `@types/uuid`, `@vitest/coverage-v8`
+- [x] **Removed dead exports**: `resetSequentialThinker`, `resetDocTracker`
+- [x] **Fixed unsafe cast** in `memory/index.ts`: replaced `(smtResults as unknown)` with `.map()`
+- [x] **Fixed `getRoutingDecisions`** return type in `metrics/collector.ts`
+- [x] **Consolidated `AgentDefinition`** into `protocol/types.ts`
+- [x] **Created `src/utils/frontmatter.ts`**: shared YAML frontmatter parsing
+- [x] **Created `src/utils/similarity.ts`**: extracted `calculateSimilarity` from `task-executor.ts`
+- [x] **Migrated `protocolTracker` → `ProtocolStateMachine`** in memory-service.ts, task-executor.ts, server.ts
+- [x] **Deprecated `server.ts`** with `@deprecated` JSDoc and `console.warn`
+- [x] **Node 22+ required**: Added `"engines": { "node": ">=22.0.0" }` to package.json
+
+### Quality Gates
+
+| Project | Typecheck | Tests | Lint |
+|---------|-----------|-------|------|
+| boomerang-v2 | ✅ | 212/212 + 14 new ✅ | — |
+| Super-Memory-TS | ✅ | 133/148 (15 skipped) ✅ | ✅ |
+
+### Super-Memory-TS Cleanup (v2.5.0 pending)
+
+- [x] **Removed unused devDep**: `@types/bun`
+- [x] **Fixed always-false condition** in `indexer.ts:159`: `if (pattern.startsWith('/') && !pattern.startsWith('/'))` → proper logic
+- [x] **Removed unused exports** from `hash.ts`, `embeddings.ts`, `memory/index.ts`, `search.ts`, `server.ts`
+- [x] **Created `src/project-index/constants.ts`**: centralized ignore patterns
+- [x] **Refactored `indexer.ts`, `watcher.ts`, `snapshot.ts`**: import from `constants.ts`
+- [x] **Replaced `glob` with `node:fs/promises.glob`**: Node 22+ built-in
+- [x] **Removed `glob` dependency**: removes ~20KB dependency
+
+### Quality Gates
+
+| Project | Typecheck | Tests | Lint |
+|---------|-----------|-------|------|
+| boomerang-v2 | ✅ | 212/212 ✅ | — |
+| Super-Memory-TS | ✅ | 133/148 (15 skipped) ✅ | ✅ |
+
+---
+
+## Next Priorities
+
+| Priority | Task | Notes |
+|----------|------|-------|
+| 1 | **Tag v3.2.0** | `git tag plugin-v3.2.0 && git push origin plugin-v3.2.0` |
+| 2 | **Monitor NPM publish** | GitHub Actions triggers on tag |
+| 3 | **Tag Super-Memory-TS v2.5.0** | `git tag v2.5.0 && git push origin v2.5.0` |
+
+---
+
+*Last Updated: 2026-05-01 (v3.2.0 buildPrompt() Fix + Release Prep)*
+
+### Changelog Entries for Next Agent
+
+**boomerang-v2 v3.2.0:**
+```markdown
+### Changed
+- **Node 22+ is now required** — Added engines.node ">=22.0.0" to package.json
+- **Removed `uuid` dependency** — Now uses native `crypto.randomUUID()`
+- **Extracted shared utilities** — New `src/utils/frontmatter.ts` and `src/utils/similarity.ts`
+- **Consolidated types** — `AgentDefinition` moved to `protocol/types.ts`
+- **Migrated deprecated protocolTracker** → `ProtocolStateMachine` checkpoints
+
+### Deprecated
+- `src/server.ts` — MCP server is deprecated, use built-in integration instead
+
+### Removed
+- `uuid`, `@types/uuid`, `@vitest/coverage-v8` dependencies
+- Various unused `reset*` exports
+```
+
+**Super-Memory-TS v2.5.0:**
+```markdown
+### Changed
+- **Replaced `glob` with `node:fs/promises.glob`** — Node 22+ built-in, removes ~20KB dependency
+- **Centralized ignore patterns** — New `src/project-index/constants.ts`
+- **Node 22+ engine requirement** already enforced (was >=22.5.0)
+
+### Fixed
+- Fixed always-false condition in `indexer.ts` gitignore pattern parsing
+
+### Removed
+- `glob` dependency
+- `@types/bun` devDependency
+- Various unused exports from hash.ts, embeddings.ts, memory/search.ts
+```
+
+---
+
+*Last Updated: 2026-05-01 (Code Audit & Cleanup)*

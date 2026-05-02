@@ -4,16 +4,8 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-/**
- * Agent definition parsed from markdown files
- */
-export interface AgentDefinition {
-  name: string;
-  description: string;
-  systemPrompt: string;
-  skills: string[];
-}
+import type { AgentDefinition } from './protocol/types.js';
+import { parseFrontmatter as parseFm, extractContent, parseSkillsArray } from './utils/frontmatter.js';
 
 /**
  * Skill definition parsed from SKILL.md files
@@ -24,60 +16,27 @@ export interface SkillDefinition {
   instructions: string;
 }
 
+// Re-export AgentDefinition from protocol/types
+export { type AgentDefinition } from './protocol/types.js';
+
 // Cache for loaded assets
 let agentsCache: AgentDefinition[] | null = null;
 let skillsCache: SkillDefinition[] | null = null;
 
 /**
  * Parse YAML frontmatter from markdown content
+ * @deprecated Use parseFrontmatter from utils/frontmatter.ts
  */
 function parseFrontmatter(content: string): Record<string, string> {
-  const frontmatter: Record<string, string> = {};
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-
-  if (!match) {
-    return frontmatter;
-  }
-
-  const lines = match[1].split('\n');
-  let currentKey = '';
-  let currentValue = '';
-  let inMultiline = false;
-
-  for (const line of lines) {
-    if (inMultiline) {
-      if (line.startsWith('    ') || line.startsWith('\t')) {
-        // Continuation of multiline value
-        currentValue += '\n' + line.replace(/^[ ]{4}|^\t/, '');
-      } else {
-        // End of multiline value
-        frontmatter[currentKey] = currentValue.trim();
-        inMultiline = false;
-      }
-    }
-
-    const keyMatch = line.match(/^(\w+):\s*(.*)/);
-    if (keyMatch) {
-      currentKey = keyMatch[1];
-      currentValue = keyMatch[2];
-
-      if (currentValue === '' || currentValue === '|') {
-        inMultiline = true;
-      } else {
-        frontmatter[currentKey] = currentValue.trim();
-      }
-    }
-  }
-
-  return frontmatter;
+  return parseFm(content);
 }
 
 /**
  * Extract system prompt from markdown content (content after frontmatter)
+ * @deprecated Use extractContent from utils/frontmatter.ts
  */
 function extractSystemPrompt(content: string): string {
-  const match = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)/);
-  return match ? match[1].trim() : content;
+  return extractContent(content);
 }
 
 /**
@@ -103,19 +62,8 @@ export function loadAgents(): AgentDefinition[] {
       // Get name from filename (e.g., boomerang-coder.md -> boomerang-coder)
       const name = file.replace(/\.md$/, '');
 
-      // Parse skills array if present (stored as YAML array)
-      let skills: string[] = [];
-      if (frontmatter.skills) {
-        // Parse YAML array format: [\n  "- skill1"\n  "- skill2"\n]
-        const skillsMatch = frontmatter.skills.match(/\[([\s\S]*?)\]/);
-        if (skillsMatch) {
-          const skillsContent = skillsMatch[1];
-          skills = skillsContent
-            .split('\n')
-            .map(s => s.replace(/^\s*["']|["']\s*$/g, '').trim())
-            .filter(s => s.length > 0);
-        }
-      }
+      // Parse skills array if present
+      const skills = frontmatter.skills ? parseSkillsArray(frontmatter.skills) : [];
 
       agents.push({
         name,

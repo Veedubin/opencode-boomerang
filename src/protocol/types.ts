@@ -83,3 +83,44 @@ export interface SessionState {
   lastActivity: number;
   context: ProtocolContext;
 }
+
+/**
+ * Canonical Agent definition for agent metadata
+ */
+export interface AgentDefinition {
+  name: string;
+  description: string;
+  systemPrompt: string;
+  skills: string[];
+}
+
+/**
+ * Session tracking for protocol checkpoint migration
+ */
+export interface ProtocolCheckpoint {
+  memoryQueried: boolean;
+  sequentialThinkingUsed: boolean;
+  memorySaved: boolean;
+  gitChecked: boolean;
+  qualityGatesRun: boolean;
+  codeChangesMade: boolean;
+}
+
+/**
+ * Tool call record for tracking
+ */
+export interface ToolCallRecord {
+  toolName: string;
+  timestamp: number;
+  args: Record<string, unknown>;
+}
+
+/**
+ * Session data for tool call tracking (used by migrated code)
+ */
+export interface SessionData {
+  checkpoints: ProtocolCheckpoint;
+  toolCalls: ToolCallRecord[];
+  startTime: number;
+  lastActivity: number;
+}

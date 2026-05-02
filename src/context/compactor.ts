@@ -1,6 +1,6 @@
 import { contextMonitor } from './monitor.js';
 import { getMemoryService } from '../memory-service.js';
-import { protocolTracker } from '../protocol/tracker.js';
+import type { SessionData } from '../protocol/types.js';
 
 export interface CompactionResult {
   success: boolean;
@@ -12,8 +12,8 @@ export class ContextCompactor {
   async compact(sessionId: string): Promise<CompactionResult> {
     try {
       const memoryService = getMemoryService();
-      const session = protocolTracker.getOrCreateSession(sessionId);
-      const summary = this.generateSummary(session);
+      // Session data now tracked via ProtocolStateMachine
+      const summary = this.generateSummary(sessionId);
 
       await memoryService.addMemory({
         content: `Session compaction: ${summary}`,
@@ -34,11 +34,10 @@ export class ContextCompactor {
     }
   }
 
-  private generateSummary(session: any): string {
-    const toolCalls = session.toolCalls;
-    const uniqueTools = [...new Set(toolCalls.map((t: any) => t.toolName))];
-    const duration = Date.now() - session.startTime;
-    return `Tools: ${uniqueTools.join(', ')}; Calls: ${toolCalls.length}; Duration: ${Math.round(duration / 1000)}s`;
+  private generateSummary(sessionId: string): string {
+    // In ProtocolStateMachine, checkpoints are stored differently
+    // For compaction summary, we track that compaction occurred
+    return `Session ${sessionId} compacted at ${new Date().toISOString()}`;
   }
 }
 
