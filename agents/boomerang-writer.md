@@ -6,6 +6,8 @@ hidden: true
 steps: 50
 permission:
   edit: allow
+  read:
+    "*": allow
   bash: allow
   tool:
     "boomerang_*": allow

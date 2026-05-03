@@ -6,10 +6,10 @@
 
 | Agent | Skill | Default Model | Role |
 |-------|-------|-------|------|
-| **boomerang** | boomerang-orchestrator | Kimi K2.6 | 🎯 **Orchestrator** — Plans, coordinates, enforces protocol |
+| **boomerang** | boomerang-orchestrator | Kimi K2.6 | 🎯 **Orchestrator** — Plans, coordinates, provides intelligent routing |
 | **boomerang-coder** | boomerang-coder | MiniMax M2.7 | 💻 **Fast code generation** — Write and modify code efficiently |
 | **boomerang-architect** | boomerang-architect | Kimi K2.6 | 🏗️ **Design decisions** — Trade-off analysis and architecture |
-| **boomerang-explorer** | boomerang-explorer | MiniMax M2.7 | 🔍 **Codebase exploration** — Find files, search patterns, understand structure |
+| **boomerang-explorer** | boomerang-explorer | MiniMax M2.7 | 🔍 **Codebase exploration** — Find files by name/glob |
 | **boomerang-tester** | boomerang-tester | MiniMax M2.7 | 🧪 **Testing specialist** — Unit/integration tests, verification |
 | **boomerang-linter** | boomerang-linter | MiniMax M2.7 | ✅ **Quality enforcement** — Lint, format, style consistency |
 | **boomerang-git** | boomerang-git | MiniMax M2.7 | 📦 **Version control** — Commits, branches, history discipline |
@@ -42,53 +42,53 @@
 | MCP tool design / server debug | `mcp-specialist` | MiniMax M2.7 |
 | Release automation | `boomerang-release` | MiniMax M2.7 |
 
-### Orchestrator Permissions (v3.1.0)
+### Orchestrator Permissions (v4.0.0)
 
-Document the threshold model for what the orchestrator can do directly vs must delegate:
+The orchestrator provides **intelligent routing and context building** — it does not execute agents directly.
 
-**Orchestrator Can Do Directly:**
-- Read any project file
-- Run build/test/lint commands
-- Make simple edits (<20 lines, single file, deterministic)
+**Orchestrator Does:**
+- Analyze request and detect task type
+- Query super-memory for relevant context
+- Select appropriate agent based on task
+- Build rich Context Package with all necessary information
+- Return `{agent, systemPrompt, contextPackage, suggestions}` to OpenCode
 
-**Must Delegate to Sub-Agents:**
-- Multi-file changes (>2 files or >20 lines)
-- New feature implementation
-- Complex refactors
-- Documentation writing
-- Git commits/tags
-- Test writing
-- Architecture planning
+**Orchestrator Delegates:**
+- Agent execution → OpenCode (native)
+- Multi-file changes → sub-agents
+- Complex implementation → boomerang-coder
+- Architecture decisions → boomerang-architect
 
 **Decision Threshold:**
 ```
 Task Size ≤ 1 file AND ≤ 20 lines AND deterministic
-    → Orchestrator does it directly
+    → Orchestrator handles directly
 
 Task Size > 1 file OR > 20 lines OR needs analysis
     → Delegate to appropriate sub-agent
 ```
 
-> **Important:** Even when orchestrator does the work directly, ALL 8 protocol steps still apply. The orchestrator is just filling all roles for that request.
-
 ### Architect Reasoning Level
 
 The `boomerang-architect` agent uses **highest reasoning level** for Kimi K2.6 when creating implementation plans. The plan is handed back to the orchestrator as a "ready-to-run game plan" for dispatching coders, testers, etc.
 
-## Mandatory Protocol
+## Protocol (Advisory, Not Blocking)
 
-All agents follow the **8-Step Boomerang Protocol**:
+All agents are encouraged to follow the **8-Step Boomerang Protocol**, but enforcement is **advisory only**.
+
+### 8-Step Protocol (Encouraged, Not Enforced)
 
 1. **Query Memory** — `super-memory_query_memories` FIRST
 2. **Think** — `sequential-thinking_sequentialthinking` for complex tasks
 3. **Plan** — Create/refine implementation plan (MANDATORY unless user explicitly waives)
-4. **Delegate** — Task tool with complete Context Package
+4. **Delegate** — OpenCode executes selected agent with Context Package
 5. **Git Check** — Verify working tree state before code changes
 6. **Quality Gates** — Lint → Typecheck → Test
 7. **Update Docs & Todos** — Update TASKS.md, todo list, AGENTS.md as needed
 8. **Save Memory** — `super-memory_add_memory` with project tag
 
 ### Planning Enforcement
+
 Planning is MANDATORY unless user explicitly waives with phrases like:
 - "skip planning"
 - "just do it"
@@ -100,7 +100,8 @@ Simple tasks (handoff, status checks, single-file docs) may skip planning.
 Build/create/implement tasks ALWAYS require planning.
 
 ### Context Passing
-When delegating via Task tool, the orchestrator MUST include a complete Context Package with:
+
+The orchestrator builds a complete Context Package with:
 1. Original User Request (verbatim)
 2. Task Background
 3. Relevant Files
@@ -116,9 +117,9 @@ When delegating via Task tool, the orchestrator MUST include a complete Context 
 - Pass context DIRECTLY to sub-agents (don't tell them to query memory)
 - Sub-agents save detailed work to memory, return thin summaries
 
-## Documentation Maintenance (MANDATORY)
+## Documentation Maintenance (Encouraged)
 
-After EVERY session interaction, update:
+After EVERY session interaction, consider updating:
 
 1. **TASKS.md** — Mark done, add new, remove outdated
 2. **Todo List** — Mark completed, remove old, add new
@@ -126,13 +127,11 @@ After EVERY session interaction, update:
 4. **README.md** — Update if user-facing changes
 5. **HANDOFF.md** — Update at session end
 
-These updates are part of the 8-step protocol (Step 7).
+> **Note**: Unlike previous versions, documentation updates are **encouraged but not enforced** at handoff.
 
-> **⚠️ IMPORTANT**: All sub-agents are required to follow the super-memory protocol. Prompts have been updated to make this MANDATORY, not optional.
+### Built-in Integration Architecture (v4.0.0)
 
-### Built-in Integration Architecture (v2.1.4+)
-
-Boomerang v2 uses **built-in direct integration** with Super-Memory-TS core modules.
+Boomerang v4 uses **direct integration** with Super-Memory-TS core modules — no MCP transport overhead.
 
 | Integration | Description |
 |-------------|-------------|
@@ -144,33 +143,14 @@ Boomerang v2 uses **built-in direct integration** with Super-Memory-TS core modu
 - Boomerang imports `MemorySystem` directly from `src/memory/index.js`
 - `MemoryService` wraps core modules with a clean API
 - All memory operations are direct function calls (no serialization)
-- Project indexing runs via `ProjectIndexer` directly
-- The MCP server (`src/server.ts`) is ONLY for external users
+- The MCP server (`src/server.ts`) is deprecated — use built-in integration
 
-#### Memory Operations (Direct)
+### Memory Operations (Direct)
 
-All agents MUST:
+All agents SHOULD:
 1. **Query memory FIRST** — `memoryService.queryMemories()` before work
 2. **Use sequential-thinking** — For complex tasks
 3. **Save results** — `memoryService.addMemory()` when complete
-
-### Legacy: MCP-Only Architecture (v2.0.0 - REPLACED)
-
-> **⚠️ DEPRECATED**: The MCP-only architecture (v2.0.0) has been replaced by built-in integration. The MCP server is retained only for external users who don't use Boomerang.
-
-- Boomerang v2.1.4+ uses direct imports from `src/memory/` instead of MCP tool calls
-- MCP tool names below are only for external users connecting to the standalone server:
-  - `super-memory_query_memories` - Search memories
-  - `super-memory_add_memory` - Save to memory
-  - `super-memory_search_project` - Search indexed project files
-  - `super-memory_index_project` - Index project files
-
-### Memory Operations
-
-All agents MUST:
-1. **Query super-memory FIRST** - Before doing ANY work, call `super-memory_query_memories` with the task description
-2. **Use sequential-thinking** - Call `sequential-thinking_sequentialthinking` to analyze complex tasks
-3. **Save results to super-memory** - Call `super-memory_add_memory` with a summary when complete
 
 ### Tiered Memory Architecture
 
@@ -186,48 +166,13 @@ This project uses a tiered memory architecture with two modes:
 - Default searches use the configured strategy automatically
 - For explicit control: `super-memory_query_memories` with `strategy` parameter (`tiered`, `vector_only`, or `text_only`)
 
-## Mandatory Metrics Collection (v1.0.0)
-
-> **⚠️ IMPORTANT**: All agents must participate in metrics collection for routing optimization.
-
-### Metrics Collected Per Task
-
-| Metric | Description |
-|--------|-------------|
-| `task_type` | Category of task (code_generation, testing, etc.) |
-| `agent_id` | Which agent handled the task |
-| `duration_ms` | Task execution time in milliseconds |
-| `success` | Whether task completed successfully |
-| `tokens_used` | LLM token consumption |
-| `context_used_pct` | Percentage of context window used |
-
-### Memory Storage
-
-Metrics are stored in Qdrant (per-project isolation via `BOOMERANG_PROJECT_ID`).
-
-### How It Works
-
-1. Orchestrator wraps agent calls with timing/counting hooks
-2. After task completion, metrics are stored in Qdrant
-3. Routing optimizer uses aggregated metrics for future task assignment
-4. Minimum 5 samples required before metrics affect routing
-
-### Performance Targets
-
-| Metric | Target |
-|--------|--------|
-| Query latency | <10ms p50 |
-| Embedding time | <100ms per query |
-| Memory usage | <500MB total |
-| Indexing throughput | >100 files/min |
-
 ## Project-Specific Context
 
-This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
+This is Boomerang v4.0.0 — an orchestration plugin for OpenCode that provides intelligent routing and context, while OpenCode handles agent execution natively.
 
-## Agent Governance Rules (v2.3.2)
+## Agent Governance Rules (v4.0.0)
 
-> **⚠️ ENFORCED**: These rules are code-level enforced, not optional guidelines.
+> **⚠️ CODE-LEVEL ENFORCED** — These rules are not optional guidelines.
 
 ### Research Ownership
 - **boomerang-architect** owns ALL research tasks (web searches, code analysis, documentation review)
@@ -255,13 +200,13 @@ This is the Boomerang v2.0.0 multi-agent orchestration system for OpenCode.
 - Ensures proper context for design decisions
 - Uses built-in super-memory search for efficient research
 
-## Protocol Enforcement v3.1.0
+## Protocol Advisor v4.0.0
 
-> **BREAKING**: The Boomerang Protocol is now **CODE-ENFORCED** via state machine, not prompt-based suggestions.
+> **BREAKING CHANGE**: The Boomerang Protocol is now **ADVISORY ONLY** — it suggests best practices but never blocks execution.
 
-### Architecture: State Machine + Checkpoints
+### Architecture: Advisory State Machine
 
-The protocol is implemented as a **state machine** with mandatory checkpoints:
+The protocol is implemented as an **advisory state machine**:
 
 ```
 IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
@@ -269,75 +214,76 @@ IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK �
 
 | Component | Purpose |
 |-----------|---------|
-| **ProtocolStateMachine** | Manages state transitions, blocks until checkpoint satisfied |
-| **CheckpointRegistry** | Validates each step, stores completion status |
-| **TaskRunner** | Real agent execution (subprocess spawn, not simulation) |
-| **AgentSpawner** | Handles agent lifecycle, timeout, cleanup |
+| **ProtocolStateMachine** | Tracks state transitions for logging |
+| **ProtocolAdvisor** | Logs suggestions and warnings, never blocks |
+| **TaskRunner** | Prompt builder only (no subprocess execution) |
 | **DocTracker** | Tracks documentation changes via SHA-256 hash comparison |
 
-### Strictness Levels
+### Strictness Levels (Advisory)
 
 | Level | Behavior |
 |-------|----------|
-| **lenient** | Auto-fix skipped steps, warn but proceed on failures |
-| **standard** | Block on mandatory steps, require explicit waiver for bypass |
-| **strict** | Block on all violations, no waivers except emergencies |
+| **lenient** | Log suggestions, auto-fix logged |
+| **standard** | Log warnings and suggestions (default) |
+| **strict** | Log errors and suggestions |
 
-Default: `standard`
+**Important**: Unlike previous versions, v4.0.0 **never blocks** execution regardless of strictness level.
 
-### 8-Step Code-Enforced Protocol
+### 8-Step Advisory Protocol
 
-1. **MEMORY_QUERY** — Auto-invoke `super-memory_query_memories` if not already called (no waiver)
-2. **SEQUENTIAL_THINK** — Auto-invoke `sequential-thinking_sequentialthinking` for complex tasks (no waiver for complex)
-3. **PLAN** — Require architect review for build tasks; block without plan unless waived
-4. **DELEGATE** — Real agent execution via TaskRunner (no writing code directly)
-5. **GIT_CHECK** — Block if working tree dirty; require `--force` or "git is fine" to bypass
-6. **QUALITY_GATES** — Block if lint/typecheck/test fails; require "skip tests" to bypass
-7. **DOC_UPDATE** — Track via DocTracker, enforce at handoff
-8. **MEMORY_SAVE** — Auto-save comprehensive summary if skipped (no waiver)
+1. **MEMORY_QUERY** — Suggest `super-memory_query_memories` if not already called
+2. **SEQUENTIAL_THINK** — Suggest `sequential-thinking_sequentialthinking` for complex tasks
+3. **PLAN** — Suggest architect review for build tasks
+4. **DELEGATE** — OpenCode handles agent execution
+5. **GIT_CHECK** — Suggest verifying working tree state
+6. **QUALITY_GATES** — Suggest running lint/typecheck/test
+7. **DOC_UPDATE** — Track via DocTracker, suggest at handoff
+8. **MEMORY_SAVE** — Auto-save suggestion if skipped
 
-### Enforcement Matrix
+### Suggestion Matrix
 
-| Step | Enforcement | Waiver Phrase |
-|------|-------------|---------------|
-| 1. Memory Query | Auto-invoke if skipped | None (always runs) |
-| 2. Sequential Thinking | Auto-invoke for complex | None for complex |
-| 3. Planning | Block without architect review | "skip planning", "just do it" |
-| 4. Delegate | Real execution, no direct code | None |
-| 5. Git Check | Block if dirty | "--force", "git is fine" |
-| 6. Quality Gates | Block if failing | "skip tests", "skip gates" |
-| 7. Doc Update | SHA-256 tracked, block at handoff | "no docs needed" |
-| 8. Memory Save | Auto-save if skipped | None (always saves) |
+| Step | Suggestion | Waiver Phrase |
+|------|------------|---------------|
+| 1. Memory Query | Query memory first | None needed (advisory) |
+| 2. Sequential Thinking | Think through complex tasks | None needed (advisory) |
+| 3. Planning | Get architect review | "skip planning", "just do it" |
+| 4. Delegate | OpenCode executes | None |
+| 5. Git Check | Check working tree | "git is fine" |
+| 6. Quality Gates | Run quality gates | "skip tests", "skip gates" |
+| 7. Doc Update | Update documentation | "no docs needed" |
+| 8. Memory Save | Save to memory | None (auto-suggested) |
 
 ### Waiver Phrases (Escape Hatches)
 
 | Phrase | Effect |
 |--------|--------|
-| `skip planning` | Bypass mandatory planning step |
-| `just do it` | Bypass mandatory planning step |
-| `no plan needed` | Bypass mandatory planning step |
-| `skip tests` | Bypass quality gates (testing) |
-| `skip gates` | Bypass quality gates (all) |
-| `git is fine` | Bypass git check |
-| `--force` | Bypass all blocking checks (emergency) |
-| `no docs needed` | Skip documentation update |
+| `skip planning` | Suggest bypassing planning |
+| `just do it` | Suggest bypassing planning |
+| `no plan needed` | Suggest bypassing planning |
+| `skip tests` | Suggest bypassing quality gates |
+| `skip gates` | Suggest bypassing quality gates |
+| `git is fine` | Suggest bypassing git check |
+| `--force` | Suggest bypassing all checks (emergency) |
+| `no docs needed` | Suggest skipping documentation update |
 
 ### Implementation Files
 
 | File | Purpose |
 |------|---------|
-| `src/protocol/state-machine.ts` | ProtocolStateMachine class |
-| `src/protocol/checkpoint.ts` | CheckpointRegistry, validation |
+| `src/protocol/state-machine.ts` | ProtocolStateMachine class (state tracking) |
+| `src/protocol/checkpoint.ts` | CheckpointRegistry (logging only) |
 | `src/protocol/types.ts` | State, event, config types |
 | `src/protocol/events.ts` | Event emitter for state transitions |
 | `src/protocol/config.ts` | Strictness levels, waiver phrases |
-| `src/execution/task-runner.ts` | TaskRunner class |
-| `src/execution/agent-spawner.ts` | AgentSpawner class |
+| `src/protocol/enforcer.ts` | ProtocolAdvisor (advisory only, never blocks) |
+| `src/execution/task-runner.ts` | TaskRunner class (prompt builder only) |
+| `src/execution/doc-tracker.ts` | DocTracker for SHA-256 tracking |
 
 ---
 
 ## Review Notes
 
+- **2026-05-03**: v4.0.0 HARD REFACTOR COMPLETE — Orchestrator is pure decision layer, OpenCode handles execution, protocol is advisory only. 155/155 tests passing. Deleted 11 dead files (AgentSpawner, TaskExecutor, ScoringRouter, ContextMonitor, Compactor, MiddlewarePipeline, ProtocolTracker, SequentialThinker, server.ts, memory-service, frontmatter).
 - **2026-05-01**: v3.2.0 RELEASED — buildPrompt() fix: sub-agents now receive full layered prompts (systemPrompt + agent rules + skill instructions + Context Package + task + instructions). Skill auto-loading from `.opencode/skills/`. 14 new tests.
 - **2026-05-01**: v3.2.0 (pending release) — Code audit & cleanup session. Removed uuid dependency (replaced with crypto.randomUUID()). Extracted shared utilities to src/utils/frontmatter.ts and src/utils/similarity.ts. Consolidated AgentDefinition into protocol/types.ts. Migrated protocolTracker → ProtocolStateMachine. Deprecated server.ts. Fixed unsafe casts and type issues. Quality gates: 212/212 tests passing.
-- **2026-04-30**: v3.1.0 BREAKING — Code-enforced protocol via state machine. All 8 phases complete. 205 tests passing. Real agent execution (no simulation). Mandatory checkpoints for all steps.
+- **2026-04-30**: v3.1.0 BREAKING — Code-enforced protocol via state machine. All 8 phases complete. 205 tests passing. (Note: protocol is now advisory in v4.0.0)

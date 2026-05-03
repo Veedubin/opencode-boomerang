@@ -16,13 +16,20 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
+      // Excluded due to referencing deleted components:
+      // - AgentSpawner (deleted)
+      // - ProtocolTracker (deleted)
+      // - ContextMonitor (deleted)
+      // - TaskExecutor (deleted)
+      // - scoring-router (deleted)
+      // - memory-service.ts (replaced by direct memory integration)
       'tests/integration/**',
       'tests/performance/**',
       'tests/context/**',
       'tests/metrics/**',
       'tests/project-index/**',
-      'tests/tui/**',
       'tests/memory-service/**',
+      'tests/tui/**',
       'src/tui/**',
       'src/model/**',
       'src/project-index/**',

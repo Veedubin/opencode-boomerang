@@ -6,6 +6,8 @@ model: minimax/MiniMax-M2.7
 steps: 50
 permission:
   edit: allow
+  read:
+    "*": allow
   bash: allow
   tool:
     "super-memory_*": allow

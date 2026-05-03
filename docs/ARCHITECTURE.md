@@ -1,61 +1,67 @@
 # Architecture
 
-System architecture for Boomerang v2 multi-agent orchestration system.
+System architecture for Boomerang v4.0.0 — an orchestration plugin for OpenCode.
 
 ## Overview
 
-Boomerang v2 is a TypeScript-based multi-agent orchestration system that combines:
+Boomerang v4.0.0 is a **pure decision layer** for OpenCode multi-agent orchestration:
 
-- **Vector memory** for semantic search
-- **Task planning** with dependency graphs
-- **Project indexing** for code understanding
-- **MCP integration** for tool calls
+- **Orchestrator**: Analyzes requests, queries memory, selects agents, builds Context Packages
+- **OpenCode**: Handles agent execution natively
+- **Super-Memory-TS**: Direct integration for semantic memory (Qdrant backend)
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│                         CLI / TUI                               │
-│                    (boomerang command)                         │
+│                         OpenCode                               │
+│                    (Agent Execution)                            │
 └────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────────────┐
-│                     Plugin Interface                           │
-│                      src/index.ts                             │
+│                     Boomerang Plugin                            │
+│                      src/index.ts                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
 │  │   register   │  │   register   │  │   register   │         │
 │  │   Command    │  │    Agent     │  │    Skill     │         │
 │  └──────────────┘  └──────────────┘  └──────────────┘         │
 └────────────────────────────────────────────────────────────────┘
-                              │
-          ┌───────────────────┼───────────────────┐
-          ▼                   ▼                   ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│  Orchestrator   │ │  MemoryClient   │ │ ProjectIndexer  │
-│                │ │                 │ │                 │
-│ • Task planning│ │ • MCP client    │ │ • File watching │
-│ • Dependency   │ │ • Auto-reconnect│ │ • Queue system  │
-│   graphs       │ │ • Memory ops    │ │ • Hash detection│
-│ • Agent routing│ │                 │ │                 │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
-          │                   │                   │
-          │                   ▼                   │
-          │          ┌─────────────────┐         │
-          │          │  MCP Server     │         │
-          │          │  src/server.ts  │         │
-          │          └─────────────────┘         │
-          │                   │                   │
-          └───────────────────┼───────────────────┘
-                              ▼
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────────────┐
-│                    Data Layer                                │
+│                   Boomerang Orchestrator                        │
+│                     src/orchestrator.ts                         │
+│                                                                     │
+│  • analyzeTask()        — Detect task type from keywords          │
+│  • selectAgent()        — Choose agent based on task type        │
+│  • queryMemory()        — Search super-memory for context        │
+│  • buildContextPackage() — Create rich context for sub-agent      │
+│  • orchestrate()         — Returns {agent, systemPrompt,         │
+│                              contextPackage, suggestions}        │
+└────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌────────────────────────────────────────────────────────────────┐
+│                      Data Layer                                │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │   LanceDB    │  │    Fuse.js   │  │ Transformers │       │
-│  │  (Vectors)   │  │   (Text)     │  │ (Embeddings) │       │
+│  │   Qdrant     │  │  Super-      │  │    BGE       │       │
+│  │  (Vectors)    │  │  Memory-TS   │  │  (Embeddings)│       │
 │  └──────────────┘  └──────────────┘  └──────────────┘       │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-## Components
+## What Boomerang IS NOT
+
+> **Important**: Previous versions of Boomerang claimed features that were never implemented.
+
+| Claimed (Old) | Reality (v4.0.0) |
+|---------------|------------------|
+| Real agent execution via subprocess spawn | **Deleted** — AgentSpawner was fake simulation |
+| Blocking protocol enforcement | **Advisory only** — ProtocolAdvisor never blocks |
+| Context monitoring with compaction | **Deleted** — ContextMonitor used naive 4chars/token heuristic |
+| Scoring router with metrics-based routing | **Deleted** — ScoringRouter queried wrong event type |
+| MCP server for memory operations | **Deprecated** — Direct integration instead |
+
+## Core Components
 
 ### Plugin Interface (`src/index.ts`)
 
@@ -65,21 +71,31 @@ Entry point for OpenCode plugin integration.
 - Register commands (`boomerang`, `chat`, `index`)
 - Register agents from `agents/` directory
 - Register skills from `skills/` directory
-- Initialize memory client
+- Initialize memory integration
 - Route CLI commands to appropriate handlers
 
 ### Orchestrator (`src/orchestrator.ts`)
 
-Task planning and dependency graph management.
+**Pure decision layer** — no agent execution.
 
-**Key Features:**
-- Parse user requests into subtasks
-- Detect task type from keywords
-- Assign agents based on task type
-- Build and validate dependency graphs
-- Cycle detection using DFS
-- Graph optimization (transitive edge removal)
-- Topological sort for execution order
+**Key Methods:**
+| Method | Description |
+|--------|-------------|
+| `analyzeTask(request: string): TaskType` | Detect task type from keywords |
+| `selectAgent(taskType: TaskType): AgentDefinition` | Choose agent based on task type |
+| `queryMemory(query: string): Promise<MemoryResult[]>` | Search super-memory |
+| `buildContextPackage(task: Task, agent: AgentDefinition): ContextPackage` | Create rich context |
+| `orchestrate(request: string): Promise<OrchestrationResult>` | Main entry point |
+
+**Returns:**
+```typescript
+interface OrchestrationResult {
+  agent: string;           // Agent name (e.g., "boomerang-coder")
+  systemPrompt: string;    // Full layered prompt
+  contextPackage: ContextPackage;  // Structured context
+  suggestions: string[];    // Protocol suggestions
+}
+```
 
 **Task Types:**
 | Type | Keywords | Default Agent |
@@ -92,156 +108,128 @@ Task planning and dependency graph management.
 | `git` | git, commit, push | boomerang-git |
 | `general` | default | boomerang |
 
-### MemoryClient (`src/memory-client.ts`)
+### ProtocolAdvisor (`src/protocol/enforcer.ts`)
 
-MCP SDK client for memory operations.
+**Advisory only** — logs suggestions and warnings, never blocks execution.
+
+**Key Behavior:**
+- Logs protocol suggestions at each step
+- Suggests auto-fix for skipped steps
+- Never blocks transitions regardless of strictness level
+
+**State Flow:**
+```
+IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
+```
+
+### TaskRunner (`src/execution/task-runner.ts`)
+
+**Prompt builder only** — no subprocess execution.
+
+**Responsibilities:**
+- Load agent definitions from `agents/*.md`
+- Load skill instructions from `skills/*/SKILL.md`
+- Compose 6-layer prompts via `buildPrompt()`:
+  1. Agent systemPrompt (identity)
+  2. Agent prompt (rules, style guides, escalation triggers, project context)
+  3. Skill instructions (auto-loaded from `.opencode/skills/{agent}/SKILL.md`)
+  4. Rich Context Package (structured ### headings)
+  5. Task description
+  6. Execution instructions
+
+### Memory Integration (`src/memory/index.ts`)
+
+**Direct Super-Memory-TS integration** — no MCP transport.
 
 **Features:**
-- Stdio transport to MCP server
-- Auto-reconnect with exponential backoff
-- Tool calls: `query_memories`, `add_memory`, `search_project`, `index_project`
-
-### ProjectIndexer (`src/project-index/indexer.ts`)
-
-Background file indexing with queue system.
-
-**Components:**
-- **File Watcher** (`watcher.ts`) - `chokidar`-based file monitoring
-- **Chunker** (`chunker.ts`) - Split files with line metadata
-- **Queue System** - Concurrent processing with limits
-- **Hash Detection** - Skip unchanged files via SHA-256
-
-**Processing Flow:**
-```
-File Event → Queue → Check Hash → [Changed?] → Chunk → Embed → Store
-                    ↓
-              Remove existing
-              chunks for file
-```
-
-### MCP Server (`src/server.ts`)
-
-Server implementing MCP tools for memory operations.
-
-**Tools:**
-| Tool | Handler | Description |
-|------|---------|-------------|
-| `query_memories` | `handleQueryMemories` | Vector + text search |
-| `add_memory` | `handleAddMemory` | Store new memory |
-| `search_project` | `handleSearchProject` | Search indexed files |
-| `index_project` | `handleIndexProject` | Start indexing |
-
-### Memory System (`src/memory/`)
-
-**LanceDB** (`database.ts`) - Connection pooling for vector storage
-
-**MemorySearch** (`search.ts`) - Hybrid search combining:
-- **Vector search** - HNSW index for semantic similarity
-- **Text search** - Fuse.js for keyword matching
-- **Tiered search** - Vector-first, text fallback
-
-**Operations** (`operations.ts`) - CRUD operations for memory entries
-
-### Model Manager (`src/model/`)
-
-Embedding model management using `@xenova/transformers`.
-
-**Default Model:** `BAAI/bge-large-en-v1.5`
-- **Dimensions:** 1024
-- **Normalized:** Yes
+- Direct function calls (no serialization overhead)
+- QueryMemories, addMemory, searchProject, indexProject
+- Qdrant backend with fp16 embeddings
+- Per-project isolation via `BOOMERANG_PROJECT_ID`
 
 ---
 
 ## Data Flow
 
-### Request → Memory Query → Task Planning → Execution
+### Request → Decision → Context Package
 
 ```
 1. User Request
-       │
-       ▼
-2. Orchestrator.queryContext()
-       │  └─→ MemoryClient.queryMemories()
-       │         └─→ MCP Server → LanceDB (HNSW)
-       ▼
-3. Orchestrator.planTask()
-       │  • Parse request into subtasks
-       │  • Detect task types
-       │  • Assign agents
-       │  • Build dependency graph
-       ▼
-4. Task Graph (validated, optimized)
-       │
-       ▼
-5. Execute tasks in topological order
-       │
-       ▼
-6. Orchestrator.saveResults()
-       │  └─→ MemoryClient.addMemory()
-       ▼
-7. Response to user
-```
-
-### Project Indexing Flow
-
-```
-1. File Event (add/change/unlink)
-       │
-       ▼
-2. ProjectIndexer.handleFileEvent()
-       │
-       ▼
-3. Queue file for processing
-       │
-       ▼
-4. Check hash (skip if unchanged)
-       │
-       ▼
-5. Chunk file (line-based)
-       │
-       ▼
-6. Generate embeddings (BGE-Large)
-       │
-       ▼
-7. Store in LanceDB
-       │
-       ▼
-8. Update stats
+        │
+        ▼
+2. BoomerangOrchestrator.analyzeTask()
+        │  └─→ Keyword detection
+        ▼
+3. BoomerangOrchestrator.selectAgent()
+        │  └─→ Task type → Agent mapping
+        ▼
+4. BoomerangOrchestrator.queryMemory()
+        │  └─→ Super-Memory-TS queryMemories()
+        │         └─→ Qdrant vector search
+        ▼
+5. BoomerangOrchestrator.buildContextPackage()
+        │  • Original request
+        │  • Task background
+        │  • Relevant files
+        │  • Memory context
+        │  • Scope boundaries
+        ▼
+6. Return OrchestrationResult
+        │
+        ▼
+7. OpenCode executes selected agent with context
 ```
 
 ---
 
-## Memory System
+## Deleted Components
 
-### Vector Storage (LanceDB)
+The following were **deleted in v4.0.0 hard refactor**:
 
-**Database:** LanceDB (based on Arrow/Parquet)
+| File | Reason |
+|------|--------|
+| `src/execution/agent-spawner.ts` | Fake simulation, not real execution |
+| `src/task-executor.ts` | Duplicate execution logic |
+| `src/routing/scoring-router.ts` | Queried wrong metrics event type |
+| `src/context/monitor.ts` | Naive 4chars/token heuristic, never read actual tokens |
+| `src/context/compactor.ts` | No real compaction implementation |
+| `src/middleware/pipeline.ts` | Never integrated into execution path |
+| `src/protocol/tracker.ts` | Deprecated |
+| `src/execution/sequential-thinker.ts` | `globalThis.mcp` never true in Node.js |
+| `src/server.ts` | Deprecated MCP server |
+| `src/memory-service.ts` | Replaced by direct memory integration |
+| `src/utils/frontmatter.ts` | Inline parsing in asset-loader |
+
+---
+
+## Memory System (Qdrant)
+
+### Vector Storage
+
+**Database:** Qdrant (cloud-native vector database)
 
 **Schema:**
 ```typescript
 interface MemoryEntry {
   id: string;           // UUID
   text: string;         // Raw text (max 8192 chars)
-  vector: Float32[];    // 1024-dim embedding
+  vector: Float32[];    // 1024-dim embedding (BGE-Large)
   sourceType: SourceType;
   sourcePath: string;
   timestamp: number;
   contentHash: string;  // SHA-256 of content
   metadataJson: string;
   sessionId: string;
+  projectId: string;    // For isolation
 }
 ```
-
-**Index:** HNSW (Hierarchical Navigable Small World)
-- `M`: 16 (connections per node)
-- `efConstruction`: 100 (search quality during build)
 
 ### Search Strategy
 
 **TIERED (default):**
-1. Vector search first (topK * 2 candidates)
+1. Vector search first (MiniLM for speed, BGE fallback)
 2. Apply threshold filter
-3. Re-rank with text similarity (Fuse.js)
+3. Re-rank with text similarity
 4. Return topK results
 
 **VECTOR_ONLY:**
@@ -249,26 +237,8 @@ interface MemoryEntry {
 2. Return topK results
 
 **TEXT_ONLY:**
-1. Fuse.js keyword search
+1. Keyword search
 2. Return topK results
-
-### Project Chunks
-
-Stored separately from memories in `project_chunks` table:
-
-```typescript
-interface ProjectChunk {
-  id: string;           // "filepath:chunkIndex"
-  filePath: string;
-  content: string;
-  lineStart: number;   // 1-indexed
-  lineEnd: number;
-  chunkIndex: number;
-  fileHash: string;
-  embedding: Float32[];
-  indexedAt: number;
-}
-```
 
 ---
 
@@ -276,7 +246,7 @@ interface ProjectChunk {
 
 ### Loading
 
-Agents are loaded from `agents/*.md` files:
+Agents are loaded from `agents/*.md` files via `asset-loader.ts`:
 
 ```typescript
 // src/asset-loader.ts
@@ -328,9 +298,9 @@ class ConnectionError extends Error { }
 
 ### Recovery
 
-- **MemoryClient**: Auto-reconnect (max 3 attempts)
-- **ProjectIndexer**: Queue continues on failure, logs errors
-- **Orchestrator**: Graceful degradation if memory unavailable
+- **Memory**: Graceful degradation if Qdrant unavailable (returns empty results)
+- **Orchestrator**: Returns partial results with error in suggestions
+- **ProtocolAdvisor**: Logs errors but never blocks
 
 ---
 
@@ -339,18 +309,17 @@ class ConnectionError extends Error { }
 ### Default Values
 
 ```typescript
-const DEFAULT_INDEX_CONFIG = {
-  chunkConfig: {
-    chunkSize: 512,
-    chunkOverlap: 50,
+const DEFAULT_CONFIG = {
+  memory: {
+    qdrantUrl: 'http://localhost:6333',
+    projectId: 'default',
   },
-  watchConfig: {
-    include: ['**/*'],
-    exclude: ['node_modules', '.git', 'dist', 'build'],
-    debounceMs: 300,
+  protocol: {
+    strictness: 'standard',  // Advisory only in v4.0.0
   },
-  maxConcurrent: 5,
-  embeddingModel: 'BAAI/bge-large-en-v1.5',
+  agents: {
+    defaultTier: 'secondary',
+  },
 };
 ```
 
@@ -358,22 +327,32 @@ const DEFAULT_INDEX_CONFIG = {
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `LANCEDB_URI` | `memory://` | LanceDB storage location |
+| `QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
+| `BOOMERANG_PROJECT_ID` | `default` | Project isolation ID |
+| `SUPER_MEMORY_EAGER_LOAD` | `false` | Pre-load embedding model |
 
 ---
 
-## Dual Architecture
+## Architecture Summary
 
-Boomerang-v2 supports two integration modes:
+| Aspect | Implementation |
+|--------|----------------|
+| **Orchestrator** | Pure decision layer (src/orchestrator.ts) |
+| **Agent Execution** | OpenCode native (not Boomerang) |
+| **Protocol** | Advisory via ProtocolAdvisor (never blocks) |
+| **Memory** | Direct Super-Memory-TS via src/memory/index.ts |
+| **Prompt Building** | 6-layer buildPrompt() in TaskRunner |
+| **Metrics** | JSONL file collection (src/metrics/collector.ts) |
+| **Doc Tracking** | SHA-256 comparison via DocTracker |
 
-### Built-in Mode (Default)
-- Direct imports from `src/memory/`
-- Zero serialization overhead
-- Automatic initialization
-- Used by: Boomerang orchestrator, agents
+---
 
-### MCP Mode (Standalone)
-- External process via stdio transport
-- JSON-RPC serialization
-- Manual configuration required
-- Used by: External tools, other AI frameworks
+## Version History
+
+| Version | Changes |
+|---------|---------|
+| v4.0.0 | Hard refactor — orchestrator as pure decision layer, OpenCode handles execution, advisory protocol |
+| v3.2.0 | Prompt composition fix |
+| v3.1.0 | Protocol state machine (now advisory) |
+| v3.0.0 | LanceDB → Qdrant migration |
+| v2.0.0 | First stable with built-in memory |

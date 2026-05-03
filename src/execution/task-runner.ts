@@ -1,10 +1,12 @@
 /**
- * Task Runner - Orchestrates agent task execution using the spawner
+ * Task Runner - Prompt Builder (NO subprocess execution)
+ * 
+ * Protocol Enforcement v4.0: This is now a PROMPT BUILDER only.
+ * Agent execution is handled by OpenCode's native agent system.
+ * 
+ * The old AgentSpawner-based execution has been deleted.
+ * This module now ONLY handles prompt composition.
  */
-
-import { randomUUID } from 'node:crypto';
-import type { AgentSpawner, AgentProcess } from './agent-spawner.js';
-import type { AgentPromptLoader, AgentPrompt } from './agent-prompts.js';
 
 export interface Task {
   id: string;
@@ -31,114 +33,18 @@ export interface TaskExecutionResult {
   error?: string;
 }
 
+/**
+ * TaskRunner - Now a prompt builder only
+ * 
+ * Does NOT execute agents. OpenCode executes agents natively.
+ * This class only composes prompts from context.
+ */
 export class TaskRunner {
-  private spawner: AgentSpawner;
-  private promptLoader: AgentPromptLoader;
-
-  constructor(spawner: AgentSpawner, promptLoader: AgentPromptLoader) {
-    this.spawner = spawner;
-    this.promptLoader = promptLoader;
-  }
-
-  /**
-   * Execute a single task
-   */
-  async execute(task: Task, context: ExecutionContext): Promise<TaskExecutionResult> {
-    const startTime = Date.now();
-    const taskId = task.id || randomUUID();
-
-    try {
-      // Load agent prompt
-      const agentPrompt = await this.promptLoader.loadAgent(task.agent);
-
-      // Build the full prompt
-      const fullPrompt = this.buildPrompt(task, agentPrompt);
-
-      // Spawn the agent process
-      const agentProcess = await this.spawner.spawn(task.agent, fullPrompt);
-
-      // Wait for completion (with internal timeout handling)
-      const result = await this.waitForCompletion(agentProcess);
-
-      const durationMs = Date.now() - startTime;
-
-      return {
-        taskId,
-        success: result.success,
-        output: result.output,
-        agentUsed: task.agent,
-        durationMs,
-        error: result.error,
-      };
-    } catch (error) {
-      return {
-        taskId,
-        success: false,
-        output: '',
-        agentUsed: task.agent,
-        durationMs: Date.now() - startTime,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
-
-  /**
-   * Execute multiple tasks
-   */
-  async executeAll(tasks: Task[], context: ExecutionContext): Promise<TaskExecutionResult[]> {
-    // Execute tasks in sequence to avoid concurrency issues
-    // In a more advanced implementation, could parallelize with dependency management
-    const results: TaskExecutionResult[] = [];
-
-    for (const task of tasks) {
-      const result = await this.execute(task, context);
-      results.push(result);
-
-      // If task failed and it's critical, could stop here
-      // For now, continue executing all tasks
-    }
-
-    return results;
-  }
-
-  /**
-   * Wait for agent process completion and parse result
-   */
-  private waitForCompletion(agentProcess: AgentProcess): Promise<{ success: boolean; output: string; error?: string }> {
-    return new Promise((resolve) => {
-      // Poll for completion since we can't use async with standard ChildProcess events
-      const checkInterval = setInterval(() => {
-        if (agentProcess.status !== 'running') {
-          clearInterval(checkInterval);
-          
-          const parsed = this.parseResult(agentProcess.output);
-          resolve({
-            success: agentProcess.status === 'completed' && parsed.success,
-            output: parsed.result,
-            error: parsed.error || (agentProcess.status === 'timeout' ? 'Execution timed out' : undefined),
-          });
-        }
-      }, 50); // Check every 50ms
-
-      // Safety timeout - if we haven't resolved after 10 minutes, force resolve
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        if (agentProcess.status === 'running') {
-          agentProcess.kill();
-        }
-        resolve({
-          success: false,
-          output: '',
-          error: 'Task execution timeout',
-        });
-      }, 600000); // 10 minute hard timeout
-    });
-  }
-
   /**
    * Build the full prompt from task and agent prompt template
+   * (formerly buildPrompt, now the main public method)
    */
-  protected buildPrompt(task: Task, agentPrompt: AgentPrompt): string {
+  buildPrompt(task: Task, agentPrompt: AgentPrompt): string {
     const parts: string[] = [];
 
     // Layer 1: Agent identity
@@ -146,7 +52,7 @@ export class TaskRunner {
       parts.push(agentPrompt.systemPrompt);
     }
 
-    // Layer 2: Agent rules, style guides, output format (the bulk)
+    // Layer 2: Agent rules, style guides, output format
     if (agentPrompt.prompt) {
       parts.push(agentPrompt.prompt);
     }
@@ -219,34 +125,12 @@ export class TaskRunner {
     }
     return String(value);
   }
+}
 
-  /**
-   * Parse the JSON output from agent execution
-   */
-  private parseResult(output: string): { success: boolean; result: string; error?: string } {
-    if (!output || output.trim() === '') {
-      return { success: false, result: '', error: 'Empty output from agent' };
-    }
-
-    try {
-      // Find JSON in output (in case there's logging before the JSON)
-      const jsonMatch = output.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        // No JSON found - treat entire output as result
-        return { success: true, result: output.trim() };
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-
-      return {
-        success: parsed.success ?? true,
-        result: parsed.result || parsed.output || '',
-        error: parsed.error,
-      };
-    } catch (error) {
-      // Failed to parse JSON - treat output as plain text result
-      return { success: true, result: output.trim() };
-    }
-  }
+export interface AgentPrompt {
+  name: string;
+  model: string;
+  prompt: string;
+  systemPrompt: string;
+  skillContent?: string;
 }

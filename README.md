@@ -1,25 +1,25 @@
-# 🚀 Boomerang for OpenCode
+# Boomerang for OpenCode
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-ff6b35?style=flat-square)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square)](https://www.typescriptlang.org/)
-[![v3.2.0](https://img.shields.io/badge/v3.2.0-Prompt%20Composition%20Fix-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v3.2.0)
+[![v4.0.0](https://img.shields.io/badge/v4.0.0-Hard%20Refactor-2ecc71?style=flat-square)](https://github.com/Veedubin/opencode-boomerang/releases/tag/plugin-v4.0.0)
 
 *Intelligent multi-agent coordination for OpenCode — because great software is a team sport.*
 
 ---
 
-## 🎉 v3.1.0 Highlights
+## 🎉 v4.0.0 Highlights
 
-> **BREAKING: Code-Enforced Protocol** — The Boomerang Protocol is now enforced via state machine, not prompt-based suggestions.
+> **BREAKING: Orchestrator is now a pure decision layer** — Boomerang provides intelligent routing and context, OpenCode handles execution natively.
 
 | Feature | Description |
 |---------|-------------|
-| **State Machine Architecture** | Each protocol step is a mandatory checkpoint |
-| **Real Agent Execution** | TaskRunner spawns actual subprocess (no simulation) |
-| **Strictness Levels** | lenient/standard/strict configuration |
-| **Documentation Tracking** | DocTracker with SHA-256 hash comparison |
-| **Mandatory Checkpoints** | All 8 steps block until satisfied |
+| **Pure Decision Layer** | Orchestrator analyzes requests, queries memory, selects agent, returns Context Package |
+| **OpenCode Execution** | Agent execution handled natively by OpenCode — no subprocess spawning |
+| **Advisory Protocol** | ProtocolAdvisor logs warnings and suggestions, never blocks execution |
+| **Direct Memory** | Direct Super-Memory-TS integration via `src/memory/index.ts` |
+| **6-Layer Prompts** | `buildPrompt()` composes full layered prompts for sub-agents |
 
 ---
 
@@ -114,8 +114,51 @@ Add to your `.opencode/opencode.json`:
 
 ## 🏗️ Architecture
 
-### Context Passing
-Boomerang uses a **Context Package** system where the orchestrator passes comprehensive context to sub-agents:
+### What Boomerang Is
+
+**Boomerang is an orchestration plugin for OpenCode, not a standalone agent execution system.**
+
+- **Boomerang's role**: Analyze requests, query memory, select appropriate agent, build rich Context Package
+- **OpenCode's role**: Handle agent execution natively using its own agent spawning mechanism
+- **Context Package**: Boomerang returns a structured package containing agent name, system prompt, context, and suggestions
+
+### How It Works
+
+```
+User Request
+      │
+      ▼
+┌─────────────────┐
+│  Boomerang      │  ← Pure decision layer
+│  Orchestrator    │     - Analyzes request
+│                  │     - Queries memory
+│                  │     - Selects agent
+│                  │     - Builds Context Package
+└─────────────────┘
+      │
+      ▼ (Context Package returned to OpenCode)
+┌─────────────────┐
+│  OpenCode       │  ← Native agent execution
+│  Agent Runner   │     - Executes selected agent
+│                  │     - Handles lifecycle
+└─────────────────┘
+```
+
+### Orchestrator (Pure Decision Layer)
+
+The `BoomerangOrchestrator` class provides:
+
+| Method | Description |
+|--------|-------------|
+| `analyzeTask()` | Detect task type from request keywords |
+| `selectAgent()` | Choose appropriate agent based on task type |
+| `queryMemory()` | Search super-memory for relevant context |
+| `buildContextPackage()` | Create rich context for sub-agent |
+| `orchestrate()` | Main entry — returns `{agent, systemPrompt, contextPackage, suggestions}` |
+
+### Context Package System
+
+Boomerang passes comprehensive context to sub-agents:
 - Original user request (verbatim)
 - Task background and constraints
 - Relevant files and code snippets
@@ -125,8 +168,9 @@ Boomerang uses a **Context Package** system where the orchestrator passes compre
 This ensures sub-agents have everything they need to work effectively.
 
 ### Super-Memory Hub
+
 Super-memory is the central knowledge base:
-- **Query before responding** — Agents check memory for relevant context
+- **Query before responding** — Orchestrator checks memory for relevant context
 - **Save after completing** — Agents save detailed work to memory
 - **Thin responses** — Sub-agents return concise summaries + memory references
 - **Thick memory** — Full details stored in Qdrant for future retrieval
@@ -142,6 +186,7 @@ Super-memory is the central knowledge base:
 **NO SPAWNING** — Sub-agents do not spawn child agents.
 
 ### Planning Enforcement
+
 Planning is mandatory for all build/create/implement tasks unless explicitly waived by the user.
 
 ---
@@ -150,7 +195,7 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 
 | Agent | Skill | Model | Role |
 |-------|-------|-------|------|
-| **boomerang** | boomerang-orchestrator | Kimi K2.6 | 🎯 **Orchestrator** — Plans, coordinates, enforces protocol |
+| **boomerang** | boomerang-orchestrator | Kimi K2.6 | 🎯 **Orchestrator** — Plans, coordinates, provides intelligent routing |
 | **boomerang-coder** | boomerang-coder | MiniMax M2.7 | 💻 **Fast code generation** — TypeScript/Python |
 | **boomerang-architect** | boomerang-architect | Kimi K2.6 | 🏗️ **Design decisions** — Trade-off analysis and architecture |
 | **boomerang-explorer** | boomerang-explorer | MiniMax M2.7 | 🔍 **Codebase exploration** — Find files by name/glob |
@@ -167,7 +212,7 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 
 ---
 
-## Agent Governance (v2.3.2+)
+## Agent Governance (v4.0.0)
 
 > **⚠️ CODE-LEVEL ENFORCED** — These rules are not optional guidelines.
 
@@ -195,24 +240,9 @@ Planning is mandatory for all build/create/implement tasks unless explicitly wai
 
 ---
 
-## 📊 Context Management
+## 📊 Protocol Advisor (Advisory, Not Blocking)
 
-### Window Management
-- **Claude 200k→180k window** — 10% reserved for protocol overhead
-- **Smart eviction at 70%** — Low-value outputs offloaded to temp files
-- **Compaction at 85%** — Session wrap-up triggered, fresh context
-
-### Eviction Strategy
-```
-70% context usage → Evict tool outputs >500 words
-85% context usage → Trigger /handoff skill, save state
-```
-
----
-
-## 🔒 Protocol Enforcement v4.0
-
-The Boomerang Protocol is **code-enforced** via state machine with mandatory checkpoints.
+The Boomerang Protocol is **advisory** — it suggests best practices but **never blocks execution**.
 
 ### State Machine Flow
 
@@ -220,37 +250,39 @@ The Boomerang Protocol is **code-enforced** via state machine with mandatory che
 IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
 ```
 
-### Strictness Levels
+### Advisory Behavior
 
 | Level | Behavior |
 |-------|----------|
-| **lenient** | Auto-fix skipped steps, warn but proceed |
-| **standard** | Block on mandatory steps, require waiver for bypass (default) |
-| **strict** | Block on all violations, no waivers except emergencies |
+| **lenient** | Log suggestions, auto-fix skipped steps |
+| **standard** | Log warnings and suggestions (default) |
+| **strict** | Log errors and suggestions |
+
+**Note**: Unlike previous versions, v4.0.0 **never blocks** execution regardless of strictness level. The protocol is advisory only.
 
 ### Waiver Phrases (Escape Hatches)
 
 | Phrase | Effect |
 |--------|--------|
-| `skip planning`, `just do it` | Bypass mandatory planning |
-| `skip tests`, `skip gates` | Bypass quality gates |
-| `git is fine` | Bypass git check |
-| `--force` | Bypass all blocking checks (emergency) |
-| `no docs needed` | Skip documentation update |
+| `skip planning`, `just do it` | Suggest bypassing planning |
+| `skip tests`, `skip gates` | Suggest bypassing quality gates |
+| `git is fine` | Suggest bypassing git check |
+| `--force` | Suggest bypassing all checks (emergency) |
+| `no docs needed` | Suggest skipping documentation update |
 
-### How It Works
+### How ProtocolAdvisor Works
 
-1. **ProtocolStateMachine** manages state transitions, blocks until checkpoint satisfied
-2. **CheckpointRegistry** validates each step, stores completion status
-3. **TaskRunner** executes agents as real subprocesses (not simulation)
+1. **ProtocolAdvisor** logs protocol suggestions and auto-fix recommendations
+2. **Never blocks** — suggestions are advisory only
+3. **TaskRunner** handles prompt building only (no subprocess execution)
 4. **DocTracker** tracks documentation changes via SHA-256 hash comparison
 
 ### Configuration
 
 ```typescript
-// lenient: Auto-fix skipped steps
-// standard: Block on mandatory steps (default)
-// strict: Block on all violations
+// lenient: Auto-fix suggestions
+// standard: Warnings and suggestions (default)
+// strict: Errors and suggestions
 const config = { strictness: 'standard' };
 ```
 
@@ -292,13 +324,6 @@ npm run qdrant:logs    # View logs
 npm run qdrant:status  # Check status
 ```
 
-**Benefits over `docker run`:**
-- Named container prevents duplicates
-- Auto-restart on boot (`unless-stopped`)
-- Health check for dependent services
-- Persistent `./qdrant_storage` volume
-- gRPC port 6334 exposed for future use
-
 ### Setup
 
 Start Qdrant (required):
@@ -324,28 +349,19 @@ docker run -p 6333:6333 qdrant/qdrant
 | Index | `memoryService.indexProject()` | Trigger project re-indexing |
 | Health | `get_status` | Check Qdrant connection health |
 
-### Migrating from LanceDB
-
-If you have existing LanceDB data, migrate with:
-
-```bash
-npm run migrate-memory -- --lancedb-uri ./memory_data --qdrant-url http://localhost:6333
-```
-
-Add `--resume` to continue an interrupted migration.
-
 ---
 
 ## 🏆 Key Achievements
 
 | Achievement | Version | Description |
 |-------------|---------|-------------|
+| **Hard Refactor** | v4.0.0 | Orchestrator as pure decision layer, OpenCode handles execution |
+| **Protocol Advisor** | v4.0.0 | Advisory-only enforcement, never blocks |
+| **155 Tests** | v4.0.0 | All tests passing after refactor |
+| **11 Files Deleted** | v4.0.0 | Removed dead code (AgentSpawner, TaskExecutor, ScoringRouter, etc.) |
 | **18-Item Completion** | v2.3.10 | All security, feature, CI, and test work items done |
-| **Connection Fix** | v2.3.10 | Removed broken transport check causing "Not connected" |
 | **Agent Governance** | v2.3.2 | Code-level enforced rules, architect owns research |
-| **CI Stabilization** | v2.3.6 | 95 critical tests passing |
-| **Database Migration** | v2.0.0 | LanceDB → Qdrant for improved performance |
-| **Dual-Mode Memory** | v2.3.8 | Built-in direct import vs MCP external |
+| **Database Migration** | v3.0.0 | LanceDB → Qdrant for improved performance |
 
 ---
 
@@ -354,47 +370,18 @@ Add `--resume` to continue an interrupted migration.
 ```
 boomerang-v2/
 ├── src/
-│   ├── index.ts              # Main entry point
-│   ├── memory/               # Memory adapter (Super-Memory-TS wrapper)
-│   ├── memory-service.ts      # Public API wrapper
-│   ├── protocol/             # Protocol tracking
+│   ├── index.ts              # Plugin interface (register/activate)
+│   ├── orchestrator.ts       # Pure decision layer
+│   ├── memory/               # Direct Super-Memory-TS integration
+│   ├── protocol/             # ProtocolAdvisor (advisory, not blocking)
+│   ├── execution/            # TaskRunner (prompt builder only)
 │   └── agents/               # Agent definitions
-├── scripts/
-│   └── migrate-lancedb-to-qdrant.ts  # Migration script
-├── dist/                     # Built output
-├── package.json              # @veedubin/boomerang-v2
-└── README.md
+├── agents/                   # Agent markdown files
+├── skills/                   # Skill definitions
+├── tests/                    # Test suite (155 tests passing)
+├── docs/                    # Documentation
+└── package.json             # @veedubin/boomerang-v2
 ```
-
----
-
-## 📦 Integration with Super-Memory-TS
-
-### Built-in Integration (Boomerang Users)
-
-Memory is automatically initialized on plugin load. Requires Qdrant:
-
-```bash
-docker run -p 6333:6333 qdrant/qdrant
-```
-
-### External MCP Server (Non-Boomerang Users)
-
-Use the standalone Super-Memory-TS MCP server:
-
-```bash
-npm install @veedubin/super-memory-ts
-npx super-memory-ts
-```
-
-### MCP Tools (External Mode)
-
-| Tool | Description |
-|------|-------------|
-| `super-memory_query_memories` | Search memories |
-| `super-memory_add_memory` | Store memory |
-| `super-memory_search_project` | Search indexed files |
-| `super-memory_index_project` | Trigger indexing |
 
 ---
 
@@ -409,13 +396,11 @@ npx super-memory-ts
 
 ### Version History
 
-- **v3.1.0** — Code-enforced protocol via state machine. Real agent execution. Mandatory checkpoints.
-- **v3.0.1** — Build fixes, TUI cleanup, version sync
-- **v3.0.0** — LanceDB → Qdrant migration complete
-- **v2.3.10** — Connection fix, version sync, all 18 items complete
-- **v2.3.8** — Dual-mode memory architecture
-- **v2.3.2** — Agent governance code-level enforced
-- **v2.0.0** — LanceDB → Qdrant migration
+- **v4.0.0** — Hard refactor: Orchestrator as pure decision layer, OpenCode handles execution, advisory protocol
+- **v3.2.0** — Prompt composition fix, code cleanup
+- **v3.1.0** — Protocol state machine (now advisory in v4.0.0)
+- **v3.0.0** — LanceDB → Qdrant migration
+- **v2.0.0** — First stable with built-in memory
 
 ---
 

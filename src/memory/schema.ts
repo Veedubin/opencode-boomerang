@@ -1,5 +1,5 @@
 /**
- * Memory entry and search types for LanceDB storage
+ * Memory entry and search types for Qdrant storage
  */
 
 export type SourceType = 'file' | 'conversation' | 'manual' | 'web';

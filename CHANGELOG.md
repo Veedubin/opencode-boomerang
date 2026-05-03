@@ -5,6 +5,199 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.0.0 - BREAKING: Hard Refactor - Orchestrator as Pure Decision Layer
+
+### Breaking Changes
+
+- **Orchestrator is now a pure decision layer** — The orchestrator analyzes requests, queries memory, selects agents, and builds Context Packages. It does NOT execute agents directly.
+- **OpenCode handles agent execution** — Agent spawning and lifecycle management is handled natively by OpenCode, not by Boomerang.
+- **Protocol is advisory only** — `ProtocolAdvisor` logs suggestions and warnings, but **never blocks execution** regardless of strictness level.
+- **Removed fake agent execution** — `AgentSpawner` was simulating agent responses, not actually executing agents. This has been deleted.
+- **Removed deprecated components** — `TaskExecutor`, `ScoringRouter`, `ContextMonitor`, `ContextCompactor`, `MiddlewarePipeline`, `ProtocolTracker`, `SequentialThinker`, `server.ts`, `memory-service.ts` all deleted.
+
+### Architecture Changes
+
+| Component | Old Behavior | New Behavior (v4.0.0) |
+|-----------|--------------|----------------------|
+| Orchestrator | Attempted execution via TaskRunner | Pure decision layer, returns Context Package |
+| AgentSpawner | Fake simulation (canned responses) | Deleted - OpenCode handles execution |
+| ProtocolEnforcer | Blocking with strictness levels | Advisory only - never blocks |
+| ScoringRouter | Queried wrong metrics event type | Deleted - keyword routing only |
+| ContextMonitor | Naive 4chars/token heuristic | Deleted |
+| MemoryService | Wrapper over MCP | Direct Super-Memory-TS integration |
+
+### Deleted Files (11 total)
+
+| File | Reason |
+|------|--------|
+| `src/execution/agent-spawner.ts` | Fake simulation, not real execution |
+| `src/task-executor.ts` | Duplicate execution logic |
+| `src/routing/scoring-router.ts` | Queried wrong metrics event type |
+| `src/context/monitor.ts` | Naive 4chars/token heuristic, never read actual tokens |
+| `src/context/compactor.ts` | No real compaction implementation |
+| `src/middleware/pipeline.ts` | Never integrated into execution path |
+| `src/protocol/tracker.ts` | Deprecated |
+| `src/execution/sequential-thinker.ts` | `globalThis.mcp` never true in Node.js |
+| `src/server.ts` | Deprecated MCP server |
+| `src/memory-service.ts` | Replaced by direct memory integration |
+| `src/utils/frontmatter.ts` | Inline parsing now in asset-loader |
+
+### New Architecture
+
+| Component | Purpose |
+|-----------|---------|
+| `BoomerangOrchestrator` | Pure decision layer - analyzes, queries memory, selects agent, builds Context Package |
+| `ProtocolAdvisor` | Advisory protocol - logs suggestions, never blocks |
+| `TaskRunner` | Prompt builder only - no subprocess execution |
+| `DocTracker` | SHA-256 hash comparison for documentation tracking |
+
+### What Boomerang Actually Does (v4.0.0)
+
+1. **Analyze** user request and detect task type
+2. **Query memory** for relevant context
+3. **Select agent** based on task type
+4. **Build Context Package** with system prompt, task, and context
+5. **Return** `{agent, systemPrompt, contextPackage, suggestions}` to OpenCode
+6. **OpenCode** executes the selected agent natively
+
+### Test Results
+
+- **155/155 tests passing** after hard refactor
+- Deleted 6 test files that referenced deleted components
+- Updated `orchestrator.test.ts` to test pure decision layer API
+
+### Migration from v3.x
+
+#### Overview
+
+v4.0.0 is a **hard refactor** that changes Boomerang from an execution engine to a **pure decision layer**. If you were using Boomerang v3.x in OpenCode, here's what this means for you:
+
+- **Boomerang no longer executes agents** — OpenCode handles all agent lifecycle management natively
+- **Protocol is advisory only** — Suggestions and warnings are logged, but execution is never blocked
+- **11 dead files deleted** — Components that never worked or were duplicates are gone
+- **Your setup likely works with minimal changes** — Most configuration (agents, models, skills) is preserved
+
+#### Breaking Changes Summary
+
+| Category | What Changed |
+|----------|--------------|
+| **Orchestrator role** | Now a pure decision layer — analyzes, queries memory, selects agent, builds Context Package. Does NOT execute agents. |
+| **Agent execution** | Boomerang no longer spawns subprocesses. OpenCode handles execution natively. |
+| **Protocol enforcement** | Was blocking (could halt execution). Now advisory only — never blocks regardless of strictness level. |
+| **Routing** | ScoringRouter deleted (queried wrong metrics event type). Keyword routing only. |
+| **Context monitoring** | ContextMonitor and ContextCompactor deleted (naive heuristic, no real implementation). |
+| **Memory integration** | `memory-service.ts` deleted — replaced by direct Super-Memory-TS integration via `src/memory/index.ts`. |
+| **MCP server** | `server.ts` deprecated — use built-in integration instead. |
+| **Deleted files** | AgentSpawner, TaskExecutor, ScoringRouter, ContextMonitor, ContextCompactor, MiddlewarePipeline, ProtocolTracker, SequentialThinker, server.ts, memory-service.ts, frontmatter.ts |
+
+#### Action Items
+
+**1. Update code importing deleted modules**
+```typescript
+// BEFORE (v3.x) — These imports no longer work:
+import { AgentSpawner } from './src/execution/agent-spawner.js';
+import { TaskExecutor } from './src/task-executor.js';
+import { ScoringRouter } from './src/routing/scoring-router.js';
+import { ContextMonitor } from './src/context/monitor.js';
+import { ProtocolTracker } from './src/protocol/tracker.js';
+import { SequentialThinker } from './src/execution/sequential-thinker.js';
+import { MemoryService } from './src/memory-service.js';
+
+// AFTER (v4.0.0) — Direct imports from Super-Memory-TS:
+import { MemorySystem, ProjectIndexer } from '@veedubin/super-memory-ts';
+```
+
+**2. Remove blocking protocol expectations**
+```typescript
+// BEFORE (v3.x) — Protocol could block execution:
+const result = await orchestrator.execute(task);
+// If protocol steps weren't followed, result might be blocked or null
+
+// AFTER (v4.0.0) — Orchestrator returns Context Package:
+const { agent, systemPrompt, contextPackage, suggestions } = await orchestrator.analyze(task);
+// suggestions contains protocol advice, but execution proceeds regardless
+```
+
+**3. Update orchestrator response handling**
+```typescript
+// BEFORE (v3.x):
+const result = await orchestrator.execute(request);
+// result was the execution result
+
+// AFTER (v4.0.0):
+const { agent, systemPrompt, contextPackage, suggestions } = await orchestrator.analyze(request);
+// agent: string (agent name like "boomerang-coder")
+// systemPrompt: string (full prompt to send to agent)
+// contextPackage: object (structured context for the agent)
+// suggestions: string[] (protocol recommendations)
+```
+
+**4. Remove quality gate blocking logic**
+```typescript
+// BEFORE (v3.x) — Code might check for blocking:
+if (result.blocked) {
+  return { error: 'Protocol violation', blocked: true };
+}
+
+// AFTER (v4.0.0) — Protocol is advisory:
+const { suggestions } = await orchestrator.analyze(request);
+// suggestions contains recommendations, but execution continues
+// Log suggestions for debugging: suggestions.forEach(s => logger.log(s));
+```
+
+#### API Changes
+
+| Old API (v3.x) | New API (v4.0.0) | Notes |
+|----------------|------------------|-------|
+| `orchestrator.execute(task)` | `orchestrator.analyze(request)` | Returns Context Package, doesn't execute |
+| `AgentSpawner.spawn(agent, task)` | OpenCode handles natively | Deleted component |
+| `TaskRunner.run(task)` | `TaskRunner.buildPrompt(context)` | Prompt builder only |
+| `ProtocolEnforcer.enforce(state)` | `ProtocolAdvisor.suggest(state)` | Advisory only |
+| `ScoringRouter.route(task, metrics)` | Keyword routing | No metrics-based routing |
+| `MemoryService.query()` | Direct `MemorySystem.query()` | Via `src/memory/index.js` |
+| `ContextMonitor.check(tokens)` | N/A | Deleted |
+
+#### No-Action Items (Unchanged)
+
+These components and configurations **work without changes**:
+
+| Category | What's Preserved |
+|----------|------------------|
+| **Agent roster** | All 12 agents in `agents/` and `.opencode/agents/` work |
+| **Model configuration** | `--primary`/`--secondary` args in `install-agents.js` unchanged |
+| **Skill files** | All 14 skills in `skills/` and `.opencode/skills/` work |
+| **Memory setup** | Qdrant, embeddings, tiered search — all unchanged |
+| **Project indexing** | chokidar watcher, incremental SHA-256 updates work |
+| **Context Package format** | 8-section structure preserved |
+| **Prompt composition** | 6-layer `buildPrompt()` unchanged |
+| **CLI commands** | `boomerang-install`, `boomerang-init` unchanged |
+| **Environment variables** | `BOOMERANG_PROJECT_ID`, Qdrant URL config unchanged |
+
+#### Rollback Notes
+
+**To stay on v3.x if needed:**
+
+```bash
+# Check current version
+cat package.json | grep version
+
+# Revert to v3.2.0 (last v3 release)
+git checkout $(git rev-list --tags | head -1)  # or specific tag
+git tag plugin-v3.2.0
+
+# Pin to v3.x in package.json
+echo '"@veedubin/boomerang-v2": "~3.2.0"' >> package.json
+npm install
+```
+
+> **Note**: v3.x is no longer maintained. Security issues and bugs will not be fixed in v3.x.
+
+#### Getting Help
+
+- **uper-memory**: Query `super-memory_query_memories` with `"boomerang v4.0.0 migration"` for detailed context
+- **Documentation**: See `docs/ARCHITECTURE.md` for new architecture diagrams
+- **Issues**: Check GitHub for known issues with the v4.0.0 refactor
+
 ## v3.2.0 - Prompt Composition Fix + Code Cleanup
 
 ### Added

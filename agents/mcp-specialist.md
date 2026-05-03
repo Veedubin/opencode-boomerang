@@ -7,9 +7,7 @@ permission:
   edit: allow
   bash: allow
   read:
-    "*.ts": allow
-    "*.json": allow
-    "*.md": allow
+    "*": allow
   tool:
     "boomerang_*": allow
     "super-memory_*": allow

@@ -6,6 +6,8 @@ model: minimax/MiniMax-M2.7
 steps: 50
 permission:
   edit: deny
+  read:
+    "*": allow
   bash: allow
   tool:
     "boomerang_*": allow

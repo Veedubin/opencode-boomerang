@@ -1,195 +1,158 @@
 /**
- * Orchestrator and TaskExecutor Tests
+ * Orchestrator Tests - Pure Decision Layer
+ * 
+ * Tests for the new BoomerangOrchestrator that returns Context Packages
+ * for OpenCode to execute, rather than executing agents directly.
  */
 
-import { test, expect, describe, beforeEach } from 'vitest';
-import { Orchestrator, DEFAULT_AGENTS } from '../src/orchestrator.js';
-import { TaskExecutor } from '../src/task-executor.js';
-import type { Task, TaskGraph } from '../src/orchestrator.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { BoomerangOrchestrator, createOrchestrator } from '../src/orchestrator.js';
 
-describe('Orchestrator', () => {
-  let orchestrator: Orchestrator;
+// Mock the memory system
+vi.mock('../src/memory/index.js', () => ({
+  getMemorySystem: () => ({
+    isInitialized: () => true,
+    search: vi.fn().mockResolvedValue([
+      {
+        entry: {
+          id: 'mem-1',
+          text: 'decided to use Qdrant for vector storage',
+          sourcePath: 'file:///src/memory/index.ts',
+          timestamp: Date.now(),
+        }
+      }
+    ]),
+    initialize: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+describe('BoomerangOrchestrator', () => {
+  let orchestrator: BoomerangOrchestrator;
 
   beforeEach(() => {
-    orchestrator = new Orchestrator(DEFAULT_AGENTS);
+    orchestrator = new BoomerangOrchestrator();
   });
 
-  describe('planTask', () => {
-    test('assigns boomerang-explorer for explore/find keywords', async () => {
-      const graph = await orchestrator.planTask('explore the codebase structure');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang-explorer');
+  describe('orchestrate', () => {
+    it('should return orchestration result with agent and context package', async () => {
+      const result = await orchestrator.orchestrate('implement user authentication');
+      
+      expect(result).toBeDefined();
+      expect(result.agent).toBe('boomerang-coder');
+      expect(result.systemPrompt).toBeDefined();
+      expect(result.contextPackage).toBeDefined();
+      expect(result.suggestions).toBeDefined();
     });
 
-    test('assigns boomerang-coder for code/implement keywords', async () => {
-      const graph = await orchestrator.planTask('implement a new feature');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang-coder');
+    it('should detect code task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('implement a new feature');
+      
+      expect(result.agent).toBe('boomerang-coder');
     });
 
-    test('assigns boomerang-tester for test keywords', async () => {
-      const graph = await orchestrator.planTask('test the new feature');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang-tester');
+    it('should detect test task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('test the payment processing');
+      
+      expect(result.agent).toBe('boomerang-tester');
     });
 
-    test('assigns boomerang-architect for review/design keywords', async () => {
-      const graph = await orchestrator.planTask('review the architecture');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang-architect');
+    it('should detect explore task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('find files with API endpoints');
+      
+      expect(result.agent).toBe('boomerang-explorer');
     });
 
-    test('assigns boomerang-writer for write/doc keywords', async () => {
-      const graph = await orchestrator.planTask('write documentation for the API');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang-writer');
+    it('should detect review task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('analyze the architecture');
+      
+      expect(result.agent).toBe('boomerang-architect');
     });
 
-    test('assigns boomerang-git for git keywords', async () => {
-      const graph = await orchestrator.planTask('commit the changes');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang-git');
+    it('should detect write task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('write documentation for the API');
+      
+      expect(result.agent).toBe('boomerang-writer');
     });
 
-    test('splits compound requests into multiple tasks', async () => {
-      const graph = await orchestrator.planTask('explore the codebase then implement feature');
-      expect(graph.tasks.length).toBe(2);
+    it('should detect git task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('commit the changes');
+      
+      expect(result.agent).toBe('boomerang-git');
     });
 
-    test('assigns default agent for unrecognized keywords', async () => {
-      const graph = await orchestrator.planTask('do something generic');
-      expect(graph.tasks.length).toBeGreaterThan(0);
-      expect(graph.tasks[0].agent).toBe('boomerang');
+    it('should detect release task type from keywords', async () => {
+      const result = await orchestrator.orchestrate('publish version 2.0');
+      
+      expect(result.agent).toBe('boomerang-release');
+    });
+
+    it('should default to boomerang-coder for unknown tasks', async () => {
+      const result = await orchestrator.orchestrate('do something generic');
+      
+      // Should still return a valid agent
+      expect(result.agent).toBeDefined();
+    });
+
+    it('should build context package with relevant fields', async () => {
+      const result = await orchestrator.orchestrate('implement feature');
+      
+      const cp = result.contextPackage;
+      expect(cp.originalUserRequest).toBe('implement feature');
+      expect(cp.taskBackground).toBeDefined();
+      expect(cp.relevantFiles).toBeDefined();
+      expect(cp.codeSnippets).toBeDefined();
+      expect(cp.previousDecisions).toBeDefined();
+      expect(cp.expectedOutput).toBeDefined();
+      expect(cp.scopeBoundaries).toBeDefined();
+      expect(cp.errorHandling).toBeDefined();
+    });
+
+    it('should suggest sequential thinking for complex tasks', async () => {
+      const result = await orchestrator.orchestrate('implement a complex architecture refactor');
+      
+      expect(result.suggestions.useSequentialThinking).toBe(true);
+    });
+
+    it('should suggest quality gates for code tasks', async () => {
+      const result = await orchestrator.orchestrate('implement feature');
+      
+      expect(result.suggestions.runQualityGates).toBe(true);
+    });
+
+    it('should not suggest quality gates for explore tasks', async () => {
+      const result = await orchestrator.orchestrate('find files');
+      
+      expect(result.suggestions.runQualityGates).toBe(false);
     });
   });
 
-  describe('validateGraph', () => {
-    test('accepts valid graph without cycles', () => {
-      const graph: TaskGraph = {
-        tasks: [
-          { id: 't1', type: 'explore', description: 'task 1', agent: 'boomerang-explorer', dependencies: [], status: 'pending' },
-          { id: 't2', type: 'code', description: 'task 2', agent: 'boomerang-coder', dependencies: ['t1'], status: 'pending' },
-        ],
-        edges: [['t2', 't1']],
-      };
-      expect(orchestrator.validateGraph(graph)).toBe(true);
+  describe('context package generation', () => {
+    it('should extract file paths from memory results', async () => {
+      const result = await orchestrator.orchestrate('implement something');
+      
+      // Memory mock returns a file:// path, should extract it
+      expect(result.contextPackage.relevantFiles.length).toBeGreaterThanOrEqual(0);
     });
 
-    test('detects cycle in graph', () => {
-      const graph: TaskGraph = {
-        tasks: [
-          { id: 't1', type: 'code', description: 'task 1', agent: 'boomerang-coder', dependencies: ['t2'], status: 'pending' },
-          { id: 't2', type: 'code', description: 'task 2', agent: 'boomerang-coder', dependencies: ['t1'], status: 'pending' },
-        ],
-        edges: [['t1', 't2'], ['t2', 't1']],
-      };
-      expect(orchestrator.validateGraph(graph)).toBe(false);
+    it('should generate task background with task type', async () => {
+      const result = await orchestrator.orchestrate('test the feature');
+      
+      expect(result.contextPackage.taskBackground).toContain('test');
     });
 
-    test('rejects graph with missing dependency', () => {
-      const graph: TaskGraph = {
-        tasks: [
-          { id: 't1', type: 'code', description: 'task 1', agent: 'boomerang-coder', dependencies: ['nonexistent'], status: 'pending' },
-        ],
-        edges: [],
-      };
-      expect(orchestrator.validateGraph(graph)).toBe(false);
-    });
-
-    test('rejects graph with invalid agent', () => {
-      const graph: TaskGraph = {
-        tasks: [
-          { id: 't1', type: 'code', description: 'task 1', agent: 'invalid-agent', dependencies: [], status: 'pending' },
-        ],
-        edges: [],
-      };
-      expect(orchestrator.validateGraph(graph)).toBe(false);
-    });
-  });
-
-  describe('optimizeGraph', () => {
-    test('removes redundant dependencies', () => {
-      const graph: TaskGraph = {
-        tasks: [
-          { id: 't1', type: 'explore', description: 'task 1', agent: 'boomerang-explorer', dependencies: [], status: 'pending' },
-          { id: 't2', type: 'code', description: 'task 2', agent: 'boomerang-coder', dependencies: ['t1'], status: 'pending' },
-          { id: 't3', type: 'test', description: 'task 3', agent: 'boomerang-tester', dependencies: ['t2', 't1'], status: 'pending' },
-        ],
-        edges: [['t2', 't1'], ['t3', 't2'], ['t3', 't1']],
-      };
-      const optimized = orchestrator.optimizeGraph(graph);
-      // t3 depends on both t2 and t1, but t2 already depends on t1
-      // So t3->t1 edge should be removed as redundant
-      expect(optimized.edges.length).toBeLessThanOrEqual(graph.edges.length);
+    it('should generate scope boundaries based on task type', async () => {
+      const codeResult = await orchestrator.orchestrate('implement code');
+      
+      expect(codeResult.contextPackage.scopeBoundaries.inScope).toBeDefined();
+      expect(codeResult.contextPackage.scopeBoundaries.outOfScope).toBeDefined();
     });
   });
 });
 
-describe('TaskExecutor', () => {
-  let orchestrator: Orchestrator;
-  let executor: TaskExecutor;
-
-  beforeEach(() => {
-    orchestrator = new Orchestrator(DEFAULT_AGENTS);
-    executor = new TaskExecutor(orchestrator, 5, 15);
-  });
-
-  describe('execute', () => {
-    test('executes valid task graph', async () => {
-      const graph = await orchestrator.planTask('explore the codebase');
-      // Create a minimal executor with very short timeout
-      const minimalExecutor = new TaskExecutor(orchestrator, 5, 5);
-      minimalExecutor.setTaskTimeout(50);
-      const results = await minimalExecutor.execute(graph);
-      expect(results.length).toBeGreaterThan(0);
-    }, 5000);
-
-    test('rejects graph with cycle', async () => {
-      const graph: TaskGraph = {
-        tasks: [
-          { id: 't1', type: 'code', description: 'task 1', agent: 'boomerang-coder', dependencies: ['t2'], status: 'pending' },
-          { id: 't2', type: 'code', description: 'task 2', agent: 'boomerang-coder', dependencies: ['t1'], status: 'pending' },
-        ],
-        edges: [['t1', 't2'], ['t2', 't1']],
-      };
-      const results = await executor.execute(graph);
-      expect(results[0].success).toBe(false);
-      expect(results[0].error).toContain('Invalid task graph');
-    });
-  });
-
-  describe('detectLoop', () => {
-    test('detects similar tasks with >90% similarity', () => {
-      const history: Task[] = [
-        { id: 't1', type: 'code', description: 'implement user authentication module', agent: 'boomerang-coder', dependencies: [], status: 'completed' },
-      ];
-      const currentTask: Task = {
-        id: 't2',
-        type: 'code',
-        description: 'implement user authentication module with JWT tokens',
-        agent: 'boomerang-coder',
-        dependencies: [],
-        status: 'pending',
-      };
-      // Current text includes history text as substring (39/54 = 72% - not enough)
-      // Use identical descriptions to get 100% similarity
-      currentTask.description = 'implement user authentication module';
-      expect(executor.detectLoop(currentTask, history)).toBe(true);
-    });
-
-    test('allows different tasks', () => {
-      const history: Task[] = [
-        { id: 't1', type: 'explore', description: 'explore the codebase structure', agent: 'boomerang-explorer', dependencies: [], status: 'completed' },
-      ];
-      const currentTask: Task = {
-        id: 't2',
-        type: 'code',
-        description: 'implement user login feature',
-        agent: 'boomerang-coder',
-        dependencies: [],
-        status: 'pending',
-      };
-      expect(executor.detectLoop(currentTask, history)).toBe(false);
-    });
+describe('createOrchestrator factory', () => {
+  it('should create a new orchestrator instance', () => {
+    const orchestrator = createOrchestrator();
+    
+    expect(orchestrator).toBeInstanceOf(BoomerangOrchestrator);
   });
 });

@@ -4,7 +4,7 @@ mode: primary
 model: kimi-for-coding/k2p6
 steps: 50
 permission:
-  edit: deny
+  edit: ask
   bash:
     "*": ask
     "git status": allow
@@ -21,9 +21,7 @@ permission:
     "find *": allow
     "cd *": allow
   read:
-    "*": deny
-    "*.md": allow
-    "**/*.md": allow
+    "*": allow
   tool:
     "boomerang_*": allow
     "searxng_*": allow

@@ -1,249 +1,263 @@
-import { parseTasksFromPrompt, buildDAG, createExecutionPlan, assignAgentsToTasks } from "./task-parser.js";
-import { executeParallelTasks, executeSequentialTasks, aggregateResults } from "./task-executor.js";
-import { boomerangMemory } from "./memory.js";
-import { checkGitStatus, commitCheckpoint, commitWithMessage, generateCommitMessage } from "./git.js";
-import { runAllQualityGates, DEFAULT_QUALITY_GATES } from "./quality-gates.js";
-import { OrchestratorContext, BoomerangConfig, ExecutionPlan, PhaseResult, AggregatedResults, GitStatus, DEFAULT_EXECUTION_CONFIG } from "./types.js";
-import { isolateResult } from "./context-isolation.js";
-import { globalMiddleware } from "./middleware.js";
+/**
+ * BoomerangOrchestrator - Pure Decision Layer v4.0.0
+ * 
+ * Does NOT execute agents or spawn subprocesses.
+ * Analyzes requests and returns Context Packages for OpenCode to execute.
+ * 
+ * Self-contained - no cross-package imports from root boomerang-v2/src/.
+ */
 
+import { getMemorySystem } from './memory.js';
+import { loadAgents } from './asset-loader.js';
+import type { AgentDefinition, MemoryEntry } from './types.js';
+
+export interface OrchestrationResult {
+  agent: string;
+  systemPrompt: string;
+  contextPackage: ContextPackage;
+  suggestions: {
+    useSequentialThinking: boolean;
+    runQualityGates: boolean;
+  };
+}
+
+export interface ContextPackage {
+  originalUserRequest: string;
+  taskBackground: string;
+  relevantFiles: string[];
+  codeSnippets: string[];
+  previousDecisions: string[];
+  expectedOutput: string;
+  scopeBoundaries: {
+    inScope: string[];
+    outOfScope: string[];
+  };
+  errorHandling: string;
+}
+
+// Task type detection keywords
+const TASK_KEYWORDS: Record<string, string[]> = {
+  code: ['code', 'implement', 'create', 'add', 'build', 'make', 'fix', 'refactor'],
+  test: ['test', 'testing', 'verify', 'check', 'validate', 'spec'],
+  explore: ['explore', 'find', 'search', 'locate', 'discover', 'grep', 'glob'],
+  review: ['review', 'analyze', 'assess', 'evaluate', 'architect'],
+  write: ['doc', 'documentation', 'readme', 'md', 'write', 'update'],
+  git: ['git', 'commit', 'push', 'branch', 'merge', 'pull', 'checkout', 'tag'],
+  release: ['release', 'publish', 'version', 'bump', 'changelog'],
+  scraper: ['scrape', 'fetch', 'web', 'search', 'research'],
+};
+
+const AGENT_FOR_TASK: Record<string, string> = {
+  code: 'boomerang-coder',
+  test: 'boomerang-tester',
+  explore: 'boomerang-explorer',
+  review: 'boomerang-architect',
+  write: 'boomerang-writer',
+  git: 'boomerang-git',
+  release: 'boomerang-release',
+  scraper: 'boomerang-scraper',
+};
+
+const COMPLEX_PATTERNS = /implement|create|design|architecture|refactor|migration|complex|multiple|stripe/i;
+const THINKING_TRIGGERS = /think through|analyze|plan this|design|architecture|refactor/i;
+
+/**
+ * BoomerangOrchestrator - Pure decision layer for OpenCode integration
+ * 
+ * Returns context packages, NOT execution results. OpenCode executes agents natively.
+ */
 export class BoomerangOrchestrator {
-  private ctx: OrchestratorContext;
-  private config: BoomerangConfig;
-  private $: (strings: TemplateStringsArray, ...values: any[]) => Promise<any>;
+  private agents: AgentDefinition[];
 
-  constructor(
-    ctx: OrchestratorContext,
-    config: BoomerangConfig,
-    shellRunner: (strings: TemplateStringsArray, ...values: any[]) => Promise<any>
-  ) {
-    this.ctx = ctx;
-    this.config = config;
-    this.$ = shellRunner;
+  constructor() {
+    this.agents = loadAgents();
   }
 
-  async run(prompt: string): Promise<{
-    success: boolean;
-    tasks: any[];
-    dag: any;
-    executionPlan: ExecutionPlan;
-    executionResults: PhaseResult[];
-    qualityGateResults: { allPassed: boolean; summary: string };
-    gitCommit?: { hash: string; message: string };
-    memorySaved: boolean;
-    summary: string;
-  }> {
-    try {
-      this.ctx.client.app.log("Starting Boomerang execution");
-    } catch {
-      // Client logging not available
-    }
-
-    // Git check
-    const gitStatus: GitStatus = { isDirty: false, files: [], branch: "", ahead: 0, behind: 0 };
-    if (this.config.gitCheckBeforeWork) {
-      const status = await checkGitStatus(this.$);
-      Object.assign(gitStatus, status);
-      if (status.isDirty) {
-        await commitCheckpoint(this.$, "wip: pre-work checkpoint");
-      }
-    }
-
-    // Memory context
-    const memoryContext = await this.fetchMemoryContext(prompt);
-    if (memoryContext) {
-      try {
-        this.ctx.client.app.log("Memory context fetched");
-      } catch {}
-    }
-
-    // Parse and plan
-    const tasks = parseTasksFromPrompt(prompt);
-    const tasksWithAgents = assignAgentsToTasks(tasks);
-
-    const dag = buildDAG(tasksWithAgents);
-    const executionPlan = createExecutionPlan(dag);
-
-    // Execute with optional middleware
-    const executionResults = await this.executePlan(executionPlan);
-    const aggregated = aggregateResults(executionResults);
-
-    // Quality gates
-    let qualityPassed = true;
-    let qualitySummary = "Skipped";
-    const qualityResult = await runAllQualityGates(DEFAULT_QUALITY_GATES);
-    qualityPassed = qualityResult.allPassed;
-    qualitySummary = qualityResult.summary;
-
-    // Git commit
-    let commitResult: { hash: string; message: string } | undefined;
-    if (this.config.gitCommitAfterWork && qualityPassed) {
-      const commitMessage = generateCommitMessage(prompt);
-      const result = await commitWithMessage(this.$, commitMessage);
-      if (result.success && result.hash) {
-        commitResult = { hash: result.hash, message: commitMessage };
-      }
-    }
-
-    // Save memory
-    if (this.config.memoryEnabled) {
-      await boomerangMemory.addMemory(
-        `Completed: ${prompt.substring(0, 200)}... Tasks: ${tasks.length}, Passed: ${aggregated.successfulTasks}`,
-        ["boomerang", "session"]
-      );
-    }
-
+  /**
+   * Main orchestration entry point
+   * Analyze request, query memory, build context package, return for OpenCode execution
+   */
+  async orchestrate(request: string): Promise<OrchestrationResult> {
+    // Step 1: Query memory for relevant context
+    const memories = await this.queryMemory(request);
+    
+    // Step 2: Detect task type
+    const taskType = this.detectTaskType(request);
+    
+    // Step 3: Select agent
+    const agent = this.selectAgent(taskType);
+    
+    // Step 4: Build context package
+    const contextPackage = this.buildContextPackage(request, taskType, agent, memories);
+    
+    // Step 5: Return orchestration result for OpenCode to execute
     return {
-      success: aggregated.allPassed && qualityPassed,
-      tasks: tasksWithAgents,
-      dag,
-      executionPlan,
-      executionResults,
-      qualityGateResults: { allPassed: qualityPassed, summary: qualitySummary },
-      gitCommit: commitResult,
-      memorySaved: this.config.memoryEnabled,
-      summary: this.formatSummary(aggregated, qualityPassed, commitResult, gitStatus),
+      agent: agent.name,
+      systemPrompt: agent.systemPrompt || '',
+      contextPackage,
+      suggestions: {
+        useSequentialThinking: this.isComplexTask(request),
+        runQualityGates: taskType === 'code',
+      },
     };
   }
 
-  private async fetchMemoryContext(prompt: string): Promise<string> {
-    if (!this.config.memoryEnabled) return "";
-    const searchResult = await boomerangMemory.searchMemory(prompt);
-    if (searchResult.success && searchResult.results) {
-      return boomerangMemory.formatContextForInjection(searchResult.results);
+  /**
+   * Query memories for relevant context
+   */
+  private async queryMemory(request: string): Promise<MemoryEntry[]> {
+    try {
+      const memorySystem = getMemorySystem();
+      if (!memorySystem.isInitialized()) {
+        return [];
+      }
+      const results = await memorySystem.search(request, { topK: 10 });
+      return results.map(r => r.entry);
+    } catch {
+      return [];
     }
-    return "";
   }
 
-  private async executePlan(plan: ExecutionPlan): Promise<PhaseResult[]> {
-    const executionConfig = this.config.executionConfig || DEFAULT_EXECUTION_CONFIG;
-    const results: PhaseResult[] = [];
-    for (const phase of plan.executionOrder) {
-      const phaseResult: PhaseResult = {
-        phase: phase.phase,
-        type: phase.type,
-        results: [],
-        allSuccess: false,
-      };
-
-      // Wrap execution with middleware if enabled
-      if (this.config.middlewareEnabled) {
-        phaseResult.results = await globalMiddleware.execute(
-          "before_agent",
-          { phase, config: this.config },
-          async () => {
-            return phase.type === "parallel"
-              ? await executeParallelTasks(
-                  this.ctx,
-                  phase.tasks.map((t) => ({
-                    id: t.id,
-                    description: t.description,
-                    agent: t.agent,
-                    status: t.status,
-                    dependencies: t.dependencies,
-                  })),
-                  this.config.coderModel,
-                  executionConfig
-                )
-              : await executeSequentialTasks(
-                  this.ctx,
-                  phase.tasks.map((t) => ({
-                    id: t.id,
-                    description: t.description,
-                    agent: t.agent,
-                    status: t.status,
-                    dependencies: t.dependencies,
-                  })),
-                  this.config.coderModel,
-                  executionConfig
-                );
-          }
-        );
-      } else {
-        phaseResult.results =
-          phase.type === "parallel"
-            ? await executeParallelTasks(
-                this.ctx,
-                phase.tasks.map((t) => ({
-                  id: t.id,
-                  description: t.description,
-                  agent: t.agent,
-                  status: t.status,
-                  dependencies: t.dependencies,
-                })),
-                this.config.coderModel,
-                executionConfig
-              )
-            : await executeSequentialTasks(
-                this.ctx,
-                phase.tasks.map((t) => ({
-                  id: t.id,
-                  description: t.description,
-                  agent: t.agent,
-                  status: t.status,
-                  dependencies: t.dependencies,
-                })),
-                this.config.coderModel,
-                executionConfig
-              );
-      }
-
-      // Apply context isolation to results
-      if (this.config.contextIsolationEnabled) {
-        phaseResult.results = phaseResult.results.map((result) => {
-          if (result.output && result.output.length > 100) {
-            const isolated = isolateResult(
-              result.output,
-              "task",
-              result.taskId,
-              (raw) => raw.substring(0, 500) + (raw.length > 500 ? "..." : "")
-            );
-            return {
-              ...result,
-              output: isolated.summary,
-            };
-          }
-          return result;
-        });
-      }
-
-      phaseResult.allSuccess = phaseResult.results.every((r) => r.success);
-      results.push(phaseResult);
-
-      if (!phaseResult.allSuccess && phase.type === "sequential") {
-        break;
+  /**
+   * Detect task type from request keywords
+   */
+  private detectTaskType(request: string): string {
+    const lower = request.toLowerCase();
+    
+    for (const [taskType, keywords] of Object.entries(TASK_KEYWORDS)) {
+      for (const keyword of keywords) {
+        if (lower.includes(keyword)) {
+          return taskType;
+        }
       }
     }
-    return results;
+    
+    return 'code';
   }
 
-  private formatSummary(
-    aggregated: AggregatedResults,
-    qualityPassed: boolean,
-    commit?: { hash: string; message: string },
-    gitStatus?: GitStatus
-  ): string {
-    let summary = "## Boomerang Execution Summary\n\n";
-    summary += `**Status:** ${aggregated.failedTasks === 0 && qualityPassed ? "✅ Success" : "⚠️ Partial"}\n\n`;
-    summary += `**Tasks:** ${aggregated.successfulTasks}/${aggregated.totalTasks} completed\n`;
-    summary += `**Quality Gates:** ${qualityPassed ? "✅ Passed" : "❌ Failed"}\n`;
-    summary += `**Git:** ${gitStatus?.branch || "unknown"}`;
-    if (gitStatus?.isDirty) summary += " (dirty)";
-    summary += "\n";
-    if (commit) {
-      summary += `**Commit:** ${commit.hash} - ${commit.message}\n`;
+  /**
+   * Select agent based on task type
+   */
+  private selectAgent(taskType: string): AgentDefinition {
+    const agentName = AGENT_FOR_TASK[taskType] || 'boomerang';
+    const agent = this.agents.find(a => a.name === agentName);
+    
+    if (agent) {
+      return agent;
     }
-    if (this.config.contextIsolationEnabled) {
-      summary += "\n*Context isolation enabled — large outputs evicted to files*\n";
+    
+    const fallback = this.agents.find(a => a.name === 'boomerang');
+    return fallback || {
+      name: 'boomerang',
+      description: 'General purpose agent',
+      systemPrompt: '',
+      skills: [],
+    };
+  }
+
+  /**
+   * Build complete Context Package
+   */
+  private buildContextPackage(
+    request: string,
+    taskType: string,
+    _agent: AgentDefinition,
+    memories: MemoryEntry[]
+  ): ContextPackage {
+    const relevantFiles = this.extractFilePaths(memories);
+    const previousDecisions = this.extractDecisions(memories);
+    
+    return {
+      originalUserRequest: request,
+      taskBackground: this.generateTaskBackground(taskType, request),
+      relevantFiles,
+      codeSnippets: this.extractCodeSnippets(memories),
+      previousDecisions,
+      expectedOutput: this.generateExpectedOutput(taskType),
+      scopeBoundaries: this.generateScopeBoundaries(taskType),
+      errorHandling: 'Report errors clearly with file paths and line numbers. Do not crash silently.',
+    };
+  }
+
+  private extractFilePaths(memories: MemoryEntry[]): string[] {
+    const paths = new Set<string>();
+    for (const memory of memories) {
+      if (memory.sourcePath && memory.sourcePath.startsWith('file://')) {
+        paths.add(memory.sourcePath.replace('file://', ''));
+      }
     }
-    return summary;
+    return Array.from(paths).slice(0, 20);
+  }
+
+  private extractDecisions(memories: MemoryEntry[]): string[] {
+    const decisions: string[] = [];
+    for (const memory of memories.slice(0, 5)) {
+      const content = memory.text;
+      if (content.includes('decided') || content.includes('chose') || content.includes('implemented')) {
+        decisions.push(content.substring(0, 200));
+      }
+    }
+    return decisions;
+  }
+
+  private extractCodeSnippets(memories: MemoryEntry[]): string[] {
+    const snippets: string[] = [];
+    for (const memory of memories) {
+      const content = memory.text;
+      const codeBlockMatch = content.match(/```[\s\S]*?```/g);
+      if (codeBlockMatch) {
+        snippets.push(...codeBlockMatch.slice(0, 3));
+      }
+    }
+    return snippets.slice(0, 5);
+  }
+
+  private generateTaskBackground(taskType: string, request: string): string {
+    return `Task type: ${taskType}\nUser request: ${request.substring(0, 500)}`;
+  }
+
+  private generateExpectedOutput(taskType: string): string {
+    const outputs: Record<string, string> = {
+      code: 'Working code with tests passing',
+      test: 'Test files with coverage',
+      explore: 'File paths and code locations',
+      review: 'Analysis with recommendations',
+      write: 'Updated documentation',
+      git: 'Git operations completed',
+      release: 'Published package with changelog',
+      scraper: 'Gathered data and sources',
+    };
+    return outputs[taskType] || 'Task completed successfully';
+  }
+
+  private generateScopeBoundaries(taskType: string): { inScope: string[]; outOfScope: string[] } {
+    const scopes: Record<string, { inScope: string[]; outOfScope: string[] }> = {
+      code: {
+        inScope: ['Implementation', 'Unit tests', 'Documentation updates'],
+        outOfScope: ['Major architecture changes', 'Database migrations', 'Performance optimization'],
+      },
+      test: {
+        inScope: ['Test files', 'Test coverage', 'Integration tests'],
+        outOfScope: ['Implementation changes', 'Production deployment'],
+      },
+      explore: {
+        inScope: ['File discovery', 'Pattern search', 'Code analysis'],
+        outOfScope: ['Code modifications', 'File creation'],
+      },
+    };
+    return scopes[taskType] || { inScope: ['Task execution'], outOfScope: ['Unrelated changes'] };
+  }
+
+  private isComplexTask(request: string): boolean {
+    return COMPLEX_PATTERNS.test(request) || 
+           THINKING_TRIGGERS.test(request) || 
+           request.length > 500;
   }
 }
 
-export function createBoomerangOrchestrator(
-  ctx: OrchestratorContext,
-  config: BoomerangConfig,
-  shellRunner: (strings: TemplateStringsArray, ...values: any[]) => Promise<any>
-): BoomerangOrchestrator {
-  return new BoomerangOrchestrator(ctx, config, shellRunner);
+/**
+ * Factory function to create orchestrator
+ */
+export function createOrchestrator(): BoomerangOrchestrator {
+  return new BoomerangOrchestrator();
 }

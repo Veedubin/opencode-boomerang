@@ -11,6 +11,7 @@ export type ProtocolEventType =
   | 'checkpoint.validated'
   | 'checkpoint.failed'
   | 'checkpoint.waived'
+  | 'checkpoint.passed'
   | 'protocol.completed'
   | 'protocol.error';
 

@@ -1,22 +1,34 @@
-// OpenCode plugin interface
-export const PLUGIN_NAME = '@veedubin/boomerang-v2';
-export const VERSION = '3.1.0';
+/**
+ * Boomerang v2 - OpenCode Plugin Interface
+ * 
+ * This is the actual plugin entry point that integrates with OpenCode's plugin system.
+ * Provides commands: 'boomerang', '/handoff'
+ * Registers agents and skills with OpenCode.
+ */
 
-// Plugin interface types
+import { createOrchestrator, type OrchestrationResult } from './orchestrator.js';
+import { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
+import { getMemorySystem } from './memory/index.js';
+
+// Plugin metadata
+export const PLUGIN_NAME = '@veedubin/boomerang-v2';
+export const VERSION = '4.0.0';
+
+// Plugin context interface (OpenCode provides this)
+export interface PluginContext {
+  cwd: string;
+  interactive: boolean;
+  args: string[];
+}
+
+// Command handler signature
+export type CommandHandler = (context: PluginContext) => Promise<void>;
+
+// Registry interface provided by OpenCode
 export interface PluginRegistry {
   registerCommand(name: string, handler: CommandHandler): void;
   registerAgent(name: string, definition: AgentDefinition): void;
   registerSkill(name: string, definition: SkillDefinition): void;
-}
-
-export interface PluginContext {
-  args: string[];
-  cwd: string;
-  interactive: boolean;
-}
-
-export interface CommandHandler {
-  (context: PluginContext): Promise<void>;
 }
 
 export interface AgentDefinition {
@@ -32,204 +44,136 @@ export interface SkillDefinition {
   instructions: string;
 }
 
-import { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
-import { MemoryService, getMemoryService } from './memory-service.js';
-import { getMemorySystem } from './memory/index.js';
-import { spawn } from 'child_process';
-
 // Qdrant configuration
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 
-// Warn about deprecated LANCEDB_URI
-if (process.env.LANCEDB_URI) {
-  console.warn('[DEPRECATED] LANCEDB_URI is deprecated. Use QDRANT_URL instead.');
-}
-
-let memoryService: MemoryService | null = null;
-
 /**
- * Register the plugin with the OpenCode registry
+ * Register the plugin with OpenCode's registry
+ * Called by OpenCode during plugin initialization
  */
 export function register(registry: PluginRegistry): void {
-  // Load agents and skills
+  // Load and register agents
   const agents = loadAgents();
-  const skills = loadSkills();
-
-  // Register each agent
   for (const agent of agents) {
-    registry.registerAgent(agent.name, agent);
+    registry.registerAgent(agent.name, {
+      name: agent.name,
+      description: agent.description,
+      systemPrompt: agent.systemPrompt || '',
+      skills: agent.skills,
+    });
   }
 
-  // Register each skill
+  // Load and register skills
+  const skills = loadSkills();
   for (const skill of skills) {
-    registry.registerSkill(skill.name, skill);
+    registry.registerSkill(skill.name, {
+      name: skill.name,
+      description: skill.description,
+      instructions: skill.instructions,
+    });
   }
 
   // Register commands
   registry.registerCommand('boomerang', handleBoomerangCommand);
-  registry.registerCommand('chat', handleChatCommand);
-  registry.registerCommand('index', handleIndexCommand);
-  registry.registerCommand('install-agents', handleInstallAgentsCommand);
+  registry.registerCommand('/handoff', handleHandoffCommand);
 }
 
 /**
- * Main execution loop for the plugin
+ * Activate the plugin - initialize memory and prepare for execution
+ * Called by OpenCode when plugin is first used
  */
-export async function execute(context: PluginContext): Promise<void> {
-  const [command, ...args] = context.args;
-
+export async function activate(context: PluginContext): Promise<void> {
   // Initialize memory system
-  memoryService = getMemoryService();
+  const memorySystem = getMemorySystem();
   try {
-    // Pass Qdrant URL for initialization
-    await memoryService.initialize(QDRANT_URL);
-    if (memoryService.isFallbackMode()) {
-      console.log('⚠️ Memory system in fallback mode — operating without persistence');
-    } else {
-      console.log('✅ Memory system initialized with Qdrant');
-    }
-  } catch (err) {
-    console.error('❌ Failed to initialize memory:', err);
+    await memorySystem.initialize(QDRANT_URL);
+    console.log('[boomerang] Memory system initialized');
+  } catch (error) {
+    console.warn('[boomerang] Memory initialization failed (fallback mode):', error instanceof Error ? error.message : error);
   }
 
-  try {
-    // Handle CLI commands
-    switch (command) {
-        case 'boomerang':
-          await handleBoomerangCommand(context);
-          break;
-        case 'chat':
-          await handleChatCommand(context);
-          break;
-        case 'index':
-          await handleIndexCommand(context);
-          break;
-        case 'install-agents':
-          await handleInstallAgentsCommand(context);
-          break;
-        default:
-          console.log('Available commands: boomerang, chat, index, install-agents');
-      }
-  } finally {
-    memoryService = null;
+  // Handle commands
+  const command = context.args[0];
+  if (command === 'boomerang' || command === undefined) {
+    await handleBoomerangCommand(context);
+  } else if (command === '/handoff') {
+    await handleHandoffCommand(context);
   }
 }
 
 /**
- * Handle boomerang command - main agent interaction
+ * Handle boomerang command - analyze request and prepare context for OpenCode execution
  */
 async function handleBoomerangCommand(context: PluginContext): Promise<void> {
-  const agentName = context.args[0] || 'boomerang';
-  const agent = getAgent(agentName);
+  const request = context.args.slice(1).join(' ') || 'help';
 
-  if (!agent) {
-    console.error(`Agent not found: ${agentName}`);
+  if (request === 'help') {
+    console.log(`
+Boomerang v${VERSION} - Multi-Agent Orchestration Plugin for OpenCode
+
+Commands:
+  boomerang <task>    - Orchestrate a task with appropriate agent
+  boomerang /handoff  - End session and save context
+
+Available agents:
+  - boomerang: General purpose orchestrator
+  - boomerang-coder: Fast code generation
+  - boomerang-tester: Testing specialist
+  - boomerang-explorer: Codebase exploration
+  - boomerang-architect: Architecture and design
+  - boomerang-writer: Documentation
+  - boomerang-git: Version control
+  - boomerang-linter: Quality enforcement
+  - boomerang-release: Release automation
+  - boomerang-scraper: Web research
+
+Examples:
+  boomerang implement user authentication
+  boomerang test payment processing
+  boomerang explore find files with API endpoints
+    `);
     return;
   }
 
-  console.log(`Starting Boomerang agent: ${agent.name}`);
-  console.log(`Description: ${agent.description}`);
+  try {
+    // Create orchestrator and analyze request
+    const orchestrator = createOrchestrator();
+    const result = await orchestrator.orchestrate(request);
 
-  // The actual agent execution would happen here
-  // For now, just display the agent info
-  console.log('\nSystem prompt loaded.');
-}
+    // Log orchestration result for OpenCode to pick up
+    console.log('[boomerang] Orchestration complete');
+    console.log(`[boomerang] Agent: ${result.agent}`);
+    console.log(`[boomerang] Context Package built with ${result.contextPackage.relevantFiles.length} relevant files`);
+    console.log(`[boomerang] Suggestions:`, result.suggestions);
 
-/**
- * Handle chat command - interactive conversation
- */
-async function handleChatCommand(context: PluginContext): Promise<void> {
-  console.log('Starting interactive chat mode...');
-
-  if (!memoryService) {
-    console.error('Memory service not initialized');
-    return;
-  }
-
-  // Query memories if provided
-  if (context.args.length > 0) {
-    const query = context.args.join(' ');
-    console.log(`Searching memories for: ${query}`);
-    const results = await memoryService.queryMemories(query, {});
-    console.log(`Found ${results.length} memories`);
-  } else {
-    console.log('Chat mode ready. Type your queries.');
+    // The actual execution happens via OpenCode's agent system
+    // We just prepare the context package
+  } catch (error) {
+    console.error('[boomerang] Orchestration failed:', error instanceof Error ? error.message : error);
   }
 }
 
 /**
- * Handle index command - index project files
+ * Handle handoff command - save context and prepare for session end
  */
-async function handleIndexCommand(context: PluginContext): Promise<void> {
-  console.log('Indexing project...');
+async function handleHandoffCommand(context: PluginContext): Promise<void> {
+  console.log('[boomerang] Starting session handoff...');
 
-  if (!memoryService) {
-    console.error('Memory service not initialized');
-    return;
+  try {
+    const memorySystem = getMemorySystem();
+    
+    if (memorySystem.isInitialized()) {
+      const summary = `Session handoff completed at ${new Date().toISOString()}`;
+      await memorySystem.saveContext('handoff', summary);
+      console.log('[boomerang] Context saved to memory');
+    }
+
+    console.log('[boomerang] Handoff complete. Session summary saved.');
+  } catch (error) {
+    console.error('[boomerang] Handoff failed:', error instanceof Error ? error.message : error);
   }
-
-  const path = context.args[0] || context.cwd;
-  console.log(`Indexing path: ${path}`);
-
-  await memoryService.indexProject(path);
-  console.log('Project indexed successfully');
 }
 
-/**
- * Handle install-agents command - run the agent installation script
- */
-async function handleInstallAgentsCommand(_context: PluginContext): Promise<void> {
-  console.log('Running agent installation...');
-  
-  const scriptPath = new URL('../scripts/install-agents.js', import.meta.url);
-  const child = spawn('node', [scriptPath.pathname], {
-    stdio: 'inherit',
-    shell: false
-  });
-  
-  await new Promise((resolve, reject) => {
-    child.on('close', (code) => {
-      if (code === 0) resolve(undefined);
-      else reject(new Error(`Script exited with code ${code}`));
-    });
-    child.on('error', reject);
-  });
-}
-
-// Re-export for external use
-export { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
-export { MemoryService, getMemoryService } from './memory-service.js';
-
-// ========== Protocol Enforcement v4.0 Exports ==========
-
-// Export protocol state machine and enforcement components
-export { ProtocolStateMachine } from './protocol/state-machine.js';
-export { CheckpointRegistry } from './protocol/checkpoint.js';
-export { ProtocolEnforcer } from './protocol/enforcer.js';
-export { ProtocolEventBus, createProtocolEvent } from './protocol/events.js';
-
-// Export types
-export type {
-  ProtocolState,
-  ProtocolContext,
-  ProtocolConfig,
-  TaskType,
-  CheckpointResult,
-  TransitionResult,
-  SessionState,
-} from './protocol/types.js';
-
-// Export default protocol config
-export { DEFAULT_PROTOCOL_CONFIG, createProtocolConfig } from './protocol/config.js';
-
-// ========== Execution Engine v4.0 Exports ==========
-
-// Export execution engine components
-export { TaskRunner, AgentSpawner, AgentPromptLoader } from './execution/index.js';
-export { SequentialThinker, getSequentialThinker } from './execution/sequential-thinker.js';
-export { DocTracker, getDocTracker } from './execution/doc-tracker.js';
-
-// Export types from execution
-export type { Task, ExecutionContext, TaskExecutionResult } from './execution/task-runner.js';
-export type { SpawnOptions, AgentProcess, SpawnerConfig } from './execution/agent-spawner.js';
-export type { AgentPrompt } from './execution/agent-prompts.js';
+// Re-export public types and functions
+export { createOrchestrator } from './orchestrator.js';
+export type { OrchestrationResult, ContextPackage } from './orchestrator.js';

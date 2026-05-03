@@ -39,7 +39,7 @@ export function createProtocolConfig(overrides?: Partial<ProtocolConfig>): Proto
 }
 
 /**
- * Check if a strictness level allows blocking
+ * Check if a strictness level is configured (advisory only, never blocks in v4.0.0)
  */
 export function isBlocking(strictness: ProtocolConfig['strictness']): boolean {
   return strictness === 'strict';

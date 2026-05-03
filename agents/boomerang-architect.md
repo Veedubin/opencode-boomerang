@@ -5,6 +5,8 @@ model: kimi-for-coding/k2p6
 steps: 50
 permission:
   edit: ask
+  read:
+    "*": allow
   bash: ask
   tool:
     "boomerang_*": allow
