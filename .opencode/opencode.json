@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
+    },
+    "searxng":{
+      "type": "local",
+      "command": ["npx", "-y", "mcp-searxng"],
+      "environment": { "SEARXNG_URL": "http://localhost:8080" },
+      "enabled": true
+    },
+  "super-memory-ts": {
+    "type": "local",
+    "command": ["npx", "-y", "@veedubin/super-memory-ts"],
+    "environment": {
+      "QDRANT_URL": "http://localhost:6333",
+      "BOOMERANG_USE_GPU": "true",
+      "BOOMERANG_DEVICE": "gpu",
+      "BOOMERANG_PRECISION": "fp16",
+      "BOOMERANG_PROJECT_ID": "mcp-servers"
+    },
+    "enabled": true
+    },
+    "markitdown": {
+      "type": "local",
+      "command": ["uvx", "markitdown-mcp"],
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@latest"],
+      "enabled": true
+    }
+  },
+  "plugin": ["@veedubin/boomerang-v2"],
+  "plugin": ["@franlol/opencode-md-table-formatter"]
+}
