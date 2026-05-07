@@ -7,38 +7,16 @@
  * Responsibilities:
  * 1. Query memory for context
  * 2. Detect task type from user request
- * 3. Select appropriate agent
- * 4. Build complete Context Package
- * 5. Return { agent, prompt, context } for OpenCode's native execution
+ * 3. Detect independent subtasks for parallel execution
+ * 4. Select appropriate agent(s)
+ * 5. Build complete Context Package(s)
+ * 6. Return { agent, prompt, context } or { tasks } for OpenCode's native execution
  */
 
 import { getMemorySystem, type MemorySystem } from './memory/index.js';
 import { loadAgents, type AgentDefinition } from './asset-loader.js';
 import type { MemoryEntry } from './memory/schema.js';
-
-export interface OrchestrationResult {
-  agent: string;
-  systemPrompt: string;
-  contextPackage: ContextPackage;
-  suggestions: {
-    useSequentialThinking: boolean;
-    runQualityGates: boolean;
-  };
-}
-
-export interface ContextPackage {
-  originalUserRequest: string;
-  taskBackground: string;
-  relevantFiles: string[];
-  codeSnippets: string[];
-  previousDecisions: string[];
-  expectedOutput: string;
-  scopeBoundaries: {
-    inScope: string[];
-    outOfScope: string[];
-  };
-  errorHandling: string;
-}
+import type { OrchestrationResult, ContextPackage, TaskPlan } from './protocol/types.js';
 
 // Task type detection keywords (more specific first)
 const TASK_KEYWORDS: Record<string, string[]> = {
@@ -88,16 +66,21 @@ export class BoomerangOrchestrator {
     // Step 1: Query memory for relevant context
     const memories = await this.queryMemory(request);
     
-    // Step 2: Detect task type
+    // Step 2: Check for parallel task opportunities
+    const subtasks = this.extractSubtasks(request);
+    
+    // Step 3: If multiple independent subtasks detected, use parallel orchestration
+    const hasParallelPotential = subtasks.length > 1 && subtasks.some(s => !s.isSequential);
+    
+    if (hasParallelPotential) {
+      return this.orchestrateWithParallelTasks(request, memories);
+    }
+    
+    // Step 4: Legacy single-agent orchestration
     const taskType = this.detectTaskType(request);
-    
-    // Step 3: Select agent
     const agent = this.selectAgent(taskType);
-    
-    // Step 4: Build context package
     const contextPackage = this.buildContextPackage(request, taskType, agent, memories);
     
-    // Step 5: Return orchestration result for OpenCode to execute
     return {
       agent: agent.name,
       systemPrompt: agent.systemPrompt || '',
@@ -284,6 +267,158 @@ export class BoomerangOrchestrator {
     return COMPLEX_PATTERNS.test(request) || 
            THINKING_TRIGGERS.test(request) || 
            request.length > 500;
+  }
+
+  /**
+   * Parse request for parallel conjunctions vs sequential markers
+   */
+  private extractSubtasks(request: string): { text: string; isSequential: boolean }[] {
+    // Sequential markers: "then", "after", "once done", "when done", "after that", "next"
+    const sequentialMarkers = /\b(then|after|once\s+done|when\s+done|after\s+that|next|before|afterwards)\b/i;
+    
+    // Parallel conjunctions: "and", "plus", "also", "both", "simultaneously"
+    const parallelMarkers = /\b(and|plus|also|both|simultaneously|while)\b/i;
+    
+    // Split on sequential markers first to identify chunks
+    const parts = request.split(sequentialMarkers);
+    
+    const subtasks: { text: string; isSequential: boolean }[] = [];
+    let currentSequential = false;
+    
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      
+      if (sequentialMarkers.test(trimmed)) {
+        currentSequential = true;
+        continue;
+      }
+      
+      // Check if this part has parallel markers (subtasks within this chunk)
+      if (parallelMarkers.test(trimmed)) {
+        // Split by parallel markers
+        const parallelParts = trimmed.split(parallelMarkers);
+        for (const p of parallelParts) {
+          const pTrimmed = p.trim();
+          if (pTrimmed) {
+            subtasks.push({ text: pTrimmed, isSequential: currentSequential });
+          }
+        }
+      } else {
+        subtasks.push({ text: trimmed, isSequential: currentSequential });
+      }
+      
+      currentSequential = true; // After encountering sequential marker, subsequent parts are sequential
+    }
+    
+    return subtasks.filter(s => s.text.length > 5);
+  }
+
+  /**
+   * Build a task plan for a single subtask
+   */
+  private buildTaskPlan(
+    id: string,
+    subtaskText: string,
+    memories: MemoryEntry[],
+    dependencies: string[] = []
+  ): TaskPlan {
+    const taskType = this.detectTaskType(subtaskText);
+    const agentName = AGENT_FOR_TASK[taskType] || 'boomerang-coder';
+    const agent = this.agents.find(a => a.name === agentName) || this.agents.find(a => a.name === 'boomerang')!;
+    
+    const contextPackage: ContextPackage = {
+      originalUserRequest: subtaskText,
+      taskBackground: `Subtask from parallel execution. Task type: ${taskType}`,
+      relevantFiles: this.extractFilePaths(memories).slice(0, 10),
+      codeSnippets: this.extractCodeSnippets(memories).slice(0, 3),
+      previousDecisions: this.extractDecisions(memories).slice(0, 3),
+      expectedOutput: this.generateExpectedOutput(taskType),
+      scopeBoundaries: this.generateScopeBoundaries(taskType),
+      errorHandling: 'Report errors clearly with file paths and line numbers. Do not crash silently.',
+    };
+    
+    return {
+      id,
+      agent: agentName,
+      description: subtaskText,
+      contextPackage,
+      dependencies,
+      priority: 'medium',
+      canParallelize: true,
+    };
+  }
+
+  /**
+   * Orchestrate with parallel task support
+   */
+  private orchestrateWithParallelTasks(request: string, memories: MemoryEntry[]): OrchestrationResult {
+    const subtasks = this.extractSubtasks(request);
+    
+    // If only one subtask or all are sequential, use legacy single-agent mode
+    if (subtasks.length <= 1 || subtasks.every(s => s.isSequential)) {
+      return this.orchestrateSingle(request, memories);
+    }
+    
+    // Group subtasks that can run in parallel
+    // Sequential ones form boundaries between parallel groups
+    const tasks: TaskPlan[] = [];
+    let taskId = 0;
+    let currentDependencies: string[] = [];
+    
+    for (const subtask of subtasks) {
+      if (subtask.isSequential) {
+        // Start a new sequential group - dependencies are all previous tasks
+        currentDependencies = tasks.map(t => t.id);
+      }
+      
+      const plan = this.buildTaskPlan(
+        `task-${++taskId}`,
+        subtask.text,
+        memories,
+        currentDependencies
+      );
+      plan.canParallelize = !subtask.isSequential;
+      plan.dependencies = currentDependencies;
+      tasks.push(plan);
+    }
+    
+    // Mark tasks that can run in parallel (no dependencies on each other within their group)
+    // For simplicity, if all dependencies are met and no sequential markers, all can parallelize
+    const hasSequential = subtasks.some(s => s.isSequential);
+    if (!hasSequential) {
+      for (const task of tasks) {
+        task.canParallelize = true;
+        task.dependencies = [];
+      }
+    }
+    
+    return {
+      tasks,
+      suggestions: {
+        useSequentialThinking: this.isComplexTask(request),
+        runQualityGates: true,
+      },
+    };
+  }
+
+  /**
+   * Legacy single-agent orchestration
+   */
+  private orchestrateSingle(request: string, memories: MemoryEntry[]): OrchestrationResult {
+    const taskType = this.detectTaskType(request);
+    const agent = this.selectAgent(taskType);
+    const contextPackage = this.buildContextPackage(request, taskType, agent, memories);
+    
+    return {
+      agent: agent.name,
+      systemPrompt: agent.systemPrompt || '',
+      contextPackage,
+      suggestions: {
+        useSequentialThinking: this.isComplexTask(request),
+        runQualityGates: taskType === 'code',
+      },
+    };
   }
 }
 

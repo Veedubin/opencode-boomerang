@@ -1,18 +1,23 @@
 /**
  * Protocol Advisor
  * 
- * ADVISORY ONLY - Never blocks execution.
- * OpenCode owns the loop; we just provide suggestions.
+ * ENFORCES the protocol - blocks execution if required steps are missing.
+ * In strict mode, the orchestrator MUST refuse to proceed until missing steps are completed.
  * 
- * Tracks protocol compliance and logs warnings.
- * Auto-fixes when possible, but never blocks.
+ * Tracks protocol compliance and returns enforcement results.
  */
 
 import { CheckpointRegistry, type Checkpoint } from './checkpoint.js';
 import type { ProtocolContext, ProtocolConfig } from './types.js';
-import { createProtocolConfig } from './config.js';
+import { createProtocolConfig, isBlocking } from './config.js';
 import { ProtocolEventBus, createProtocolEvent } from './events.js';
 import { getMemorySystem } from '../memory/index.js';
+
+export interface EnforcementResult {
+  canProceed: boolean;
+  missingSteps: string[];
+  severity: 'info' | 'warning' | 'error';
+}
 
 export interface Advisory {
   rule: string;
@@ -48,8 +53,63 @@ export class ProtocolAdvisor {
   }
 
   /**
-   * Get advisories for a session
-   * OpenCode decides whether to act on them
+   * Check if a session has all required protocol steps completed
+   * Returns whether the orchestrator can proceed or must block
+   */
+  async checkEnforcement(
+    sessionId: string,
+    checkpoints: Record<string, boolean>
+  ): Promise<EnforcementResult> {
+    const missingSteps: string[] = [];
+    const config = this.config;
+
+    // Memory query is ALWAYS required - no waiver
+    if (!checkpoints.memoryQueried) {
+      missingSteps.push('MEMORY_QUERY');
+    }
+
+    // Sequential thinking check for complex tasks
+    if (!checkpoints.sequentialThinkingUsed && config.enforceSequentialThinking) {
+      missingSteps.push('SEQUENTIAL_THINK');
+    }
+
+    // Planning check (has waiver phrases)
+    if (!checkpoints.planApproved && config.enforcePlanning) {
+      missingSteps.push('PLAN');
+    }
+
+    // Git check (has waiver phrases)
+    if (!checkpoints.gitChecked && config.enforceGitCheck) {
+      missingSteps.push('GIT_CHECK');
+    }
+
+    // Quality gates check (has waiver phrases)
+    if (!checkpoints.qualityGatesRun && config.enforceQualityGates) {
+      missingSteps.push('QUALITY_GATES');
+    }
+
+    // Doc updates check (has waiver phrases)
+    if (!checkpoints.docUpdated && config.enforceDocUpdates) {
+      missingSteps.push('DOC_UPDATE');
+    }
+
+    // Memory save is ALWAYS required - no waiver
+    if (!checkpoints.memorySaved) {
+      missingSteps.push('MEMORY_SAVE');
+    }
+
+    const canProceed = missingSteps.length === 0 || !isBlocking(this.config.strictness);
+
+    return {
+      canProceed,
+      missingSteps,
+      severity: missingSteps.length > 0 ? 'error' : 'info',
+    };
+  }
+
+  /**
+   * Get advisories for a session (for logging/suggestions)
+   * OpenCode decides whether to act on them in lenient/standard mode
    */
   async advise(
     sessionId: string,

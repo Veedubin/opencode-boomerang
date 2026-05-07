@@ -7,7 +7,7 @@
 import type { ProtocolConfig } from './types.js';
 
 export const DEFAULT_PROTOCOL_CONFIG: ProtocolConfig = {
-  strictness: 'lenient', // Gradual rollout - default lenient
+  strictness: 'strict', // Protocol is MANDATORY - blocks execution if steps are skipped
   timeoutSeconds: 300,
   autoSaveMemory: true,
   enforcePlanning: true,
@@ -39,14 +39,14 @@ export function createProtocolConfig(overrides?: Partial<ProtocolConfig>): Proto
 }
 
 /**
- * Check if a strictness level is configured (advisory only, never blocks in v4.0.0)
+ * Check if a strictness level blocks execution (strictness ENFORCES the protocol)
  */
 export function isBlocking(strictness: ProtocolConfig['strictness']): boolean {
   return strictness === 'strict';
 }
 
 /**
- * Check if a strictness level allows warnings
+ * Check if a strictness level allows warnings (standard or strict)
  */
 export function isWarning(strictness: ProtocolConfig['strictness']): boolean {
   return strictness === 'strict' || strictness === 'standard';

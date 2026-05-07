@@ -8,6 +8,8 @@
  * This module now ONLY handles prompt composition.
  */
 
+import type { TaskPlan, ContextPackage } from '../protocol/types.js';
+
 export interface Task {
   id: string;
   agent: string;
@@ -74,6 +76,30 @@ export class TaskRunner {
     parts.push(`## Instructions\n1. Execute the task described above\n2. Return a summary of what was accomplished\n3. Include any files modified or created`);
 
     return parts.join('\n\n');
+  }
+
+  /**
+   * Build prompts for multiple parallel tasks
+   */
+  buildParallelPrompts(tasks: TaskPlan[], agentPrompts: Map<string, AgentPrompt>): Map<string, string> {
+    const prompts = new Map<string, string>();
+    
+    for (const task of tasks) {
+      const agentPrompt = agentPrompts.get(task.agent);
+      if (!agentPrompt) continue;
+      
+      const taskObj: Task = {
+        id: task.id,
+        agent: task.agent,
+        description: task.description,
+        context: task.contextPackage as unknown as Record<string, unknown>,
+        priority: task.priority,
+      };
+      
+      prompts.set(task.id, this.buildPrompt(taskObj, agentPrompt));
+    }
+    
+    return prompts;
   }
 
   /**

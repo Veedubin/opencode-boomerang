@@ -350,59 +350,5 @@ Each sub-agent call should aim to return:
 
 ```
 User Request → Memory Query → Sequential Think → Plan → Delegate to Architect → Architect Researches + Plans → Orchestrator Dispatches → Quality Gates → Update Docs → Save Memory
-```
-
-## Middleware Pattern (Future)
-
-Inspired by LangChain DeepAgents, Boomerang can support composable middleware hooks:
-
-### Proposed Hooks
-
-1. **wrap_model_call** — Intercept and modify model invocations
-   - Logging
-   - Rate limiting
-   - Model fallback (e.g., if Kimi fails, try GPT)
-
-2. **wrap_tool_call** — Intercept and modify tool executions
-   - Validation
-   - Caching
-   - Result transformation
-
-3. **before_agent** — Run before agent starts
-   - Context setup
-   - Permission checks
-   - Environment validation
-
-4. **after_agent** — Run after agent completes
-   - Result validation
-   - Cleanup
-   - Metrics collection
-
-### Middleware Stack
-
-```
-User Request
-  → before_agent
-    → wrap_model_call
-      → Agent Execution
-    → wrap_tool_call (per tool)
-  → after_agent
-  → Result
-```
-
-### Use Cases
-
-- **Logging**: Track all agent actions for audit
-- **Caching**: Cache tool results to avoid redundant calls
-- **HITL**: Human-in-the-loop approval for sensitive operations
-- **Fallbacks**: Switch models if primary is unavailable
-- **Validation**: Validate tool inputs before execution
-
-### Implementation Notes
-
-- Middleware should be composable (chainable)
-- Order matters — middleware runs in pipeline order
-- Each middleware can short-circuit (stop processing)
-- State should be immutable between middleware layers
 
 (End of file - total 265 lines)

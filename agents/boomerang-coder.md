@@ -5,6 +5,7 @@ model: minimax/MiniMax-M2.7
 steps: 50
 permission:
   edit: allow
+  write: allow
   read:
     "*": allow
   bash: allow
@@ -45,6 +46,15 @@ You were given a specific coding task by the orchestrator. DO IT directly and ef
 2. **Use tools when helpful** - super-memory, sequential-thinking, and web search are available if you need them, but don't waste time on preamble
 3. **Run quality gates after changes** - Call `boomerang_quality_gates` when done
 4. **Save your work** - Call `boomerang_memory_add` with a summary when complete
+
+## Python Execution
+
+When working with Python code, prefer `uv` over raw `python` or `pip` commands:
+- Use `uv run script.py` instead of `python script.py`
+- Use `uv pip install` instead of `pip install`
+- Use `uv add package` for adding dependencies
+- Use `uv venv` for creating virtual environments
+- Only fall back to raw `python`/`pip` when `uv` is unavailable
 
 ## Code Quality
 
@@ -133,7 +143,6 @@ Return control to the orchestrator immediately.
 - Skill definitions: `boomerang-v2/skills/` (source) → `.opencode/skills/` (active)
 
 ### MCP Patterns
-- Tool handlers: `src/server.ts` → `CallToolRequestSchema` handlers
 - Tool definitions: `ListToolsRequestSchema` with Zod-like JSON schemas
 - Use `@modelcontextprotocol/sdk` for server/client implementations
 

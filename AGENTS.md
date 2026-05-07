@@ -72,11 +72,11 @@ Task Size > 1 file OR > 20 lines OR needs analysis
 
 The `boomerang-architect` agent uses **highest reasoning level** for Kimi K2.6 when creating implementation plans. The plan is handed back to the orchestrator as a "ready-to-run game plan" for dispatching coders, testers, etc.
 
-## Protocol (Advisory, Not Blocking)
+## Protocol (MANDATORY)
 
-All agents are encouraged to follow the **8-Step Boomerang Protocol**, but enforcement is **advisory only**.
+All agents **MUST** follow the **8-Step Boomerang Protocol** — enforcement is **MANDATORY**.
 
-### 8-Step Protocol (Encouraged, Not Enforced)
+### 8-Step Protocol (MANDATORY)
 
 1. **Query Memory** — `super-memory_query_memories` FIRST
 2. **Think** — `sequential-thinking_sequentialthinking` for complex tasks
@@ -127,7 +127,7 @@ After EVERY session interaction, consider updating:
 4. **README.md** — Update if user-facing changes
 5. **HANDOFF.md** — Update at session end
 
-> **Note**: Unlike previous versions, documentation updates are **encouraged but not enforced** at handoff.
+> **Note**: Unlike previous versions, documentation updates are **MANDATORY** at handoff.
 
 ### Built-in Integration Architecture (v4.0.0)
 
@@ -202,11 +202,11 @@ This is Boomerang v4.0.0 — an orchestration plugin for OpenCode that provides 
 
 ## Protocol Advisor v4.0.0
 
-> **BREAKING CHANGE**: The Boomerang Protocol is now **ADVISORY ONLY** — it suggests best practices but never blocks execution.
+> **BREAKING CHANGE**: The Boomerang Protocol is now **MANDATORY** — it enforces all 8 steps and blocks execution if required steps are missing.
 
-### Architecture: Advisory State Machine
+### Architecture: Mandatory State Machine
 
-The protocol is implemented as an **advisory state machine**:
+The protocol is implemented as a **mandatory state machine with enforcement at each step**:
 
 ```
 IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK → QUALITY_GATES → DOC_UPDATE → MEMORY_SAVE → COMPLETE
@@ -215,56 +215,56 @@ IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK �
 | Component | Purpose |
 |-----------|---------|
 | **ProtocolStateMachine** | Tracks state transitions for logging |
-| **ProtocolAdvisor** | Logs suggestions and warnings, never blocks |
+| **ProtocolAdvisor** | Enforces steps and blocks execution if required steps are missing |
 | **TaskRunner** | Prompt builder only (no subprocess execution) |
 | **DocTracker** | Tracks documentation changes via SHA-256 hash comparison |
 
-### Strictness Levels (Advisory)
+### Strictness Levels (Enforced)
 
 | Level | Behavior |
 |-------|----------|
 | **lenient** | Log suggestions, auto-fix logged |
 | **standard** | Log warnings and suggestions (default) |
-| **strict** | Log errors and suggestions |
+| **strict** | BLOCK execution if required steps are missing |
 
-**Important**: Unlike previous versions, v4.0.0 **never blocks** execution regardless of strictness level.
+**Important**: v4.0.0 **blocks execution** if mandatory steps are missing in strict mode.
 
-### 8-Step Advisory Protocol
+### 8-Step Mandatory Protocol
 
-1. **MEMORY_QUERY** — Suggest `super-memory_query_memories` if not already called
-2. **SEQUENTIAL_THINK** — Suggest `sequential-thinking_sequentialthinking` for complex tasks
-3. **PLAN** — Suggest architect review for build tasks
+1. **MEMORY_QUERY** — MUST call `super-memory_query_memories` first
+2. **SEQUENTIAL_THINK** — MUST call `sequential-thinking_sequentialthinking` for complex tasks
+3. **PLAN** — MUST create plan or delegate to architect for build tasks
 4. **DELEGATE** — OpenCode handles agent execution
-5. **GIT_CHECK** — Suggest verifying working tree state
-6. **QUALITY_GATES** — Suggest running lint/typecheck/test
-7. **DOC_UPDATE** — Track via DocTracker, suggest at handoff
-8. **MEMORY_SAVE** — Auto-save suggestion if skipped
+5. **GIT_CHECK** — MUST verify working tree state before code changes
+6. **QUALITY_GATES** — MUST run lint/typecheck/test before completion
+7. **DOC_UPDATE** — Track via DocTracker, update at handoff
+8. **MEMORY_SAVE** — MUST save to memory when complete
 
-### Suggestion Matrix
+### Enforcement Matrix
 
-| Step | Suggestion | Waiver Phrase |
-|------|------------|---------------|
-| 1. Memory Query | Query memory first | None needed (advisory) |
-| 2. Sequential Thinking | Think through complex tasks | None needed (advisory) |
-| 3. Planning | Get architect review | "skip planning", "just do it" |
+| Step | Requirement | Waiver Phrase |
+|------|-------------|---------------|
+| 1. Memory Query | MUST query memory first | None (always required) |
+| 2. Sequential Thinking | MUST think for complex tasks | None (always required for complex) |
+| 3. Planning | MUST plan or delegate to architect | "skip planning", "just do it", "no plan needed" |
 | 4. Delegate | OpenCode executes | None |
-| 5. Git Check | Check working tree | "git is fine" |
-| 6. Quality Gates | Run quality gates | "skip tests", "skip gates" |
-| 7. Doc Update | Update documentation | "no docs needed" |
-| 8. Memory Save | Save to memory | None (auto-suggested) |
+| 5. Git Check | MUST verify working tree | "git is fine" |
+| 6. Quality Gates | MUST run lint/typecheck/test | "skip tests", "skip gates" |
+| 7. Doc Update | MUST update documentation | "no docs needed" |
+| 8. Memory Save | MUST save to memory | None (always required) |
 
 ### Waiver Phrases (Escape Hatches)
 
 | Phrase | Effect |
 |--------|--------|
-| `skip planning` | Suggest bypassing planning |
-| `just do it` | Suggest bypassing planning |
-| `no plan needed` | Suggest bypassing planning |
-| `skip tests` | Suggest bypassing quality gates |
-| `skip gates` | Suggest bypassing quality gates |
-| `git is fine` | Suggest bypassing git check |
-| `--force` | Suggest bypassing all checks (emergency) |
-| `no docs needed` | Suggest skipping documentation update |
+| `skip planning` | Skip planning for this turn |
+| `just do it` | Skip planning and execute immediately |
+| `no plan needed` | Skip planning for simple tasks |
+| `skip tests` | Skip running tests |
+| `skip gates` | Skip quality gates |
+| `git is fine` | Skip git check |
+| `--force` | Skip all checks (emergency) |
+| `no docs needed` | Skip documentation update |
 
 ### Implementation Files
 
@@ -275,7 +275,7 @@ IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK �
 | `src/protocol/types.ts` | State, event, config types |
 | `src/protocol/events.ts` | Event emitter for state transitions |
 | `src/protocol/config.ts` | Strictness levels, waiver phrases |
-| `src/protocol/enforcer.ts` | ProtocolAdvisor (advisory only, never blocks) |
+| `src/protocol/enforcer.ts` | ProtocolAdvisor (ENFORCES the protocol, blocks execution if steps are missing) |
 | `src/execution/task-runner.ts` | TaskRunner class (prompt builder only) |
 | `src/execution/doc-tracker.ts` | DocTracker for SHA-256 tracking |
 
@@ -283,7 +283,8 @@ IDLE → MEMORY_QUERY → SEQUENTIAL_THINK → PLAN → DELEGATE → GIT_CHECK �
 
 ## Review Notes
 
-- **2026-05-03**: v4.0.0 HARD REFACTOR COMPLETE — Orchestrator is pure decision layer, OpenCode handles execution, protocol is advisory only. 155/155 tests passing. Deleted 11 dead files (AgentSpawner, TaskExecutor, ScoringRouter, ContextMonitor, Compactor, MiddlewarePipeline, ProtocolTracker, SequentialThinker, server.ts, memory-service, frontmatter).
+- **2026-05-06**: v4.1.0 RELEASED — Protocol enforcement: MANDATORY (reverted from advisory). Parallel agent launching: TaskPlan types, task decomposition, parallel execution. Memory sync: SMT ^2.6.5, PARALLEL strategy, filter/wrapper methods, queryCollections. Release manager: UV/Python, GitHub releases, cross-package sync. 155/155 tests passing.
+- **2026-05-03**: v4.0.0 HARD REFACTOR COMPLETE — Orchestrator is pure decision layer, OpenCode handles execution. 155/155 tests passing. Deleted 11 dead files (AgentSpawner, TaskExecutor, ScoringRouter, ContextMonitor, Compactor, MiddlewarePipeline, ProtocolTracker, SequentialThinker, server.ts, memory-service, frontmatter).
 - **2026-05-01**: v3.2.0 RELEASED — buildPrompt() fix: sub-agents now receive full layered prompts (systemPrompt + agent rules + skill instructions + Context Package + task + instructions). Skill auto-loading from `.opencode/skills/`. 14 new tests.
 - **2026-05-01**: v3.2.0 (pending release) — Code audit & cleanup session. Removed uuid dependency (replaced with crypto.randomUUID()). Extracted shared utilities to src/utils/frontmatter.ts and src/utils/similarity.ts. Consolidated AgentDefinition into protocol/types.ts. Migrated protocolTracker → ProtocolStateMachine. Deprecated server.ts. Fixed unsafe casts and type issues. Quality gates: 212/212 tests passing.
-- **2026-04-30**: v3.1.0 BREAKING — Code-enforced protocol via state machine. All 8 phases complete. 205 tests passing. (Note: protocol is now advisory in v4.0.0)
+- **2026-04-30**: v3.1.0 BREAKING — Code-enforced protocol via state machine. All 8 phases complete. 205 tests passing. (Note: protocol is now MANDATORY in v4.1.0)

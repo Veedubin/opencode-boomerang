@@ -5,21 +5,32 @@ model: kimi-for-coding/k2p6
 steps: 50
 permission:
   edit: ask
+  write: ask
   bash:
-    "*": ask
+    "*": allow
     "git status": allow
     "git log*": allow
     "git diff*": allow
     "git *": allow
     "npm *": allow
+    "npx *": allow
+    "uv *": allow
+    "uvx *": allow
     "bun *": allow
     "ls *": allow
     "mkdir *": allow
     "rm *": ask
     "cat *": allow
     "grep *": allow
+    "head *": allow
+    "tail *": allow
+    "cut *": allow
+    "echo *": allow
     "find *": allow
     "cd *": allow
+    "curl *": allow
+    "docker *": allow
+    "docker-compose *": allow
   read:
     "*": allow
   tool:
@@ -107,7 +118,24 @@ Task { subagent_type: "AGENT_NAME", prompt: "## Context Package\n\n### Original 
 - Do NOT queue multiple Tasks for the same work
 - If a sub-agent doesn't respond, do NOT retry the same Task immediately
 - If Task fails, report the failure to the user and STOP
-- Never invoke more than 3 Task tools in a single turn
+
+**Task Tool Budget:**
+- You may invoke up to 3 Task tools PER TURN
+- Use multiple Task tools for INDEPENDENT tasks that can run in parallel
+- Do NOT invoke multiple Task tools for the same work or dependent tasks
+
+**Parallel Execution Rules:**
+1. Detect if user request contains multiple independent subtasks
+2. If subtasks are independent (different agents, no "then/after" sequencing):
+   - Launch up to 3 sub-agents simultaneously using Task tool
+3. If subtasks have dependencies:
+   - Launch only the first independent batch
+   - Wait for results before launching dependent tasks
+
+**Independence Detection:**
+- "and", "plus", "also", "both" → PARALLEL (independent)
+- "then", "after", "once done", "when done" → SEQUENTIAL (dependency)
+- Same agent for multiple tasks → SEQUENTIAL (resource conflict)
 
 ## Orchestrator Permissions
 
@@ -169,6 +197,15 @@ When the orchestrator executes tasks directly (under threshold), it STILL follow
 - **You MUST use Task tool for all work** - No exceptions for tasks over threshold
 - **Do not explain what you will do** - Just call the tools
 - **Do not summarize before calling tools** - Call tools first, explain later if needed
+
+## Python Execution
+
+When working with Python code, prefer `uv` over raw `python` or `pip` commands:
+- Use `uv run script.py` instead of `python script.py`
+- Use `uv pip install` instead of `pip install`
+- Use `uv add package` for adding dependencies
+- Use `uv venv` for creating virtual environments
+- Only fall back to raw `python`/`pip` when `uv` is unavailable
 
 ## FILE ACCESS RESTRICTION
 

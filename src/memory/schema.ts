@@ -4,6 +4,11 @@
 
 export type SourceType = 'file' | 'conversation' | 'manual' | 'web';
 
+/**
+ * Source type compatible with Super-Memory-TS
+ */
+export type MemorySourceType = 'session' | 'file' | 'web' | 'boomerang' | 'project';
+
 export interface MemoryEntry {
   /** Unique identifier (UUID) */
   id: string;
@@ -57,7 +62,7 @@ export interface SearchResult<T = MemoryEntry | ProjectChunk> {
   score: number;
 }
 
-export type SearchStrategy = 'TIERED' | 'VECTOR_ONLY' | 'TEXT_ONLY';
+export type SearchStrategy = 'TIERED' | 'VECTOR_ONLY' | 'TEXT_ONLY' | 'PARALLEL';
 
 export interface SearchOptions {
   /** Search strategy to use */
@@ -66,6 +71,17 @@ export interface SearchOptions {
   topK: number;
   /** Minimum similarity score threshold */
   threshold: number;
+  /** Optional filters */
+  filter?: {
+    /** Filter by source type (SMT uses session|file|web|boomerang|project) */
+    sourceType?: MemorySourceType;
+    /** Filter by session ID */
+    sessionId?: string;
+    /** Filter by minimum timestamp */
+    since?: Date;
+    /** Filter by project ID */
+    projectId?: string;
+  };
 }
 
 /** Default search options */

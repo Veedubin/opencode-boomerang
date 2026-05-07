@@ -124,3 +124,49 @@ export interface SessionData {
   startTime: number;
   lastActivity: number;
 }
+
+/**
+ * Task plan for multi-agent parallel execution
+ */
+export interface TaskPlan {
+  id: string;
+  agent: string;
+  description: string;
+  contextPackage: ContextPackage;
+  dependencies: string[]; // Task IDs that must complete first
+  priority: 'low' | 'medium' | 'high';
+  canParallelize: boolean;
+}
+
+/**
+ * Context package for agent execution
+ */
+export interface ContextPackage {
+  originalUserRequest: string;
+  taskBackground: string;
+  relevantFiles: string[];
+  codeSnippets: string[];
+  previousDecisions: string[];
+  expectedOutput: string;
+  scopeBoundaries: {
+    inScope: string[];
+    outOfScope: string[];
+  };
+  errorHandling: string;
+}
+
+/**
+ * Orchestration result supporting both single and multi-agent execution
+ */
+export interface OrchestrationResult {
+  // Legacy single-agent support (backward compatible)
+  agent?: string;
+  systemPrompt?: string;
+  contextPackage?: ContextPackage;
+  // New multi-agent support
+  tasks?: TaskPlan[];
+  suggestions: {
+    useSequentialThinking: boolean;
+    runQualityGates: boolean;
+  };
+}

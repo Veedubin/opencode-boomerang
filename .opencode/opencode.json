@@ -18,9 +18,10 @@
     "environment": {
       "QDRANT_URL": "http://localhost:6333",
       "BOOMERANG_USE_GPU": "true",
-      "BOOMERANG_DEVICE": "gpu",
+      "BOOMERANG_DEVICE": "auto",
       "BOOMERANG_PRECISION": "fp16",
-      "BOOMERANG_PROJECT_ID": "mcp-servers"
+      "BOOMERANG_PROJECT_ID": "mcp-servers",
+      "QUERY_COLLECTIONS": "memories_1024,memories_384"
     },
     "enabled": true
     },
@@ -35,6 +36,5 @@
       "enabled": true
     }
   },
-  "plugin": ["@veedubin/boomerang-v2"],
-  "plugin": ["@franlol/opencode-md-table-formatter"]
+  "plugin": ["@veedubin/boomerang-v2", "@franlol/opencode-md-table-formatter"]
 }

@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v4.1.0 - Protocol MANDATORY, Parallel Agents, Memory Sync, Release Manager
+
+### Features
+
+- **Protocol enforcement: MANDATORY** — Reverted from advisory-only to blocking enforcement
+  - All 8 protocol steps are now mandatory checkpoints
+  - `ProtocolAdvisor` blocks execution if required steps are missing in strict mode
+  - "Enforcement Matrix" replaces "Suggestion Matrix" with MUST language
+
+- **Parallel agent launching** — New TaskPlan types and task decomposition
+  - Added `TaskPlan` types for parallel execution
+  - Task decomposition for complex multi-agent workflows
+  - Parallel execution rules for concurrent agent dispatch
+
+- **Memory sync fixes** — Super-Memory-TS dependency updated to ^2.6.5
+  - PARALLEL strategy for dual-tier search with RRF fusion
+  - Added `filter` and `wrapper` methods to memory operations
+  - Added `queryCollections` for multi-collection queries
+
+- **Release manager enhancement** — UV/Python support and GitHub releases
+  - UV/Python integration for Python package releases
+  - GitHub releases via release manager
+  - Cross-package sync for multi-package repositories
+
+### Quality Gates
+
+- **155/155 tests passing**
+
+### Review Notes
+
+- **2026-05-06**: Protocol enforcement reverted from "advisory only" to MANDATORY
+- Parallel agent launching with TaskPlan types and task decomposition
+- Memory sync: SMT ^2.6.5, PARALLEL strategy, filter/wrapper methods, queryCollections
+- Release manager: UV/Python, GitHub releases, cross-package sync
+
 ## v4.0.0 - BREAKING: Hard Refactor - Orchestrator as Pure Decision Layer
 
 ### Breaking Changes

@@ -6,9 +6,10 @@
  * Registers agents and skills with OpenCode.
  */
 
-import { createOrchestrator, type OrchestrationResult } from './orchestrator.js';
+import { createOrchestrator } from './orchestrator.js';
 import { loadAgents, loadSkills, getAgent, getSkill } from './asset-loader.js';
 import { getMemorySystem } from './memory/index.js';
+import type { OrchestrationResult, ContextPackage } from './protocol/types.js';
 
 // Plugin metadata
 export const PLUGIN_NAME = '@veedubin/boomerang-v2';
@@ -142,8 +143,12 @@ Examples:
 
     // Log orchestration result for OpenCode to pick up
     console.log('[boomerang] Orchestration complete');
-    console.log(`[boomerang] Agent: ${result.agent}`);
-    console.log(`[boomerang] Context Package built with ${result.contextPackage.relevantFiles.length} relevant files`);
+    if (result.tasks) {
+      console.log(`[boomerang] ${result.tasks.length} tasks planned (${result.tasks.filter(t => t.canParallelize).length} parallelizable)`);
+    } else {
+      console.log(`[boomerang] Agent: ${result.agent}`);
+      console.log(`[boomerang] Context Package built with ${result.contextPackage?.relevantFiles.length ?? 0} relevant files`);
+    }
     console.log(`[boomerang] Suggestions:`, result.suggestions);
 
     // The actual execution happens via OpenCode's agent system
@@ -176,4 +181,4 @@ async function handleHandoffCommand(context: PluginContext): Promise<void> {
 
 // Re-export public types and functions
 export { createOrchestrator } from './orchestrator.js';
-export type { OrchestrationResult, ContextPackage } from './orchestrator.js';
+export type { OrchestrationResult, ContextPackage } from './protocol/types.js';

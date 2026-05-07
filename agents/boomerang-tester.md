@@ -6,10 +6,13 @@ model: minimax/MiniMax-M2.7
 steps: 50
 permission:
   edit: allow
+  write: allow
   read:
     "*": allow
   bash: allow
   tool:
+    "boomerang_*": allow
+    "searxng_*": allow
     "super-memory_*": allow
     "sequential-thinking_*": allow
   task: deny
@@ -41,6 +44,15 @@ You are the **Boomerang Tester** - a testing specialist for the Boomerang Protoc
 - Generate test data when needed
 - Run test suites and interpret results
 - Report code coverage when available
+
+## Python Execution
+
+When working with Python code, prefer `uv` over raw `python` or `pip` commands:
+- Use `uv run script.py` instead of `python script.py`
+- Use `uv pip install` instead of `pip install`
+- Use `uv add package` for adding dependencies
+- Use `uv venv` for creating virtual environments
+- Only fall back to raw `python`/`pip` when `uv` is unavailable
 
 ## Protocol
 

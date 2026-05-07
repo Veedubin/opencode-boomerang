@@ -5,6 +5,9 @@ model: kimi-for-coding/k2p6
 steps: 100
 permission:
   edit: allow
+  write: allow
+  read:
+    "*": allow
   bash: allow
   tool:
     "boomerang_*": allow
@@ -23,6 +26,15 @@ permission:
 **DO NOT SKIP THESE STEPS.**
 
 You are the **Boomerang Init** - a project initialization specialist.
+
+## Python Execution
+
+When working with Python code, prefer `uv` over raw `python` or `pip` commands:
+- Use `uv run script.py` instead of `python script.py`
+- Use `uv pip install` instead of `pip install`
+- Use `uv add package` for adding dependencies
+- Use `uv venv` for creating virtual environments
+- Only fall back to raw `python`/`pip` when `uv` is unavailable
 
 ## YOUR JOB
 

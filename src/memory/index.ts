@@ -17,7 +17,11 @@ class MemorySystem {
   private _smt: SmtMemorySystem;
 
   private constructor() {
-    this._smt = getSmtMemorySystem({ projectId: PROJECT_ID });
+    const queryCollections = process.env.QUERY_COLLECTIONS?.split(',').map(s => s.trim()).filter(Boolean);
+    this._smt = getSmtMemorySystem({
+      projectId: PROJECT_ID,
+      queryCollections,
+    });
   }
 
   /**
@@ -190,6 +194,53 @@ class MemorySystem {
     if (!this.isInitialized()) {
       throw new Error('MemorySystem not initialized. Call initialize() first.');
     }
+  }
+
+  /**
+   * Check if the memory system is ready (initialized and connected to Qdrant)
+   */
+  async isReady(): Promise<boolean> {
+    return this._smt.isReady();
+  }
+
+  /**
+   * Check if content already exists in the database
+   */
+  async contentExists(text: string): Promise<boolean> {
+    this.ensureInitialized();
+    return this._smt.contentExists(text);
+  }
+
+  /**
+   * Search memories using a pre-computed vector
+   */
+  async searchWithVector(vector: number[], options?: Partial<SearchOptions>): Promise<SearchResult<MemoryEntry>[]> {
+    this.ensureInitialized();
+    const smtResults = await this._smt.searchWithVector(new Float32Array(vector), options);
+    return smtResults.map((entry) => ({
+      entry: adaptMemoryEntry(entry),
+      score: entry.score ?? 0,
+    }));
+  }
+
+  /**
+   * Get memories similar to a given memory
+   */
+  async getSimilar(memoryId: string, options?: Partial<SearchOptions>): Promise<SearchResult<MemoryEntry>[]> {
+    this.ensureInitialized();
+    const smtResults = await this._smt.getSimilar(memoryId, options);
+    return smtResults.map((entry) => ({
+      entry: adaptMemoryEntry(entry),
+      score: entry.score ?? 0,
+    }));
+  }
+
+  /**
+   * Get memory statistics
+   */
+  async getStats(): Promise<{ count: number; collections?: number }> {
+    this.ensureInitialized();
+    return this._smt.getStats();
   }
 }
 
