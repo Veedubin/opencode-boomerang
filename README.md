@@ -1,3 +1,22 @@
+> ## ⚠️ NO LONGER IN ACTIVE DEVELOPMENT
+>
+> **This project (`boomerang/`, v1.x) is no longer in active development.**
+>
+> | Status | Replacement |
+> |--------|-------------|
+> | Boomerang plugin | **[`@veedubin/boomerang-v3`](https://www.npmjs.com/package/@veedubin/boomerang-v3)** — same routing + 8-step protocol, now with explicit per-agent tool permissions, security-hardened config, and updated Ollama Cloud models. Source at `~/Projects/MCP-Servers/boomerang-v3/`. |
+> | Memory backend | **[`memini-ai-dev`](https://github.com/...)** — PostgreSQL + pgvector with trust scoring, knowledge graph, and tiered loading. Source at `~/Projects/MCP-Servers/memini-ai-dev/`. |
+>
+> **This directory is kept for historical reference only.** No new features, bug fixes, or releases will be made here. Existing `memory_data/` snapshots, builds (`dist/`), and the bundled Super-Memory-TS core are still functional if you point an older OpenCode at them.
+>
+> **Migrating?** Install the replacement plugin in your project's `.opencode/opencode.json`:
+> ```json
+> "plugin": ["@veedubin/boomerang-v3"]
+> ```
+> and switch the memory MCP server from `super-memory-ts` to `memini-ai-dev`. See the new plugin's README for the full migration checklist.
+
+---
+
 # 🚀 Boomerang for OpenCode
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
