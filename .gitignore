@@ -44,3 +44,8 @@ NPM_MIGRATION_PLAN.md
 
 # Project Knowledge
 PROJECT_KNOWLEDGE_BASE.md
+
+# Environment variables (contains secrets — never commit)
+.env
+.env.local
+.env.*.local
