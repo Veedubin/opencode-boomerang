@@ -1,0 +1,28 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": true
+    },
+    "searxng": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-searxng"],
+      "environment": { "SEARXNG_URL": "http://localhost:8080" },
+      "enabled": true
+    },
+    "super-memory": {
+      "type": "local",
+      "command": ["uvx", "super-memory-mcp"],
+      "enabled": true
+    },
+    "github-mcp": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+      "environment": { "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_PERSONAL_ACCESS_TOKEN}" },
+      "enabled": true
+    }
+  },
+  "plugin": ["@veedubin/boomerang-v3"]
+}
