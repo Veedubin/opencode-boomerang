@@ -13,7 +13,6 @@ Author: Boomerang Coder
 
 import argparse
 import hashlib
-import os
 import shutil
 import subprocess
 import sys
@@ -200,7 +199,7 @@ def convert_table(db: "lancedb.LanceDB", db_path: Path, table_name: str, dry_run
             df = table.to_pandas()
         except Exception as e:
             print(f"    ERROR: Cannot read table '{table_name}': {e}")
-            print(f"    This may indicate corrupted LanceDB data. Check .lance directory contents.")
+            print("    This may indicate corrupted LanceDB data. Check .lance directory contents.")
             return False
 
         row_count = len(df)
@@ -214,7 +213,7 @@ def convert_table(db: "lancedb.LanceDB", db_path: Path, table_name: str, dry_run
 
         if row_count == 0:
             if verbose:
-                print(f"    Table is empty, skipping conversion")
+                print("    Table is empty, skipping conversion")
             return True
 
         # Transform data
@@ -332,7 +331,7 @@ def convert_memory_data_dir(mem_dir: Path, dry_run: bool = False, verbose: bool 
                 # This might be a newer LanceDB format
                 print(f"  Warning: Non-standard LanceDB format at {mem_dir}")
                 return False, "Non-standard format"
-            print(f"  No .lance directories found, skipping")
+            print("  No .lance directories found, skipping")
             return True, "No tables to convert"
 
         # Connect to LanceDB
